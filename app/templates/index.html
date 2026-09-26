@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="stats">
+    {% if stats %}
+      <div class="stat-card">
+        <span class="stat-label">Current</span>
+        <span class="stat-value">{{ "%.1f"|format(stats.current) }} {{ unit }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">7-day change</span>
+        <span class="stat-value {{ 'down' if stats.change_7d and stats.change_7d < 0 else 'up' if stats.change_7d }}">
+          {{ "%+.1f"|format(stats.change_7d) ~ " " ~ unit if stats.change_7d is not none else "—" }}
+        </span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">30-day change</span>
+        <span class="stat-value {{ 'down' if stats.change_30d and stats.change_30d < 0 else 'up' if stats.change_30d }}">
+          {{ "%+.1f"|format(stats.change_30d) ~ " " ~ unit if stats.change_30d is not none else "—" }}
+        </span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total change</span>
+        <span class="stat-value {{ 'down' if stats.total_change < 0 else 'up' }}">
+          {{ "%+.1f"|format(stats.total_change) }} {{ unit }}
+        </span>
+      </div>
+    {% else %}
+      <p class="empty">No entries yet — log your first weigh-in below.</p>
+    {% endif %}
+  </section>
+
+  {% if entries %}
+    <section class="chart-wrap">
+      <canvas id="weight-chart" height="90"></canvas>
+    </section>
+  {% endif %}
+
+  <section class="add-entry">
+    <h2>Add / update entry</h2>
+    <form method="post" action="{{ url_for('main.create_entry') }}" class="entry-form">
+      {{ form.hidden_tag() }}
+      <div class="field">
+        {{ form.entry_date.label }}
+        {{ form.entry_date(value=form.entry_date.data.isoformat() if form.entry_date.data else "") }}
+      </div>
+      <div class="field">
+        {{ form.weight.label }} ({{ unit }})
+        {{ form.weight(step="0.1", placeholder="e.g. 82.4") }}
+      </div>
+      <div class="field field-wide">
+        {{ form.note.label }}
+        {{ form.note(placeholder="optional") }}
+      </div>
+      <button type="submit">Save entry</button>
+    </form>
+  </section>
+
+  <section class="entries">
+    <h2>History</h2>
+    {% if entries %}
+      <table class="entry-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Weight ({{ unit }})</th>
+            <th>Note</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+            <tr>
+              <td>{{ entry.entry_date.isoformat() }}</td>
+              <td>{{ "%.1f"|format(entry.weight) }}</td>
+              <td>{{ entry.note or "" }}</td>
+              <td class="actions">
+                <a href="{{ url_for('main.edit_entry', entry_id=entry.id) }}">Edit</a>
+                <form method="post" action="{{ url_for('main.delete_entry', entry_id=entry.id) }}"
+                      onsubmit="return confirm('Delete this entry?');" class="inline-form">
+                  {{ form.csrf_token }}
+                  <button type="submit" class="link-button">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">Nothing to show yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block scripts %}
+{% if entries %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  const ctx = document.getElementById('weight-chart');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ chart_labels|tojson }},
+      datasets: [{
+        label: 'Weight ({{ unit }})',
+        data: {{ chart_values|tojson }},
+        borderColor: '#2f6f4f',
+        backgroundColor: 'rgba(47, 111, 79, 0.12)',
+        tension: 0.25,
+        fill: true,
+        pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: false } }
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

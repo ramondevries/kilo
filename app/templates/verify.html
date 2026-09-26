@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Verify your email{% endblock %}
+
+{% block content %}
+  <section class="add-entry">
+    <h2>Enter your code</h2>
+    <p>We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in 10 minutes.</p>
+    <form method="post" action="{{ url_for('auth.verify') }}" class="entry-form">
+      {{ form.hidden_tag() }}
+      <div class="field">
+        {{ form.code.label }}
+        {{ form.code(placeholder="123456", autofocus=true, maxlength=6, inputmode="numeric") }}
+        {% for error in form.code.errors %}
+          <p class="flash flash-error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <button type="submit">Verify</button>
+    </form>
+    <form method="post" action="{{ url_for('auth.resend_code') }}" class="inline-form">
+      {{ form.csrf_token }}
+      <button type="submit" class="link-button">Resend code</button>
+    </form>
+  </section>
+{% endblock %}

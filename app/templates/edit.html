@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Edit entry — Weight Tracker{% endblock %}
+
+{% block content %}
+  <section class="add-entry">
+    <h2>Edit entry ({{ entry.entry_date.isoformat() }})</h2>
+    <form method="post" class="entry-form">
+      {{ form.hidden_tag() }}
+      <div class="field">
+        {{ form.entry_date.label }}
+        {{ form.entry_date(value=form.entry_date.data.isoformat() if form.entry_date.data else "") }}
+      </div>
+      <div class="field">
+        {{ form.weight.label }}
+        {{ form.weight(step="0.1") }}
+      </div>
+      <div class="field field-wide">
+        {{ form.note.label }}
+        {{ form.note() }}
+      </div>
+      <button type="submit">Update entry</button>
+      <a class="cancel-link" href="{{ url_for('main.index') }}">Cancel</a>
+    </form>
+  </section>
+{% endblock %}
