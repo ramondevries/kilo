@@ -21,6 +21,10 @@ body {
   padding: 1rem 1.5rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .brand {
@@ -28,6 +32,23 @@ body {
   font-size: 1.1rem;
   color: var(--accent);
   text-decoration: none;
+}
+
+.account-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.avatar {
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.account-nav a {
+  color: var(--accent);
 }
 
 .container {
@@ -84,12 +105,27 @@ body {
 .stat-value.up { color: var(--danger); }
 .stat-value.down { color: var(--accent); }
 
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  padding-top: 0.25rem;
+  margin: 0 -1.5rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
 .chart-wrap {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.stat-hint {
+  font-size: 0.78rem;
 }
 
 .add-entry, .entries {
@@ -127,7 +163,7 @@ input[type="date"], input[type="text"], input[type="number"] {
   border-radius: 6px;
 }
 
-button, .cancel-link {
+button {
   padding: 0.55rem 1.1rem;
   border-radius: 6px;
   border: none;
@@ -139,26 +175,42 @@ button, .cancel-link {
   text-align: center;
 }
 
-.cancel-link {
-  background: transparent;
+.day-grid-header, .day-row {
+  display: grid;
+  grid-template-columns: 110px 100px 1fr 70px;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.day-grid-header {
+  padding: 0 0.4rem 0.4rem;
+  font-size: 0.78rem;
   color: var(--muted);
-  border: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
-.entry-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.entry-table th, .entry-table td {
-  text-align: left;
-  padding: 0.5rem 0.4rem;
+.day-row {
+  padding: 0.4rem;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
 }
 
-.actions { display: flex; gap: 0.6rem; }
-.actions a { color: var(--accent); }
+.day-row:last-child { border-bottom: none; }
+
+.day-date { font-size: 0.9rem; }
+
+.day-status {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.loading-hint {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.muted-link { color: var(--muted); }
 
 .inline-form { display: inline; }
 

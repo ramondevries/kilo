@@ -1,7 +1,8 @@
 import re
 
-from app import db, mail
+from app import mail
 from app.models import User
+from app.utils import hash_email
 
 
 def _get_code(outbox):
@@ -19,7 +20,7 @@ def test_signup_sends_code_and_creates_unverified_user(client, app):
     assert outbox[0].recipients == ["new@example.com"]
 
     with app.app_context():
-        user = User.query.filter_by(email="new@example.com").first()
+        user = User.query.filter_by(email_hash=hash_email("new@example.com")).first()
         assert user is not None
         assert not user.is_verified
 
@@ -33,7 +34,7 @@ def test_verify_with_correct_code_signs_in(client, app):
     assert resp.status_code == 200
 
     with app.app_context():
-        user = User.query.filter_by(email="a@example.com").first()
+        user = User.query.filter_by(email_hash=hash_email("a@example.com")).first()
         assert user.is_verified
 
     with client.session_transaction() as sess:
@@ -49,7 +50,7 @@ def test_verify_with_wrong_code_fails(client, app):
     assert b"Incorrect code" in resp.data
 
     with app.app_context():
-        user = User.query.filter_by(email="b@example.com").first()
+        user = User.query.filter_by(email_hash=hash_email("b@example.com")).first()
         assert not user.is_verified
 
 

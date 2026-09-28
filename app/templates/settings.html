@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Settings — Weight Tracker{% endblock %}
+
+{% block content %}
+  <section class="add-entry">
+    <h2>Settings</h2>
+    <p>Your height is used to calculate your BMI.</p>
+    <form method="post" class="entry-form">
+      {{ form.hidden_tag() }}
+      <div class="field">
+        {{ form.height_value.label }}
+        {{ form.height_value(step="0.1") }}
+        {% for error in form.height_value.errors %}
+          <p class="flash flash-error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <div class="field">
+        {{ form.height_unit.label }}
+        {{ form.height_unit() }}
+      </div>
+      <button type="submit">Save</button>
+    </form>
+  </section>
+{% endblock %}

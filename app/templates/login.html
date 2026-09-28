@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in — Weight Tracker{% endblock %}
+
+{% block content %}
+  <section class="add-entry">
+    <h2>Sign in</h2>
+    <p>Enter your email and we'll send you a 6-digit code — no password needed.</p>
+    <form method="post" action="{{ url_for('auth.signup') }}" class="entry-form">
+      {{ form.hidden_tag() }}
+      <div class="field field-wide">
+        {{ form.email.label }}
+        {{ form.email(placeholder="you@example.com", autofocus=true) }}
+        {% for error in form.email.errors %}
+          <p class="flash flash-error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <button type="submit">Send code</button>
+    </form>
+    <p class="muted-link"><a href="{{ url_for('auth.about') }}">How does this work?</a></p>
+  </section>
+{% endblock %}

@@ -4,22 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Weight Tracker{% endblock %}</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="{{ url_for('main.index') }}">Weight Tracker</a>
-    <nav class="account-nav">
-      {% if current_user %}
-        <span>{{ current_user.email }}</span>
+    {% if current_user %}
+      <nav class="account-nav">
+        <img class="avatar" src="{{ current_user.gravatar_url(40) }}" alt="" width="20" height="20">
+        <span>{{ current_email or "Signed in" }}</span>
+        <a href="{{ url_for('main.settings') }}">Settings</a>
         <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="link-button">Log out</button>
         </form>
-      {% else %}
-        <a href="{{ url_for('auth.signup') }}">Sign up</a>
-      {% endif %}
-    </nav>
+      </nav>
+    {% endif %}
   </header>
 
   <main class="container">

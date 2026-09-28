@@ -1,108 +1,85 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <section class="stats">
-    {% if stats %}
+  <div class="sticky-top">
+    <section class="stats">
+      {% if stats %}
+        <div class="stat-card">
+          <span class="stat-label">Current</span>
+          <span class="stat-value" id="stat-current">{{ "%.1f"|format(stats.current) }} {{ unit }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">7-day change</span>
+          <span class="stat-value {{ 'down' if stats.change_7d and stats.change_7d < 0 else 'up' if stats.change_7d }}" id="stat-7d">
+            {{ "%+.1f"|format(stats.change_7d) ~ " " ~ unit if stats.change_7d is not none else "—" }}
+          </span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">30-day change</span>
+          <span class="stat-value {{ 'down' if stats.change_30d and stats.change_30d < 0 else 'up' if stats.change_30d }}" id="stat-30d">
+            {{ "%+.1f"|format(stats.change_30d) ~ " " ~ unit if stats.change_30d is not none else "—" }}
+          </span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Total change</span>
+          <span class="stat-value {{ 'down' if stats.total_change < 0 else 'up' }}" id="stat-total">
+            {{ "%+.1f"|format(stats.total_change) }} {{ unit }}
+          </span>
+        </div>
+      {% else %}
+        <p class="empty" id="stat-empty">No entries yet — add your weight below.</p>
+      {% endif %}
       <div class="stat-card">
-        <span class="stat-label">Current</span>
-        <span class="stat-value">{{ "%.1f"|format(stats.current) }} {{ unit }}</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">7-day change</span>
-        <span class="stat-value {{ 'down' if stats.change_7d and stats.change_7d < 0 else 'up' if stats.change_7d }}">
-          {{ "%+.1f"|format(stats.change_7d) ~ " " ~ unit if stats.change_7d is not none else "—" }}
+        <span class="stat-label">BMI</span>
+        <span class="stat-value" id="stat-bmi">
+          {% if bmi %}{{ "%.1f"|format(bmi) }}{% else %}—{% endif %}
         </span>
+        {% if not bmi %}
+          <a class="stat-hint" href="{{ url_for('main.settings') }}">Set your height</a>
+        {% endif %}
       </div>
-      <div class="stat-card">
-        <span class="stat-label">30-day change</span>
-        <span class="stat-value {{ 'down' if stats.change_30d and stats.change_30d < 0 else 'up' if stats.change_30d }}">
-          {{ "%+.1f"|format(stats.change_30d) ~ " " ~ unit if stats.change_30d is not none else "—" }}
-        </span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Total change</span>
-        <span class="stat-value {{ 'down' if stats.total_change < 0 else 'up' }}">
-          {{ "%+.1f"|format(stats.total_change) }} {{ unit }}
-        </span>
-      </div>
-    {% else %}
-      <p class="empty">No entries yet — log your first weigh-in below.</p>
-    {% endif %}
-  </section>
+    </section>
 
-  {% if entries %}
     <section class="chart-wrap">
       <canvas id="weight-chart" height="90"></canvas>
     </section>
-  {% endif %}
-
-  <section class="add-entry">
-    <h2>Add / update entry</h2>
-    <form method="post" action="{{ url_for('main.create_entry') }}" class="entry-form">
-      {{ form.hidden_tag() }}
-      <div class="field">
-        {{ form.entry_date.label }}
-        {{ form.entry_date(value=form.entry_date.data.isoformat() if form.entry_date.data else "") }}
-      </div>
-      <div class="field">
-        {{ form.weight.label }} ({{ unit }})
-        {{ form.weight(step="0.1", placeholder="e.g. 82.4") }}
-      </div>
-      <div class="field field-wide">
-        {{ form.note.label }}
-        {{ form.note(placeholder="optional") }}
-      </div>
-      <button type="submit">Save entry</button>
-    </form>
-  </section>
+  </div>
 
   <section class="entries">
-    <h2>History</h2>
-    {% if entries %}
-      <table class="entry-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Weight ({{ unit }})</th>
-            <th>Note</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entry in entries %}
-            <tr>
-              <td>{{ entry.entry_date.isoformat() }}</td>
-              <td>{{ "%.1f"|format(entry.weight) }}</td>
-              <td>{{ entry.note or "" }}</td>
-              <td class="actions">
-                <a href="{{ url_for('main.edit_entry', entry_id=entry.id) }}">Edit</a>
-                <form method="post" action="{{ url_for('main.delete_entry', entry_id=entry.id) }}"
-                      onsubmit="return confirm('Delete this entry?');" class="inline-form">
-                  {{ form.csrf_token }}
-                  <button type="submit" class="link-button">Delete</button>
-                </form>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <p class="empty">Nothing to show yet.</p>
-    {% endif %}
+    <h2>Daily log</h2>
+    <div class="day-grid-header">
+      <span>Date</span>
+      <span>Weight ({{ unit }})</span>
+      <span>Note</span>
+    </div>
+    <div class="day-rows" id="day-rows">
+      {% for day in grid_days %}
+        <div class="day-row" data-date="{{ day.date }}">
+          <span class="day-date">{{ day.date }}</span>
+          <input type="number" step="0.1" class="day-weight" value="{{ day.weight if day.weight is not none else '' }}" placeholder="—">
+          <input type="text" class="day-note" value="{{ day.note }}" placeholder="note" maxlength="280">
+          <span class="day-status" aria-live="polite"></span>
+        </div>
+      {% endfor %}
+    </div>
+    <div id="scroll-sentinel" data-oldest="{{ grid_days[-1].date if grid_days else '' }}"></div>
+    <p class="loading-hint" id="loading-hint" hidden>Loading more days…</p>
   </section>
 {% endblock %}
 
 {% block scripts %}
-{% if entries %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-  const ctx = document.getElementById('weight-chart');
-  new Chart(ctx, {
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  const unitLabel = {{ unit|tojson }};
+
+  const chartCtx = document.getElementById('weight-chart');
+  const chart = new Chart(chartCtx, {
     type: 'line',
     data: {
       labels: {{ chart_labels|tojson }},
       datasets: [{
-        label: 'Weight ({{ unit }})',
+        label: 'Weight (' + unitLabel + ')',
         data: {{ chart_values|tojson }},
         borderColor: '#2f6f4f',
         backgroundColor: 'rgba(47, 111, 79, 0.12)',
@@ -117,6 +94,110 @@
       scales: { y: { beginAtZero: false } }
     }
   });
+
+  function fmtSigned(value) {
+    if (value === null || value === undefined) return '—';
+    const sign = value > 0 ? '+' : '';
+    return sign + value.toFixed(1) + ' ' + unitLabel;
+  }
+
+  function updateOverview(data) {
+    chart.data.labels = data.chart_labels;
+    chart.data.datasets[0].data = data.chart_values;
+    chart.update();
+
+    const stats = data.stats;
+    const currentEl = document.getElementById('stat-current');
+    if (stats && currentEl) {
+      currentEl.textContent = stats.current.toFixed(1) + ' ' + unitLabel;
+      document.getElementById('stat-7d').textContent = fmtSigned(stats.change_7d);
+      document.getElementById('stat-30d').textContent = fmtSigned(stats.change_30d);
+      document.getElementById('stat-total').textContent = fmtSigned(stats.total_change);
+    }
+
+    const bmiEl = document.getElementById('stat-bmi');
+    if (bmiEl) {
+      bmiEl.textContent = data.bmi ? data.bmi.toFixed(1) : '—';
+    }
+  }
+
+  function bindRow(row) {
+    const weightInput = row.querySelector('.day-weight');
+    const noteInput = row.querySelector('.day-note');
+    const statusEl = row.querySelector('.day-status');
+
+    async function save() {
+      statusEl.textContent = 'Saving…';
+      try {
+        const resp = await fetch('{{ url_for("main.save_field") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({
+            date: row.dataset.date,
+            weight: weightInput.value,
+            note: noteInput.value,
+          }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          statusEl.textContent = data.error || 'Error saving';
+          return;
+        }
+        statusEl.textContent = 'Saved';
+        setTimeout(() => { if (statusEl.textContent === 'Saved') statusEl.textContent = ''; }, 1500);
+        updateOverview(data);
+      } catch (err) {
+        statusEl.textContent = 'Could not save';
+      }
+    }
+
+    weightInput.addEventListener('change', save);
+    noteInput.addEventListener('change', save);
+  }
+
+  document.querySelectorAll('.day-row').forEach(bindRow);
+
+  const dayRows = document.getElementById('day-rows');
+  const sentinel = document.getElementById('scroll-sentinel');
+  const loadingHint = document.getElementById('loading-hint');
+  let oldest = sentinel.dataset.oldest;
+  let loading = false;
+  let exhausted = !oldest;
+
+  function appendDay(day) {
+    const row = document.createElement('div');
+    row.className = 'day-row';
+    row.dataset.date = day.date;
+    row.innerHTML =
+      '<span class="day-date">' + day.date + '</span>' +
+      '<input type="number" step="0.1" class="day-weight" placeholder="—">' +
+      '<input type="text" class="day-note" placeholder="note" maxlength="280">' +
+      '<span class="day-status" aria-live="polite"></span>';
+    row.querySelector('.day-weight').value = day.weight ?? '';
+    row.querySelector('.day-note').value = day.note ?? '';
+    dayRows.appendChild(row);
+    bindRow(row);
+  }
+
+  const observer = new IntersectionObserver(async (observed) => {
+    if (!observed[0].isIntersecting || loading || exhausted) return;
+    loading = true;
+    loadingHint.hidden = false;
+    try {
+      const resp = await fetch('{{ url_for("main.entries_window") }}?before=' + oldest);
+      const data = await resp.json();
+      if (!data.days || data.days.length === 0) {
+        exhausted = true;
+      } else {
+        data.days.forEach(appendDay);
+        oldest = data.days[data.days.length - 1].date;
+      }
+    } finally {
+      loading = false;
+      loadingHint.hidden = true;
+    }
+  }, { rootMargin: '300px' });
+
+  if (!exhausted) observer.observe(sentinel);
 </script>
-{% endif %}
 {% endblock %}

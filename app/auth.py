@@ -1,5 +1,6 @@
 import secrets
 from datetime import datetime, timedelta
+from functools import wraps
 
 from flask import Blueprint, flash, redirect, render_template, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -8,6 +9,7 @@ from app import db
 from app.email_utils import send_verification_email
 from app.forms import SignupForm, VerifyCodeForm
 from app.models import User
+from app.utils import hash_email, normalize_email
 
 bp = Blueprint("auth", __name__)
 
@@ -21,32 +23,44 @@ def get_current_user():
     return db.session.get(User, user_id)
 
 
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if get_current_user() is None:
+            flash("Enter your email to sign in.", "error")
+            return redirect(url_for("main.index"))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
 @bp.app_context_processor
 def inject_current_user():
-    return {"current_user": get_current_user()}
+    return {"current_user": get_current_user(), "current_email": session.get("email")}
 
 
-def _issue_code(user):
+def _issue_code(user, email):
     code = f"{secrets.randbelow(1_000_000):06d}"
     user.code_hash = generate_password_hash(code)
     user.code_expires_at = datetime.utcnow() + timedelta(minutes=CODE_TTL_MINUTES)
     user.code_attempts = 0
     db.session.commit()
-    send_verification_email(user, code)
+    send_verification_email(email, code)
 
 
 @bp.route("/signup", methods=["GET", "POST"])
 def signup():
     form = SignupForm()
     if form.validate_on_submit():
-        email = form.email.data.strip().lower()
-        user = User.query.filter_by(email=email).first()
+        email = normalize_email(form.email.data)
+        email_hash = hash_email(email)
+        user = User.query.filter_by(email_hash=email_hash).first()
         if user is None:
-            user = User(email=email)
+            user = User(email_hash=email_hash)
             db.session.add(user)
             db.session.commit()
 
-        _issue_code(user)
+        _issue_code(user, email)
         session["pending_email"] = email
         flash(f"We sent a verification code to {email}.", "success")
         return redirect(url_for("auth.verify"))
@@ -61,7 +75,7 @@ def verify():
         flash("Enter your email to get a verification code.", "error")
         return redirect(url_for("auth.signup"))
 
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email_hash=hash_email(email)).first()
     if user is None:
         session.pop("pending_email", None)
         return redirect(url_for("auth.signup"))
@@ -84,6 +98,7 @@ def verify():
             db.session.commit()
             session.pop("pending_email", None)
             session["user_id"] = user.id
+            session["email"] = email
             flash("Email verified — you're signed in.", "success")
             return redirect(url_for("main.index"))
 
@@ -96,12 +111,12 @@ def resend_code():
     if not email:
         return redirect(url_for("auth.signup"))
 
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email_hash=hash_email(email)).first()
     if user is None:
         session.pop("pending_email", None)
         return redirect(url_for("auth.signup"))
 
-    _issue_code(user)
+    _issue_code(user, email)
     flash(f"We sent a new code to {email}.", "success")
     return redirect(url_for("auth.verify"))
 
@@ -109,5 +124,11 @@ def resend_code():
 @bp.route("/logout", methods=["POST"])
 def logout():
     session.pop("user_id", None)
+    session.pop("email", None)
     flash("Signed out.", "success")
     return redirect(url_for("main.index"))
+
+
+@bp.route("/about")
+def about():
+    return render_template("about.html")

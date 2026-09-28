@@ -1,14 +1,8 @@
-from datetime import date
-
 from flask_wtf import FlaskForm
-from wtforms import DateField, FloatField, StringField
-from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional, Regexp
+from wtforms import FloatField, SelectField, StringField
+from wtforms.validators import DataRequired, Email, Length, NumberRange, Regexp
 
-
-class WeightEntryForm(FlaskForm):
-    entry_date = DateField("Date", validators=[DataRequired()], default=date.today)
-    weight = FloatField("Weight", validators=[DataRequired(), NumberRange(min=1, max=1000)])
-    note = StringField("Note", validators=[Optional(), Length(max=280)])
+from app.models import User
 
 
 class SignupForm(FlaskForm):
@@ -21,4 +15,13 @@ class VerifyCodeForm(FlaskForm):
     code = StringField(
         "Verification code",
         validators=[DataRequired(), Regexp(r"^\d{6}$", message="Enter the 6-digit code.")],
+    )
+
+
+class SettingsForm(FlaskForm):
+    height_value = FloatField(
+        "Height", validators=[DataRequired(), NumberRange(min=1, max=300)]
+    )
+    height_unit = SelectField(
+        "Unit", choices=[(u, u) for u in User.HEIGHT_UNITS], validators=[DataRequired()]
     )

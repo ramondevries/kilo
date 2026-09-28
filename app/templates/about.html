@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}How it works — Weight Tracker{% endblock %}
+
+{% block content %}
+  <section class="add-entry">
+    <h2>How signing in works</h2>
+    <p>There are no passwords. Enter your email and we send a 6-digit code
+      that's valid for 10 minutes — enter it and you're signed in.</p>
+    <p>We never store your email address itself. Instead we keep a one-way
+      SHA-256 hash of it (the same scheme
+      <a href="https://docs.gravatar.com/rest/hash/" target="_blank" rel="noopener">Gravatar uses</a>),
+      so if our database were ever breached, it wouldn't reveal which entries
+      belong to which email address.</p>
+    <p>That hash also doubles as your Gravatar id — if you have an avatar set
+      up at <a href="https://gravatar.com" target="_blank" rel="noopener">gravatar.com</a>,
+      it shows up automatically once you're signed in.</p>
+    <p>Each account's weigh-ins are private and only visible to that account.</p>
+    <p><a href="{{ url_for('main.index') }}">&larr; Back</a></p>
+  </section>
+{% endblock %}
