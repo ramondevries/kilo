@@ -73,6 +73,10 @@
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
   const unitLabel = {{ unit|tojson }};
 
+  const rootStyle = getComputedStyle(document.documentElement);
+  const chartLine = rootStyle.getPropertyValue('--chart-line').trim();
+  const chartFill = rootStyle.getPropertyValue('--chart-fill').trim();
+
   const chartCtx = document.getElementById('weight-chart');
   const chart = new Chart(chartCtx, {
     type: 'line',
@@ -81,8 +85,8 @@
       datasets: [{
         label: 'Weight (' + unitLabel + ')',
         data: {{ chart_values|tojson }},
-        borderColor: '#2f6f4f',
-        backgroundColor: 'rgba(47, 111, 79, 0.12)',
+        borderColor: chartLine,
+        backgroundColor: chartFill,
         tension: 0.25,
         fill: true,
         pointRadius: 3,

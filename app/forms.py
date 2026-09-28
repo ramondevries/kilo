@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import FloatField, SelectField, StringField
+from wtforms import BooleanField, FloatField, SelectField, StringField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, Regexp
 
 from app.models import User
@@ -25,3 +25,4 @@ class SettingsForm(FlaskForm):
     height_unit = SelectField(
         "Unit", choices=[(u, u) for u in User.HEIGHT_UNITS], validators=[DataRequired()]
     )
+    dark_mode = BooleanField("Dark mode")

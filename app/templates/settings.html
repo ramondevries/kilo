@@ -19,6 +19,15 @@
         {{ form.height_unit.label }}
         {{ form.height_unit() }}
       </div>
+      <div class="field field-wide">
+        <label class="toggle-row">
+          <span class="toggle-switch">
+            {{ form.dark_mode() }}
+            <span class="toggle-slider"></span>
+          </span>
+          Dark mode
+        </label>
+      </div>
       <button type="submit">Save</button>
     </form>
   </section>

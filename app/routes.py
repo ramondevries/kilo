@@ -145,20 +145,23 @@ def settings():
     user = get_current_user()
     form = SettingsForm()
 
-    if request.method == "GET" and user.height_cm is not None:
-        form.height_unit.data = user.height_unit
-        if user.height_unit == "m":
-            form.height_value.data = round(user.height_cm / 100, 2)
-        else:
-            form.height_value.data = round(user.height_cm, 1)
+    if request.method == "GET":
+        form.dark_mode.data = user.dark_mode
+        if user.height_cm is not None:
+            form.height_unit.data = user.height_unit
+            if user.height_unit == "m":
+                form.height_value.data = round(user.height_cm / 100, 2)
+            else:
+                form.height_value.data = round(user.height_cm, 1)
 
     if form.validate_on_submit():
         value = form.height_value.data
         unit = form.height_unit.data
         user.height_cm = value * 100 if unit == "m" else value
         user.height_unit = unit
+        user.dark_mode = form.dark_mode.data
         db.session.commit()
-        flash("Height updated.", "success")
+        flash("Settings updated.", "success")
         return redirect(url_for("main.settings"))
 
     return render_template("settings.html", form=form, user=user)

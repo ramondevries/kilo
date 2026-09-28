@@ -34,6 +34,7 @@ class User(db.Model):
 
     height_cm = db.Column(db.Float, nullable=True)
     height_unit = db.Column(db.String(2), nullable=False, default="cm")
+    dark_mode = db.Column(db.Boolean, nullable=False, default=False)
 
     entries = db.relationship(
         "WeightEntry", backref="user", cascade="all, delete-orphan", lazy="dynamic"

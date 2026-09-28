@@ -36,7 +36,12 @@ def login_required(view):
 
 @bp.app_context_processor
 def inject_current_user():
-    return {"current_user": get_current_user(), "current_email": session.get("email")}
+    user = get_current_user()
+    return {
+        "current_user": user,
+        "current_email": session.get("email"),
+        "theme": "dark" if user and user.dark_mode else "light",
+    }
 
 
 def _issue_code(user, email):

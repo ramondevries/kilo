@@ -149,3 +149,45 @@ def test_about_page_renders(client):
     resp = client.get("/about")
     assert resp.status_code == 200
     assert b"SHA-256" in resp.data
+
+
+def test_default_theme_is_light(logged_in_client, app):
+    client, user_id = logged_in_client
+    with app.app_context():
+        user = db.session.get(User, user_id)
+        assert user.dark_mode is False
+
+    resp = client.get("/")
+    assert b'data-theme="light"' in resp.data
+
+
+def test_logged_out_theme_is_light(client):
+    resp = client.get("/")
+    assert b'data-theme="light"' in resp.data
+
+
+def test_settings_toggle_dark_mode(logged_in_client, app):
+    client, user_id = logged_in_client
+    resp = client.post(
+        "/settings",
+        data={"height_value": "180", "height_unit": "cm", "dark_mode": "y"},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    with app.app_context():
+        user = db.session.get(User, user_id)
+        assert user.dark_mode is True
+
+    resp2 = client.get("/")
+    assert b'data-theme="dark"' in resp2.data
+
+
+def test_settings_untoggle_dark_mode(logged_in_client, app):
+    client, user_id = logged_in_client
+    client.post(
+        "/settings", data={"height_value": "180", "height_unit": "cm", "dark_mode": "y"}
+    )
+    client.post("/settings", data={"height_value": "180", "height_unit": "cm"})
+    with app.app_context():
+        user = db.session.get(User, user_id)
+        assert user.dark_mode is False
