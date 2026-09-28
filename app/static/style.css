@@ -227,6 +227,15 @@ code {
 
 .day-row:last-child { border-bottom: none; }
 
+.day-row-highlight {
+  animation: day-row-flash 1.6s ease;
+}
+
+@keyframes day-row-flash {
+  0% { background: var(--chart-fill); }
+  100% { background: transparent; }
+}
+
 .day-date { font-size: 0.9rem; }
 
 .day-status {

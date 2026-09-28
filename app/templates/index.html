@@ -105,8 +105,17 @@
     },
     options: {
       responsive: true,
+      interaction: { mode: 'nearest', intersect: false },
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: false } }
+      scales: { y: { beginAtZero: false } },
+      onClick(evt, elements, chartInstance) {
+        if (!elements.length) return;
+        const dateStr = chartInstance.data.labels[elements[0].index];
+        if (dateStr) scrollToDate(dateStr);
+      },
+      onHover(evt, elements) {
+        evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+      },
     }
   });
 
@@ -257,8 +266,8 @@
     bindRow(row);
   }
 
-  const observer = new IntersectionObserver(async (observed) => {
-    if (!observed[0].isIntersecting || loading || exhausted) return;
+  async function loadNextPage() {
+    if (loading || exhausted) return false;
     loading = true;
     loadingHint.hidden = false;
     try {
@@ -266,16 +275,37 @@
       const data = await resp.json();
       if (!data.days || data.days.length === 0) {
         exhausted = true;
-      } else {
-        data.days.forEach(appendDay);
-        oldest = data.days[data.days.length - 1].date;
+        return false;
       }
+      data.days.forEach(appendDay);
+      oldest = data.days[data.days.length - 1].date;
+      return true;
     } finally {
       loading = false;
       loadingHint.hidden = true;
     }
+  }
+
+  const observer = new IntersectionObserver((observed) => {
+    if (observed[0].isIntersecting) loadNextPage();
   }, { rootMargin: '300px' });
 
   if (!exhausted) observer.observe(sentinel);
+
+  async function scrollToDate(dateStr) {
+    let row = dayRows.querySelector('.day-row[data-date="' + dateStr + '"]');
+    let guard = 0;
+    while (!row && guard < 2000) {
+      guard++;
+      const loaded = await loadNextPage();
+      if (!loaded) break;
+      row = dayRows.querySelector('.day-row[data-date="' + dateStr + '"]');
+    }
+    if (row) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.classList.add('day-row-highlight');
+      setTimeout(() => row.classList.remove('day-row-highlight'), 1600);
+    }
+  }
 </script>
 {% endblock %}
