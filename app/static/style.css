@@ -207,7 +207,7 @@ code {
 
 .day-grid-header, .day-row {
   display: grid;
-  grid-template-columns: 110px 100px 1fr 70px;
+  grid-template-columns: 110px 100px 44px 1fr;
   gap: 0.6rem;
   align-items: center;
 }
@@ -238,6 +238,107 @@ code {
   text-align: center;
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.note-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.note-btn {
+  background: none;
+  border: none;
+  padding: 0.2rem;
+  min-width: 32px;
+  min-height: 32px;
+  font-size: 1.1rem;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.note-btn.has-note {
+  opacity: 1;
+  filter: none;
+}
+
+.note-btn:hover, .note-btn:focus-visible {
+  background: var(--bg);
+}
+
+.note-preview {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 4px;
+  background: var(--text);
+  color: var(--surface);
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  max-width: 220px;
+  width: max-content;
+  text-align: center;
+  display: none;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.note-wrap:hover .note-preview {
+  display: block;
+}
+
+@media (hover: none) {
+  .note-preview { display: none !important; }
+}
+
+.note-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  z-index: 20;
+}
+
+.note-popover[hidden] { display: none; }
+
+.note-textarea {
+  width: 100%;
+  min-height: 64px;
+  padding: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  resize: vertical;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.note-popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.note-popover-actions button {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.note-cancel {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
 }
 
 .muted-link { color: var(--muted); }

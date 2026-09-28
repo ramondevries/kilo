@@ -57,7 +57,18 @@
         <div class="day-row" data-date="{{ day.date }}">
           <span class="day-date">{{ day.date }}</span>
           <input type="number" step="0.1" class="day-weight" value="{{ day.weight if day.weight is not none else '' }}" placeholder="—">
-          <input type="text" class="day-note" value="{{ day.note }}" placeholder="note" maxlength="280">
+          <span class="note-wrap">
+            <button type="button" class="note-btn{{ ' has-note' if day.note }}" aria-label="View or edit note">📝</button>
+            <span class="note-preview">{{ day.note or 'No note' }}</span>
+            <div class="note-popover" hidden>
+              <textarea class="note-textarea" maxlength="280" placeholder="Add a note…"></textarea>
+              <div class="note-popover-actions">
+                <button type="button" class="note-cancel">Cancel</button>
+                <button type="button" class="note-save">Save</button>
+              </div>
+            </div>
+            <input type="hidden" class="day-note-value" value="{{ day.note }}">
+          </span>
           <span class="day-status" aria-live="polite"></span>
         </div>
       {% endfor %}
@@ -125,10 +136,27 @@
     }
   }
 
+  function closeAllPopovers(except) {
+    document.querySelectorAll('.note-popover').forEach((p) => {
+      if (p !== except) p.hidden = true;
+    });
+  }
+
   function bindRow(row) {
     const weightInput = row.querySelector('.day-weight');
-    const noteInput = row.querySelector('.day-note');
+    const noteValue = row.querySelector('.day-note-value');
+    const noteBtn = row.querySelector('.note-btn');
+    const notePreview = row.querySelector('.note-preview');
+    const popover = row.querySelector('.note-popover');
+    const textarea = row.querySelector('.note-textarea');
     const statusEl = row.querySelector('.day-status');
+
+    function refreshNoteDisplay() {
+      const hasNote = !!noteValue.value;
+      noteBtn.classList.toggle('has-note', hasNote);
+      notePreview.textContent = hasNote ? noteValue.value : 'No note';
+    }
+    refreshNoteDisplay();
 
     async function save() {
       statusEl.textContent = 'Saving…';
@@ -139,7 +167,7 @@
           body: JSON.stringify({
             date: row.dataset.date,
             weight: weightInput.value,
-            note: noteInput.value,
+            note: noteValue.value,
           }),
         });
         const data = await resp.json();
@@ -156,8 +184,43 @@
     }
 
     weightInput.addEventListener('change', save);
-    noteInput.addEventListener('change', save);
+
+    noteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const opening = popover.hidden;
+      closeAllPopovers(opening ? popover : null);
+      popover.hidden = !opening;
+      if (opening) {
+        textarea.value = noteValue.value;
+        textarea.focus();
+      }
+    });
+
+    popover.querySelector('.note-save').addEventListener('click', (e) => {
+      e.stopPropagation();
+      noteValue.value = textarea.value.trim().slice(0, 280);
+      refreshNoteDisplay();
+      popover.hidden = true;
+      save();
+    });
+
+    popover.querySelector('.note-cancel').addEventListener('click', (e) => {
+      e.stopPropagation();
+      popover.hidden = true;
+    });
+
+    popover.addEventListener('click', (e) => e.stopPropagation());
+
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        popover.hidden = true;
+      } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        popover.querySelector('.note-save').click();
+      }
+    });
   }
+
+  document.addEventListener('click', () => closeAllPopovers());
 
   document.querySelectorAll('.day-row').forEach(bindRow);
 
@@ -175,10 +238,21 @@
     row.innerHTML =
       '<span class="day-date">' + day.date + '</span>' +
       '<input type="number" step="0.1" class="day-weight" placeholder="—">' +
-      '<input type="text" class="day-note" placeholder="note" maxlength="280">' +
+      '<span class="note-wrap">' +
+        '<button type="button" class="note-btn" aria-label="View or edit note">📝</button>' +
+        '<span class="note-preview"></span>' +
+        '<div class="note-popover" hidden>' +
+          '<textarea class="note-textarea" maxlength="280" placeholder="Add a note…"></textarea>' +
+          '<div class="note-popover-actions">' +
+            '<button type="button" class="note-cancel">Cancel</button>' +
+            '<button type="button" class="note-save">Save</button>' +
+          '</div>' +
+        '</div>' +
+        '<input type="hidden" class="day-note-value">' +
+      '</span>' +
       '<span class="day-status" aria-live="polite"></span>';
     row.querySelector('.day-weight').value = day.weight ?? '';
-    row.querySelector('.day-note').value = day.note ?? '';
+    row.querySelector('.day-note-value').value = day.note ?? '';
     dayRows.appendChild(row);
     bindRow(row);
   }
