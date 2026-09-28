@@ -1,10 +1,21 @@
 from datetime import date, timedelta
 
-from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    Response,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from app import db
 from app.auth import get_current_user, login_required
-from app.forms import SettingsForm, SignupForm
+from app.csv_io import export_csv, parse_csv
+from app.forms import ImportForm, SettingsForm, SignupForm
 from app.models import WeightEntry
 
 bp = Blueprint("main", __name__)
@@ -164,4 +175,55 @@ def settings():
         flash("Settings updated.", "success")
         return redirect(url_for("main.settings"))
 
-    return render_template("settings.html", form=form, user=user)
+    return render_template("settings.html", form=form, import_form=ImportForm(), user=user)
+
+
+@bp.route("/settings/export", methods=["GET"])
+@login_required
+def export_entries():
+    user = get_current_user()
+    unit = current_app.config["WEIGHT_UNIT"]
+    csv_text = export_csv(_entries_sorted(user), unit)
+    return Response(
+        csv_text,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=weight-export.csv"},
+    )
+
+
+@bp.route("/settings/import", methods=["POST"])
+@login_required
+def import_entries():
+    user = get_current_user()
+    form = ImportForm()
+
+    if not form.validate_on_submit():
+        for field_errors in form.errors.values():
+            for error in field_errors:
+                flash(error, "error")
+        return redirect(url_for("main.settings"))
+
+    unit = current_app.config["WEIGHT_UNIT"]
+    rows, errors = parse_csv(form.csv_file.data.read(), unit)
+
+    imported = 0
+    for entry_date, weight, note in rows:
+        entry = WeightEntry.query.filter_by(user_id=user.id, entry_date=entry_date).first()
+        if entry is not None:
+            entry.weight = weight
+            entry.note = note
+        else:
+            db.session.add(WeightEntry(user_id=user.id, entry_date=entry_date, weight=weight, note=note))
+        imported += 1
+    db.session.commit()
+
+    if imported:
+        flash(f"Imported {imported} entr{'y' if imported == 1 else 'ies'}.", "success")
+    if errors:
+        preview = "; ".join(errors[:5])
+        more = f" (+{len(errors) - 5} more)" if len(errors) > 5 else ""
+        flash(f"Skipped {len(errors)} invalid line(s): {preview}{more}", "error")
+    if not imported and not errors:
+        flash("No rows found in the file.", "error")
+
+    return redirect(url_for("main.settings"))

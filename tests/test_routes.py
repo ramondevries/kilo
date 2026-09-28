@@ -1,3 +1,4 @@
+import io
 from datetime import date, timedelta
 
 from app import db
@@ -191,3 +192,109 @@ def test_settings_untoggle_dark_mode(logged_in_client, app):
     with app.app_context():
         user = db.session.get(User, user_id)
         assert user.dark_mode is False
+
+
+def _upload(client, text, filename="data.csv"):
+    return client.post(
+        "/settings/import",
+        data={"csv_file": (io.BytesIO(text.encode()), filename)},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+
+
+def test_import_creates_entries(logged_in_client, app):
+    client, user_id = logged_in_client
+    text = "23-9-26,79.7,optional notes\n25-9-26,80.5,\n"
+    resp = _upload(client, text)
+    assert resp.status_code == 200
+    assert b"Imported 2" in resp.data
+
+    with app.app_context():
+        entries = WeightEntry.query.filter_by(user_id=user_id).order_by(WeightEntry.entry_date).all()
+        assert len(entries) == 2
+        assert entries[0].entry_date == date(2026, 9, 23)
+        assert entries[0].weight == 79.7
+        assert entries[0].note == "optional notes"
+        assert entries[1].note is None
+
+
+def test_import_overwrites_existing_entry_for_same_date(logged_in_client, app):
+    client, user_id = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-23", "weight": 70.0, "note": "old"})
+    _upload(client, "23-9-26,79.7,new note\n")
+    with app.app_context():
+        entries = WeightEntry.query.filter_by(user_id=user_id).all()
+        assert len(entries) == 1
+        assert entries[0].weight == 79.7
+        assert entries[0].note == "new note"
+
+
+def test_import_reports_skipped_invalid_lines(logged_in_client, app):
+    client, user_id = logged_in_client
+    text = "23-9-26,79.7,\nnot-a-date,80,\n24-9-26,not-a-number,\n"
+    resp = _upload(client, text)
+    assert b"Imported 1" in resp.data
+    assert b"Skipped 2" in resp.data
+    with app.app_context():
+        assert WeightEntry.query.filter_by(user_id=user_id).count() == 1
+
+
+def test_import_four_digit_year(logged_in_client, app):
+    client, user_id = logged_in_client
+    _upload(client, "23-9-2026,79.7,\n")
+    with app.app_context():
+        entry = WeightEntry.query.filter_by(user_id=user_id).one()
+        assert entry.entry_date == date(2026, 9, 23)
+
+
+def test_import_requires_login(client):
+    resp = _upload(client, "23-9-26,79.7,\n")
+    assert resp.status_code == 200
+    assert b"Sign in" in resp.data
+
+
+def test_import_rejects_wrong_file_type(logged_in_client, app):
+    client, user_id = logged_in_client
+    resp = client.post(
+        "/settings/import",
+        data={"csv_file": (io.BytesIO(b"not a csv"), "data.png")},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    assert b"CSV or text files only" in resp.data
+    with app.app_context():
+        assert WeightEntry.query.filter_by(user_id=user_id).count() == 0
+
+
+def test_export_returns_csv_attachment(logged_in_client, app):
+    client, user_id = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-23", "weight": 79.7, "note": "hi"})
+
+    resp = client.get("/settings/export")
+    assert resp.status_code == 200
+    assert resp.mimetype == "text/csv"
+    assert "attachment" in resp.headers["Content-Disposition"]
+    assert resp.data.decode() == "23-9-26,79.7,hi\r\n"
+
+
+def test_export_requires_login(client):
+    resp = client.get("/settings/export")
+    assert resp.status_code == 302
+
+
+def test_export_then_import_round_trips(logged_in_client, app):
+    client, user_id = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-23", "weight": 79.7, "note": "hi"})
+    client.post("/entries/field", json={"date": "2026-09-24", "weight": 80.1})
+
+    exported = client.get("/settings/export").data
+
+    with app.app_context():
+        WeightEntry.query.filter_by(user_id=user_id).delete()
+        db.session.commit()
+
+    _upload(client, exported.decode())
+    with app.app_context():
+        entries = WeightEntry.query.filter_by(user_id=user_id).order_by(WeightEntry.entry_date).all()
+        assert [e.weight for e in entries] == [79.7, 80.1]

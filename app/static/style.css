@@ -177,7 +177,7 @@ input[type="date"], input[type="text"], input[type="number"] {
   border-radius: 6px;
 }
 
-button {
+button, .button-link {
   padding: 0.55rem 1.1rem;
   border-radius: 6px;
   border: none;
@@ -187,6 +187,22 @@ button {
   text-decoration: none;
   display: inline-block;
   text-align: center;
+}
+
+.csv-example {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+  overflow-x: auto;
+}
+
+code {
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.9em;
 }
 
 .day-grid-header, .day-row {

@@ -1,6 +1,7 @@
 from datetime import date, datetime
 
 from app import db
+from app.utils import to_kg
 
 
 class WeightEntry(db.Model):
@@ -51,7 +52,7 @@ class User(db.Model):
         entry = self.entries.order_by(WeightEntry.entry_date.desc()).first()
         if entry is None:
             return None
-        return entry.weight * 0.45359237 if weight_unit == "lb" else entry.weight
+        return to_kg(entry.weight, weight_unit)
 
     def bmi(self, weight_unit):
         if not self.height_cm:

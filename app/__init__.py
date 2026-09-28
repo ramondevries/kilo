@@ -24,6 +24,7 @@ def create_app(test_config=None):
         MAIL_PASSWORD=os.environ.get("MAIL_PASSWORD"),
         MAIL_DEFAULT_SENDER=os.environ.get("MAIL_DEFAULT_SENDER", "no-reply@weight-tracker.local"),
         MAIL_SUPPRESS_SEND=os.environ.get("MAIL_SUPPRESS_SEND", "1") == "1",
+        MAX_CONTENT_LENGTH=1 * 1024 * 1024,
     )
 
     if test_config:

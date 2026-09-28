@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField, FileRequired
 from wtforms import BooleanField, FloatField, SelectField, StringField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, Regexp
 
@@ -26,3 +27,10 @@ class SettingsForm(FlaskForm):
         "Unit", choices=[(u, u) for u in User.HEIGHT_UNITS], validators=[DataRequired()]
     )
     dark_mode = BooleanField("Dark mode")
+
+
+class ImportForm(FlaskForm):
+    csv_file = FileField(
+        "CSV file",
+        validators=[FileRequired(), FileAllowed(["csv", "txt"], "CSV or text files only.")],
+    )
