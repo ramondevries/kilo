@@ -443,14 +443,17 @@
 
   // Long ranges (5Y+/All) can put many thousands of daily points — one per
   // calendar day, since gaps are interpolated — across maybe 1500px of
-  // chart width: several points per pixel. Per-segment coloring forces a
-  // separate draw call at nearly every one of those, and at that density
-  // adjacent draws produce a dense comb of antialiasing gaps rather than a
-  // clean fill (reported as "vertical white lines"). Capping the plotted
-  // point count fixes the actual cause (oversampling), rather than just
-  // patching the symptom further. Each pixel-ish bucket keeps its min AND
-  // max value so real peaks/dips in the trend stay visible; only ranges
-  // that already exceed the cap get thinned, so 1W-1Y are never touched.
+  // chart width: several points per pixel. A first attempt at fixing this
+  // kept each bucket's min AND max, on the theory that real peaks/dips
+  // should stay visible — but for genuinely volatile day-to-day data that
+  // just reproduces the same dense zig-zag at a slightly lower density
+  // ("still a lot of vertical white lines" after that fix shipped). What a
+  // zoomed-out multi-year view actually needs is a smoothed trend, the same
+  // way stock charts and analytics dashboards aggregate by average once
+  // you're looking at a long enough span — so each bucket now contributes
+  // ONE averaged point instead of two extremes. Full day-by-day resolution
+  // (spikes included) is exactly what the un-decimated short ranges
+  // (1W-1Y, all under the cap) already show.
   const MAX_PLOT_POINTS = 1000;
 
   function decimateForDisplay(labels, values, bmis, reals) {
@@ -460,28 +463,40 @@
     }
 
     const bucketSize = n / MAX_PLOT_POINTS;
-    const keepIndexes = new Set([0, n - 1]);
+    const outLabels = [];
+    const outValues = [];
+    const outBmis = bmis ? [] : null;
+    const outReals = [];
+
     for (let b = 0; b < MAX_PLOT_POINTS; b++) {
       const start = Math.floor(b * bucketSize);
       const end = Math.min(n, Math.floor((b + 1) * bucketSize));
       if (end <= start) continue;
-      let minIdx = start;
-      let maxIdx = start;
-      for (let i = start + 1; i < end; i++) {
-        if (values[i] < values[minIdx]) minIdx = i;
-        if (values[i] > values[maxIdx]) maxIdx = i;
+
+      let valueSum = 0;
+      let bmiSum = 0;
+      let bmiCount = 0;
+      for (let i = start; i < end; i++) {
+        valueSum += values[i];
+        if (bmis && bmis[i] != null) {
+          bmiSum += bmis[i];
+          bmiCount++;
+        }
       }
-      keepIndexes.add(minIdx);
-      keepIndexes.add(maxIdx);
+      const count = end - start;
+      const midIndex = start + Math.floor((count - 1) / 2);
+
+      outLabels.push(labels[midIndex]);
+      outValues.push(valueSum / count);
+      if (outBmis) outBmis.push(bmiCount ? bmiSum / bmiCount : null);
+      // A bucket spanning more than one source day is now a synthetic
+      // average, not an individual measurement — no dot/tooltip for it. A
+      // bucket that happens to cover exactly one source day (the un-full
+      // final bucket, typically) keeps that day's real/interpolated status.
+      outReals.push(count === 1 ? reals[start] : false);
     }
 
-    const sortedIndexes = Array.from(keepIndexes).sort((a, b) => a - b);
-    return {
-      labels: sortedIndexes.map((i) => labels[i]),
-      values: sortedIndexes.map((i) => values[i]),
-      bmis: bmis ? sortedIndexes.map((i) => bmis[i]) : null,
-      reals: sortedIndexes.map((i) => reals[i]),
-    };
+    return { labels: outLabels, values: outValues, bmis: outBmis, reals: outReals };
   }
 
   function applyRange(rangeKey) {
