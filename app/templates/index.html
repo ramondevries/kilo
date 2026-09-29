@@ -101,6 +101,7 @@
   const chartFill = rootStyle.getPropertyValue('--chart-fill').trim();
   const dangerColor = rootStyle.getPropertyValue('--danger').trim();
   const accentColor = rootStyle.getPropertyValue('--accent').trim();
+  const gridLineColor = rootStyle.getPropertyValue('--border').trim();
 
   let fullLabels = {{ chart_labels|tojson }};
   let fullValues = {{ chart_values|tojson }};
@@ -227,7 +228,7 @@
     return 'day';
   }
 
-  function xTickLabel(_value, index) {
+  function computeTickText(index) {
     const label = currentLabels[index];
     if (!label) return '';
     const granularity = tickGranularity();
@@ -244,6 +245,25 @@
       return MONTH_ABBR[month] + ' ' + label.slice(0, 4);
     }
     return String(Number(label.slice(8, 10)));
+  }
+
+  // Precomputed once per data/range change (see rebuildTickCache), not per
+  // redraw: grid line/tick-mark styling is a scriptable option too, and
+  // Chart.js re-evaluates those on every redraw (every hover/mousemove),
+  // same as the point/segment colors above — so this stays a plain lookup
+  // on the hot path rather than re-parsing dates each time.
+  let currentTickTexts = [];
+
+  function rebuildTickCache() {
+    currentTickTexts = currentLabels.map((_label, i) => computeTickText(i));
+  }
+
+  function xTickLabel(_value, index) {
+    return currentTickTexts[index] ?? '';
+  }
+
+  function xGridStyle(ctx) {
+    return currentTickTexts[ctx.index] ? gridLineColor : 'transparent';
   }
 
   const chartCtx = document.getElementById('weight-chart');
@@ -276,7 +296,7 @@
       plugins: { legend: { display: false } },
       scales: {
         x: {
-          grid: { display: false },
+          grid: { color: xGridStyle, tickColor: xGridStyle },
           ticks: { autoSkip: false, maxRotation: 0, callback: xTickLabel },
         },
         y: { beginAtZero: false },
@@ -322,6 +342,7 @@
     currentBmis = bmis;
     currentLabels = labels;
     rebuildBmiColorCaches();
+    rebuildTickCache();
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
     chart.update();
