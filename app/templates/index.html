@@ -601,6 +601,19 @@
     });
   }
 
+  // Only one row is ever highlighted at a time: selecting a new one (by
+  // clicking a chart point, or by clicking into a row's weight field to
+  // edit it) clears whichever row was highlighted before.
+  let highlightedRow = null;
+
+  function setHighlightedRow(row) {
+    if (highlightedRow && highlightedRow !== row) {
+      highlightedRow.classList.remove('day-row-highlight');
+    }
+    row.classList.add('day-row-highlight');
+    highlightedRow = row;
+  }
+
   function bindRow(row) {
     const weightInput = row.querySelector('.day-weight');
     const noteValue = row.querySelector('.day-note-value');
@@ -643,6 +656,7 @@
     }
 
     weightInput.addEventListener('change', save);
+    weightInput.addEventListener('focus', () => setHighlightedRow(row));
 
     noteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -746,10 +760,6 @@
 
   if (!exhausted) observer.observe(sentinel);
 
-  // Only one row stays highlighted at a time: selecting a new point from
-  // the chart clears whichever row was highlighted before.
-  let highlightedRow = null;
-
   async function scrollToDate(dateStr) {
     let row = dayRows.querySelector('.day-row[data-date="' + dateStr + '"]');
     let guard = 0;
@@ -761,11 +771,7 @@
     }
     if (row) {
       row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      if (highlightedRow && highlightedRow !== row) {
-        highlightedRow.classList.remove('day-row-highlight');
-      }
-      row.classList.add('day-row-highlight');
-      highlightedRow = row;
+      setHighlightedRow(row);
     }
   }
 
