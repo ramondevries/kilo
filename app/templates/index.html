@@ -212,6 +212,19 @@
   let currentPointColors = null;
   let currentSegmentColors = null;
 
+  // Chart.js draws a new stroke/fill polygon every time the per-segment
+  // color actually changes between adjacent points (a "style run" break),
+  // and adjacent polygons can leave hairline antialiasing seams between
+  // them. With thousands of points on a long range and the fine 0.1 BMI
+  // color resolution, a smoothly-ramping interpolated stretch changes
+  // color on nearly every point — thousands of style-run breaks, visible
+  // as vertical gaps. Rounding the segment color to a coarser BMI step
+  // (points keep the fine resolution) collapses long runs of near-equal
+  // BMI into identical color strings, so Chart.js merges them into one
+  // polygon instead of many — the color is visually indistinguishable at
+  // this scale, but there are far fewer seams to render.
+  const SEGMENT_COLOR_STEP = 0.5;
+
   function rebuildBmiColorCaches() {
     if (!currentBmis) {
       currentPointColors = null;
@@ -223,7 +236,12 @@
     for (let i = 0; i < currentBmis.length - 1; i++) {
       const b0 = currentBmis[i];
       const b1 = currentBmis[i + 1];
-      currentSegmentColors.push(b0 == null || b1 == null ? chartLine : bmiColor((b0 + b1) / 2));
+      if (b0 == null || b1 == null) {
+        currentSegmentColors.push(chartLine);
+      } else {
+        const avg = Math.round((b0 + b1) / 2 / SEGMENT_COLOR_STEP) * SEGMENT_COLOR_STEP;
+        currentSegmentColors.push(bmiColor(avg));
+      }
     }
   }
 
@@ -371,7 +389,12 @@
         borderWidth: 1,
         backgroundColor: verticalBmiGradient,
         segment: { borderColor: segmentBmiColor },
-        tension: 0.25,
+        // Straight segments connect at exact shared coordinates; curved
+        // (tension > 0) ones use bezier control points computed from
+        // neighboring points, which don't line up cleanly across a
+        // style-run break (see the SEGMENT_COLOR_STEP comment above) and
+        // is the other half of what causes the vertical seam artifact.
+        tension: 0,
         fill: true,
         pointStyle: 'circle',
         pointRadius: pointRadiusFor,
