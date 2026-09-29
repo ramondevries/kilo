@@ -79,23 +79,58 @@ def _available_range_keys(entries):
     ]
 
 
-def _chart_bmis(entries, user, unit):
-    """Per-entry BMI, in the same order as chart_labels/chart_values, or
-    None when the user hasn't set a height yet (BMI coloring needs it)."""
-    if not user.height_cm:
-        return None
-    height_m = user.height_cm / 100
-    return [to_kg(e.weight, unit) / (height_m ** 2) for e in entries]
+def _daily_series(entries, unit, height_cm):
+    """Every calendar day from the first entry to the last, inclusive.
+
+    A category-axis chart spaces its labels evenly regardless of the actual
+    date gap between them, so if the chart only plotted real entries, a
+    stretch with no logged weigh-ins would look visually "compressed" next
+    to daily-logged stretches — same on-screen width for a 1-day gap as for
+    a 3-week one. Filling every day in between and linearly interpolating
+    the weight for the ones with no real entry keeps the spacing uniform
+    and the line continuous.
+
+    Returns (labels, values, bmis) — bmis is None when height isn't set.
+    Stats/BMI cards use the real entries directly and are unaffected by
+    this interpolation.
+    """
+    if not entries:
+        return [], [], None
+
+    start = entries[0].entry_date
+    total_days = (entries[-1].entry_date - start).days
+
+    values = []
+    prev_offset = 0
+    prev_weight = entries[0].weight
+    for entry in entries[1:]:
+        offset = (entry.entry_date - start).days
+        gap = offset - prev_offset
+        for step in range(gap):
+            values.append(prev_weight + (entry.weight - prev_weight) * (step / gap))
+        prev_offset = offset
+        prev_weight = entry.weight
+    values.append(prev_weight)
+
+    labels = [(start + timedelta(days=i)).isoformat() for i in range(total_days + 1)]
+
+    bmis = None
+    if height_cm:
+        height_m = height_cm / 100
+        bmis = [to_kg(v, unit) / (height_m ** 2) for v in values]
+
+    return labels, values, bmis
 
 
 def _overview(user):
     unit = current_app.config["WEIGHT_UNIT"]
     entries = _entries_sorted(user)
+    chart_labels, chart_values, chart_bmis = _daily_series(entries, unit, user.height_cm)
     return {
         "stats": _stats(entries),
-        "chart_labels": [e.entry_date.isoformat() for e in entries],
-        "chart_values": [e.weight for e in entries],
-        "chart_bmis": _chart_bmis(entries, user, unit),
+        "chart_labels": chart_labels,
+        "chart_values": chart_values,
+        "chart_bmis": chart_bmis,
         "bmi": user.bmi(unit),
         "unit": unit,
         "available_ranges": _available_range_keys(entries),

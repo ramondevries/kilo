@@ -413,4 +413,47 @@ def test_chart_bmis_cleared_alongside_entry(logged_in_client):
 
     resp = client.post("/entries/field", json={"date": "2026-09-23", "weight": ""})
     data = resp.get_json()
-    assert data["chart_bmis"] == []
+    assert data["chart_bmis"] is None
+    assert data["chart_labels"] == []
+
+
+def test_chart_fills_gaps_with_linear_interpolation(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 70.0})
+    resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 90.0})
+    data = resp.get_json()
+
+    assert data["chart_labels"] == [
+        "2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05",
+    ]
+    assert data["chart_values"] == pytest.approx([70.0, 75.0, 80.0, 85.0, 90.0])
+
+
+def test_chart_series_single_entry_has_no_gaps_to_fill(logged_in_client):
+    client, _ = logged_in_client
+    resp = client.post("/entries/field", json={"date": "2026-09-23", "weight": 79.0})
+    data = resp.get_json()
+    assert data["chart_labels"] == ["2026-09-23"]
+    assert data["chart_values"] == [79.0]
+
+
+def test_chart_bmis_use_interpolated_weight(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/settings", data={"height_value": "180", "height_unit": "cm"})
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 70.0})
+    resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 90.0})
+    data = resp.get_json()
+
+    # 80.0 kg / 1.8^2 = 24.691... at the midpoint (2026-09-03)
+    assert data["chart_bmis"][2] == pytest.approx(80.0 / 1.8 ** 2)
+
+
+def test_stats_unaffected_by_interpolation(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 70.0})
+    resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 90.0})
+    stats = resp.get_json()["stats"]
+    # stats are computed from real entries only, not the 5 interpolated points
+    assert stats["current"] == 90.0
+    assert stats["start"] == 70.0
+    assert stats["total_change"] == 20.0
