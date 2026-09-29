@@ -441,6 +441,49 @@
     }
   });
 
+  // Long ranges (5Y+/All) can put many thousands of daily points — one per
+  // calendar day, since gaps are interpolated — across maybe 1500px of
+  // chart width: several points per pixel. Per-segment coloring forces a
+  // separate draw call at nearly every one of those, and at that density
+  // adjacent draws produce a dense comb of antialiasing gaps rather than a
+  // clean fill (reported as "vertical white lines"). Capping the plotted
+  // point count fixes the actual cause (oversampling), rather than just
+  // patching the symptom further. Each pixel-ish bucket keeps its min AND
+  // max value so real peaks/dips in the trend stay visible; only ranges
+  // that already exceed the cap get thinned, so 1W-1Y are never touched.
+  const MAX_PLOT_POINTS = 1000;
+
+  function decimateForDisplay(labels, values, bmis, reals) {
+    const n = labels.length;
+    if (n <= MAX_PLOT_POINTS) {
+      return { labels, values, bmis, reals };
+    }
+
+    const bucketSize = n / MAX_PLOT_POINTS;
+    const keepIndexes = new Set([0, n - 1]);
+    for (let b = 0; b < MAX_PLOT_POINTS; b++) {
+      const start = Math.floor(b * bucketSize);
+      const end = Math.min(n, Math.floor((b + 1) * bucketSize));
+      if (end <= start) continue;
+      let minIdx = start;
+      let maxIdx = start;
+      for (let i = start + 1; i < end; i++) {
+        if (values[i] < values[minIdx]) minIdx = i;
+        if (values[i] > values[maxIdx]) maxIdx = i;
+      }
+      keepIndexes.add(minIdx);
+      keepIndexes.add(maxIdx);
+    }
+
+    const sortedIndexes = Array.from(keepIndexes).sort((a, b) => a - b);
+    return {
+      labels: sortedIndexes.map((i) => labels[i]),
+      values: sortedIndexes.map((i) => values[i]),
+      bmis: bmis ? sortedIndexes.map((i) => bmis[i]) : null,
+      reals: sortedIndexes.map((i) => reals[i]),
+    };
+  }
+
   function applyRange(rangeKey) {
     currentRange = rangeKey;
     const days = RANGE_DAYS[rangeKey];
@@ -467,6 +510,8 @@
         }
       }
     }
+
+    ({ labels, values, bmis, reals } = decimateForDisplay(labels, values, bmis, reals));
 
     currentBmis = bmis;
     currentReal = reals;
