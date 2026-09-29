@@ -131,6 +131,38 @@ def test_settings_updates_height_in_meters(logged_in_client, app):
         assert user.height_unit == "m"
 
 
+def test_set_dark_mode_requires_login(client):
+    resp = client.post("/settings/dark-mode", json={"dark_mode": True})
+    assert resp.status_code == 302
+
+
+def test_set_dark_mode_saves_immediately(logged_in_client, app):
+    client, user_id = logged_in_client
+    resp = client.post("/settings/dark-mode", json={"dark_mode": True})
+    assert resp.get_json() == {"status": "saved", "dark_mode": True}
+    with app.app_context():
+        user = db.session.get(User, user_id)
+        assert user.dark_mode is True
+
+    resp2 = client.post("/settings/dark-mode", json={"dark_mode": False})
+    assert resp2.get_json() == {"status": "saved", "dark_mode": False}
+    with app.app_context():
+        user = db.session.get(User, user_id)
+        assert user.dark_mode is False
+
+
+def test_dark_mode_toggle_in_account_dropdown(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    assert 'class="dark-mode-toggle"' in html
+
+
+def test_dark_mode_field_is_first_in_settings_form(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/settings").data.decode()
+    assert html.index("dark-mode-toggle") < html.index("height_value")
+
+
 def test_bmi_shown_once_height_and_weight_are_set(logged_in_client, app):
     client, user_id = logged_in_client
     client.post("/settings", data={"height_value": "180", "height_unit": "cm"})

@@ -17,6 +17,13 @@
           <span>{{ current_email or "Signed in" }}</span>
         </button>
         <div class="account-dropdown" id="account-dropdown">
+          <label class="dropdown-item toggle-row">
+            Dark mode
+            <span class="toggle-switch">
+              <input type="checkbox" class="dark-mode-toggle" {{ 'checked' if current_user.dark_mode }}>
+              <span class="toggle-slider"></span>
+            </span>
+          </label>
           <a class="dropdown-item" href="{{ url_for('main.settings') }}">Settings</a>
           <form method="post" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -64,6 +71,27 @@
       document.addEventListener('click', close);
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') close();
+      });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var toggles = document.querySelectorAll('.dark-mode-toggle');
+      if (!toggles.length) return;
+      var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+      toggles.forEach(function (toggle) {
+        toggle.addEventListener('change', function () {
+          var checked = toggle.checked;
+          document.documentElement.setAttribute('data-theme', checked ? 'dark' : 'light');
+          toggles.forEach(function (other) { other.checked = checked; });
+          fetch('{{ url_for("main.set_dark_mode") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ dark_mode: checked }),
+          }).catch(function () {});
+        });
       });
     })();
   </script>

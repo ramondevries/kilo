@@ -8,6 +8,15 @@
     <p>Your height is used to calculate your BMI.</p>
     <form method="post" class="entry-form">
       {{ form.hidden_tag() }}
+      <div class="field field-wide">
+        <label class="toggle-row">
+          <span class="toggle-switch">
+            {{ form.dark_mode(class_="dark-mode-toggle") }}
+            <span class="toggle-slider"></span>
+          </span>
+          Dark mode
+        </label>
+      </div>
       <div class="field">
         {{ form.height_value.label }}
         {{ form.height_value(step="0.1") }}
@@ -18,15 +27,6 @@
       <div class="field">
         {{ form.height_unit.label }}
         {{ form.height_unit() }}
-      </div>
-      <div class="field field-wide">
-        <label class="toggle-row">
-          <span class="toggle-switch">
-            {{ form.dark_mode() }}
-            <span class="toggle-slider"></span>
-          </span>
-          Dark mode
-        </label>
       </div>
       <div class="field">
         {{ form.moving_avg_days.label }}

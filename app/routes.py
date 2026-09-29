@@ -298,6 +298,16 @@ def save_field():
     return jsonify(status="saved", **_overview(user))
 
 
+@bp.route("/settings/dark-mode", methods=["POST"])
+@login_required
+def set_dark_mode():
+    data = request.get_json(silent=True) or {}
+    user = get_current_user()
+    user.dark_mode = bool(data.get("dark_mode"))
+    db.session.commit()
+    return jsonify(status="saved", dark_mode=user.dark_mode)
+
+
 @bp.route("/chart-range", methods=["POST"])
 @login_required
 def set_chart_range():
