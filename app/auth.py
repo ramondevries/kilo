@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from functools import wraps
 
 from flask import Blueprint, flash, redirect, render_template, session, url_for
@@ -14,6 +14,11 @@ from app.utils import hash_email, normalize_email
 bp = Blueprint("auth", __name__)
 
 CODE_TTL_MINUTES = 10
+
+
+def _utcnow():
+    # Naive UTC, matching the naive DateTime columns stored in SQLite.
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 def get_current_user():
@@ -47,7 +52,7 @@ def inject_current_user():
 def _issue_code(user, email):
     code = f"{secrets.randbelow(1_000_000):06d}"
     user.code_hash = generate_password_hash(code)
-    user.code_expires_at = datetime.utcnow() + timedelta(minutes=CODE_TTL_MINUTES)
+    user.code_expires_at = _utcnow() + timedelta(minutes=CODE_TTL_MINUTES)
     user.code_attempts = 0
     db.session.commit()
     send_verification_email(email, code)
@@ -87,7 +92,7 @@ def verify():
 
     form = VerifyCodeForm()
     if form.validate_on_submit():
-        if not user.code_hash or not user.code_expires_at or user.code_expires_at < datetime.utcnow():
+        if not user.code_hash or not user.code_expires_at or user.code_expires_at < _utcnow():
             flash("That code has expired. Request a new one.", "error")
         elif user.code_attempts >= User.MAX_CODE_ATTEMPTS:
             flash("Too many attempts. Request a new code.", "error")
@@ -96,7 +101,7 @@ def verify():
             db.session.commit()
             flash("Incorrect code.", "error")
         else:
-            user.verified_at = user.verified_at or datetime.utcnow()
+            user.verified_at = user.verified_at or _utcnow()
             user.code_hash = None
             user.code_expires_at = None
             user.code_attempts = 0
