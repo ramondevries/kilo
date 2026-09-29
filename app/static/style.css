@@ -204,7 +204,7 @@ main.dashboard-main .flashes {
 .flash-error { background: #fbe9e7; color: var(--danger); }
 
 .stats {
-  display: flex;
+  display: grid;
   gap: 0.75rem;
   min-height: 0;
 }
@@ -214,7 +214,7 @@ main.dashboard-main .flashes {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.9rem 1rem;
-  display: grid;
+  display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
@@ -263,6 +263,7 @@ main.dashboard-main .flashes {
       "stats log";
   }
 
+  /* Two rows of four boxes: Current, BMI, then the six x-day changes. */
   .stats {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -274,7 +275,6 @@ main.dashboard-main .flashes {
     grid-template-rows: 1fr 1fr;
     grid-template-areas:
       "chart chart"
-  /* Two rows of four boxes: Current, BMI, then the six x-day changes. */
       "stats log";
   }
 
@@ -547,7 +547,7 @@ code {
 .note-popover {
   position: absolute;
   top: 100%;
-  left: 0;
+  right: 0;
   margin-top: 4px;
   width: 200px;
   background: var(--surface);
