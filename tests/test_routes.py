@@ -502,8 +502,7 @@ def test_stats_unaffected_by_interpolation(logged_in_client):
         "/entries/field", json={"date": "2026-09-05", "weight": 90.0, "confirm": True}
     )
     stats = resp.get_json()["stats"]
-    # stats are computed from real entries only, not the 5 interpolated points
-    assert stats["current"] == 90.0
+    # start/total change come from real entries only, not the interpolated points
     assert stats["start"] == 70.0
     assert stats["total_change"] == 20.0
 
@@ -680,3 +679,11 @@ def test_today_prompt_skip_key_is_per_user(logged_in_client):
     html = client.get("/").data.decode()
     assert f"'weightTracker.todayPromptSkippedDate.' + {user_id}" in html
 
+
+def test_current_weight_and_bmi_use_the_moving_average(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/settings", data={"height_value": "200", "height_unit": "cm", "moving_avg_days": "2"})
+    data = _post_weights(client, [80.0, 90.0])
+    # 2-day window: (80 + 90) / 2, not the latest 90
+    assert data["stats"]["current"] == pytest.approx(85.0)
+    assert data["bmi"] == pytest.approx(85.0 / 2.0 ** 2)

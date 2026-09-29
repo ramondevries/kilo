@@ -53,7 +53,7 @@ def _stats(entries, moving_average, unit):
     latest = entries[-1]
     first = entries[0]
     return {
-        "current": latest.weight,
+        "current": moving_average[-1],
         "start": first.weight,
         "total_change": latest.weight - first.weight,
         "changes": _moving_average_changes(moving_average, unit),
@@ -75,6 +75,14 @@ def _moving_average_changes(moving_average, unit):
             g_per_day = to_kg(change, unit) * 1000 / days
         changes.append({"days": days, "change": change, "g_per_day": g_per_day})
     return changes
+
+
+def _bmi(moving_average, height_cm, unit):
+    """BMI from the current (latest) moving-average weight; None without a
+    height or any entries."""
+    if not height_cm or not moving_average:
+        return None
+    return to_kg(moving_average[-1], unit) / ((height_cm / 100) ** 2)
 
 
 def _entries_sorted(user):
@@ -172,7 +180,7 @@ def _overview(user):
         "chart_real": chart_real,
         "chart_moving_average": chart_moving_average,
         "moving_avg_days": user.moving_avg_days,
-        "bmi": user.bmi(unit),
+        "bmi": _bmi(chart_moving_average, user.height_cm, unit),
         "unit": unit,
         "available_ranges": _available_range_keys(entries),
     }
