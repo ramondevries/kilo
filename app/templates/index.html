@@ -207,47 +207,29 @@
     return BMI_FILL_LUT[bmiLutIndex(bmi)];
   }
 
-  // Per-point/per-segment colors for the data currently on the chart,
-  // rebuilt only when that data changes (see rebuildBmiColorCaches).
-  let currentPointColors = null;
-  let currentSegmentColors = null;
-
-  // Chart.js draws a new stroke/fill polygon every time the per-segment
-  // color actually changes between adjacent points (a "style run" break),
+  // Per-point colors for the data currently on the chart, rebuilt only
+  // when that data changes (see rebuildBmiColorCaches).
+  //
+  // The line itself is NOT per-segment colored (no segment.borderColor):
+  // Chart.js draws a new stroke/fill polygon every time a per-segment
+  // style actually changes between adjacent points (a "style run" break),
   // and adjacent polygons can leave hairline antialiasing seams between
-  // them. With thousands of points on a long range and the fine 0.1 BMI
-  // color resolution, a smoothly-ramping interpolated stretch changes
-  // color on nearly every point — thousands of style-run breaks, visible
-  // as vertical gaps. Rounding the segment color to a coarser BMI step
-  // (points keep the fine resolution) collapses long runs of near-equal
-  // BMI into identical color strings, so Chart.js merges them into one
-  // polygon instead of many — the color is visually indistinguishable at
-  // this scale, but there are far fewer seams to render.
-  const SEGMENT_COLOR_STEP = 0.5;
+  // them. On a long/decimated range there are still ~1000 points spanning
+  // the chart, and BMI drifts continuously along a smoothed trend — so
+  // even a coarse color-rounding step still breaks the path on nearly
+  // every point, producing a dense, regular vertical-striping artifact
+  // (confirmed via screenshots; a coarser rounding step alone wasn't
+  // enough to fix it). The y-axis BMI gradient on the fill already shows
+  // the same zone information clearly without any path-continuity issue
+  // (it's one continuous canvas gradient, not per-segment), so the line
+  // stays a single flat color and per-point BMI coloring is kept only for
+  // the dots, which are discrete shapes with no seam risk.
+  let currentPointColors = null;
 
   function rebuildBmiColorCaches() {
-    if (!currentBmis) {
-      currentPointColors = null;
-      currentSegmentColors = null;
-      return;
-    }
-    currentPointColors = currentBmis.map((b) => (b == null ? chartLine : bmiColor(b)));
-    currentSegmentColors = [];
-    for (let i = 0; i < currentBmis.length - 1; i++) {
-      const b0 = currentBmis[i];
-      const b1 = currentBmis[i + 1];
-      if (b0 == null || b1 == null) {
-        currentSegmentColors.push(chartLine);
-      } else {
-        const avg = Math.round((b0 + b1) / 2 / SEGMENT_COLOR_STEP) * SEGMENT_COLOR_STEP;
-        currentSegmentColors.push(bmiColor(avg));
-      }
-    }
-  }
-
-  function segmentBmiColor(ctx) {
-    if (!currentSegmentColors) return chartLine;
-    return currentSegmentColors[ctx.p0DataIndex] ?? chartLine;
+    currentPointColors = currentBmis
+      ? currentBmis.map((b) => (b == null ? chartLine : bmiColor(b)))
+      : null;
   }
 
   function pointBmiColor(ctx) {
@@ -388,12 +370,12 @@
         borderColor: chartLine,
         borderWidth: 1,
         backgroundColor: verticalBmiGradient,
-        segment: { borderColor: segmentBmiColor },
-        // Straight segments connect at exact shared coordinates; curved
-        // (tension > 0) ones use bezier control points computed from
-        // neighboring points, which don't line up cleanly across a
-        // style-run break (see the SEGMENT_COLOR_STEP comment above) and
-        // is the other half of what causes the vertical seam artifact.
+        // No segment.borderColor override — the line stays a single flat
+        // color (see the comment above currentPointColors/pointBmiColor
+        // for why: per-segment coloring was the actual source of the
+        // vertical seam artifact). tension stays 0 regardless, since
+        // straight segments are simplest for a chart with this many
+        // points either way.
         tension: 0,
         fill: true,
         pointStyle: 'circle',
