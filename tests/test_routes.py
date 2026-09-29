@@ -466,3 +466,27 @@ def test_stats_unaffected_by_interpolation(logged_in_client):
     assert stats["current"] == 90.0
     assert stats["start"] == 70.0
     assert stats["total_change"] == 20.0
+
+
+def test_today_prompt_shows_when_todays_entry_missing(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    assert "const todayEntryMissing = true;" in html
+    assert f'const todayDate = "{date.today().isoformat()}";' in html
+    assert 'id="today-prompt"' in html
+
+
+def test_today_prompt_hidden_flag_when_todays_entry_exists(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/entries/field", json={"date": date.today().isoformat(), "weight": 80.0})
+    html = client.get("/").data.decode()
+    assert "const todayEntryMissing = false;" in html
+
+
+def test_today_prompt_missing_when_only_older_entries_exist(logged_in_client):
+    client, _ = logged_in_client
+    client.post(
+        "/entries/field", json={"date": (date.today() - timedelta(days=1)).isoformat(), "weight": 80.0}
+    )
+    html = client.get("/").data.decode()
+    assert "const todayEntryMissing = true;" in html

@@ -93,6 +93,22 @@
       <p class="loading-hint" id="loading-hint" hidden>Loading more days…</p>
     </section>
   </div>
+
+  <div class="modal-overlay" id="today-prompt" hidden>
+    <div class="modal-box">
+      <h3>Log today's weight?</h3>
+      <p>You haven't recorded a weight for today yet.</p>
+      <div class="field">
+        <label for="today-prompt-weight">Weight ({{ unit }})</label>
+        <input type="number" step="0.1" id="today-prompt-weight" placeholder="e.g. 82.4">
+      </div>
+      <p class="flash flash-error" id="today-prompt-error" hidden></p>
+      <div class="modal-actions">
+        <button type="button" id="today-prompt-skip" class="button-secondary">Skip</button>
+        <button type="button" id="today-prompt-ok">OK</button>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -616,5 +632,95 @@
       setTimeout(() => row.classList.remove('day-row-highlight'), 1600);
     }
   }
+
+  // Prompt for today's weight if it's still missing, unless the user
+  // already skipped it today (remembered per-device via localStorage —
+  // a viewer convenience, not data the server needs to know about).
+  const todayDate = {{ today_date|tojson }};
+  const todayEntryMissing = {{ today_entry_missing|tojson }};
+  const SKIP_STORAGE_KEY = 'weightTracker.todayPromptSkippedDate';
+
+  function wasTodayPromptSkipped() {
+    try {
+      return localStorage.getItem(SKIP_STORAGE_KEY) === todayDate;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function rememberTodayPromptSkipped() {
+    try {
+      localStorage.setItem(SKIP_STORAGE_KEY, todayDate);
+    } catch (err) {
+      // localStorage unavailable (private browsing, etc.) — the prompt
+      // will just show again next time, which is an acceptable fallback.
+    }
+  }
+
+  const todayPrompt = document.getElementById('today-prompt');
+  const todayPromptWeight = document.getElementById('today-prompt-weight');
+  const todayPromptError = document.getElementById('today-prompt-error');
+  const todayPromptSkipBtn = document.getElementById('today-prompt-skip');
+  const todayPromptOkBtn = document.getElementById('today-prompt-ok');
+
+  function hideTodayPrompt() {
+    todayPrompt.hidden = true;
+  }
+
+  function showTodayPrompt() {
+    todayPromptError.hidden = true;
+    todayPrompt.hidden = false;
+    todayPromptWeight.focus();
+  }
+
+  todayPromptSkipBtn.addEventListener('click', () => {
+    rememberTodayPromptSkipped();
+    hideTodayPrompt();
+  });
+
+  todayPromptOkBtn.addEventListener('click', async () => {
+    const weight = todayPromptWeight.value;
+    if (!weight) {
+      todayPromptWeight.focus();
+      return;
+    }
+    todayPromptOkBtn.disabled = true;
+    todayPromptError.hidden = true;
+    try {
+      const resp = await fetch('{{ url_for("main.save_field") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify({ date: todayDate, weight, note: '' }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        todayPromptError.textContent = data.error || 'Could not save.';
+        todayPromptError.hidden = false;
+        return;
+      }
+      const todayRow = dayRows.querySelector('.day-row[data-date="' + todayDate + '"]');
+      if (todayRow) todayRow.querySelector('.day-weight').value = weight;
+      updateOverview(data);
+      hideTodayPrompt();
+    } catch (err) {
+      todayPromptError.textContent = 'Could not save.';
+      todayPromptError.hidden = false;
+    } finally {
+      todayPromptOkBtn.disabled = false;
+    }
+  });
+
+  todayPromptWeight.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') todayPromptOkBtn.click();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !todayPrompt.hidden) {
+      rememberTodayPromptSkipped();
+      hideTodayPrompt();
+    }
+  });
+
+  if (todayEntryMissing && !wasTodayPromptSkipped()) showTodayPrompt();
 </script>
 {% endblock %}

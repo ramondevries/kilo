@@ -170,7 +170,8 @@ def index():
     if user is None:
         return render_template("login.html", form=SignupForm())
 
-    grid_days = _grid_page(user, date.today())
+    today = date.today()
+    grid_days = _grid_page(user, today)
     overview = _overview(user)
     chart_range = user.chart_range if user.chart_range in overview["available_ranges"] else "all"
     return render_template(
@@ -179,6 +180,8 @@ def index():
         grid_page_size=GRID_PAGE_SIZE,
         chart_ranges=CHART_RANGES,
         chart_range=chart_range,
+        today_date=today.isoformat(),
+        today_entry_missing=bool(grid_days) and grid_days[0]["weight"] is None,
         **overview,
     )
 
