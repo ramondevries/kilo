@@ -319,7 +319,7 @@
   // first point of each calendar unit for the current range.
   const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const YEARLY_TICK_RANGES = new Set(['5y', '10y', '15y', '20y']);
-  const MONTHLY_TICK_RANGES = new Set(['3m', '1y']);
+  const MONTHLY_TICK_RANGES = new Set(['3m', '6m', '1y']);
   const DAILY_TICK_RANGES = new Set(['1w', '1m']);
 
   let currentLabels = fullLabels;
@@ -534,7 +534,7 @@
 
   // The moving average is only drawn on the short ranges; on 5Y and longer
   // it's just noise on top of an already-decimated line.
-  const MOVING_AVG_RANGES = new Set(['1w', '1m', '3m', '1y']);
+  const MOVING_AVG_RANGES = new Set(['1w', '1m', '3m', '6m', '1y']);
 
   function applyRange(rangeKey) {
     currentRange = rangeKey;

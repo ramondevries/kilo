@@ -361,7 +361,7 @@ def test_chart_range_default_is_all_with_only_always_shown_buttons(logged_in_cli
     assert buttons["all"]["active"] is True
     assert buttons["1w"]["hidden"] is False
     assert buttons["all"]["hidden"] is False
-    for key in ("1m", "3m", "1y", "5y", "10y", "15y", "20y"):
+    for key in ("1m", "3m", "6m", "1y", "5y", "10y", "15y", "20y"):
         assert buttons[key]["hidden"] is True, f"{key} should be hidden with no data"
 
 
@@ -371,7 +371,7 @@ def test_chart_range_buttons_unlock_as_data_spans_grow(logged_in_client, app):
     _add_entry(app, user_id, days_ago=400)
 
     buttons = _range_buttons(client.get("/").data.decode())
-    for key in ("1w", "1m", "3m", "1y", "all"):
+    for key in ("1w", "1m", "3m", "6m", "1y", "all"):
         assert buttons[key]["hidden"] is False, f"{key} should be visible (400-day span)"
     for key in ("5y", "10y", "15y", "20y"):
         assert buttons[key]["hidden"] is True, f"{key} should still be hidden"
