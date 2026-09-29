@@ -371,15 +371,20 @@ h2 {
 
 label { font-size: var(--fs-ui); color: var(--muted); }
 
-input, button {
+input, button, select {
   font: inherit;
 }
 
-input[type="date"], input[type="text"], input[type="number"] {
+input[type="date"], input[type="text"], input[type="number"],
+input[type="email"], select {
   padding: 0.5rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
 }
+
+html[data-theme="dark"] { color-scheme: dark; }
 
 button, .button-link {
   padding: 0.55rem 1.1rem;
