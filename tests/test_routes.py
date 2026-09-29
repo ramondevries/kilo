@@ -399,7 +399,9 @@ def test_chart_bmis_computed_with_height(logged_in_client):
     client.post("/settings", data={"height_value": "180", "height_unit": "cm"})
 
     client.post("/entries/field", json={"date": "2026-09-23", "weight": 81.0})
-    resp = client.post("/entries/field", json={"date": "2026-09-24", "weight": 90.0})
+    resp = client.post(
+        "/entries/field", json={"date": "2026-09-24", "weight": 90.0, "confirm": True}
+    )
     data = resp.get_json()
 
     assert data["chart_labels"] == ["2026-09-23", "2026-09-24"]
@@ -420,7 +422,9 @@ def test_chart_bmis_cleared_alongside_entry(logged_in_client):
 def test_chart_fills_gaps_with_linear_interpolation(logged_in_client):
     client, _ = logged_in_client
     client.post("/entries/field", json={"date": "2026-09-01", "weight": 70.0})
-    resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 90.0})
+    resp = client.post(
+        "/entries/field", json={"date": "2026-09-05", "weight": 90.0, "confirm": True}
+    )
     data = resp.get_json()
 
     assert data["chart_labels"] == [
@@ -450,7 +454,9 @@ def test_chart_bmis_use_interpolated_weight(logged_in_client):
     client, _ = logged_in_client
     client.post("/settings", data={"height_value": "180", "height_unit": "cm"})
     client.post("/entries/field", json={"date": "2026-09-01", "weight": 70.0})
-    resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 90.0})
+    resp = client.post(
+        "/entries/field", json={"date": "2026-09-05", "weight": 90.0, "confirm": True}
+    )
     data = resp.get_json()
 
     # 80.0 kg / 1.8^2 = 24.691... at the midpoint (2026-09-03)
@@ -460,7 +466,9 @@ def test_chart_bmis_use_interpolated_weight(logged_in_client):
 def test_stats_unaffected_by_interpolation(logged_in_client):
     client, _ = logged_in_client
     client.post("/entries/field", json={"date": "2026-09-01", "weight": 70.0})
-    resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 90.0})
+    resp = client.post(
+        "/entries/field", json={"date": "2026-09-05", "weight": 90.0, "confirm": True}
+    )
     stats = resp.get_json()["stats"]
     # stats are computed from real entries only, not the 5 interpolated points
     assert stats["current"] == 90.0
@@ -490,3 +498,74 @@ def test_today_prompt_missing_when_only_older_entries_exist(logged_in_client):
     )
     html = client.get("/").data.decode()
     assert "const todayEntryMissing = true;" in html
+
+
+def test_save_field_warns_on_outlier_before_neighbor(logged_in_client, app):
+    client, user_id = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 80.0})
+
+    resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 95.0})
+    data = resp.get_json()
+    assert data["status"] == "warning"
+    assert "message" in data
+    with app.app_context():
+        assert WeightEntry.query.filter_by(user_id=user_id, entry_date=date(2026, 9, 5)).count() == 0
+
+
+def test_save_field_warning_message_mentions_neighbor(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 80.0})
+
+    resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 95.0})
+    message = resp.get_json()["message"]
+    assert "80" in message
+    assert "2026-09-01" in message
+
+
+def test_save_field_confirm_overrides_outlier_warning(logged_in_client, app):
+    client, user_id = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 80.0})
+
+    resp = client.post(
+        "/entries/field", json={"date": "2026-09-05", "weight": 95.0, "confirm": True}
+    )
+    data = resp.get_json()
+    assert data["status"] == "saved"
+    with app.app_context():
+        entry = WeightEntry.query.filter_by(user_id=user_id, entry_date=date(2026, 9, 5)).one()
+        assert entry.weight == 95.0
+
+
+def test_save_field_no_warning_within_threshold(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 80.0})
+
+    # 85 is a 6.25% change from 80 — within the 10% threshold
+    resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 85.0})
+    assert resp.get_json()["status"] == "saved"
+
+
+def test_save_field_checks_after_neighbor_when_no_before_neighbor(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-10", "weight": 80.0})
+
+    # Inserting an earlier date with no entry before it, but one after it
+    # that differs by more than 10%.
+    resp = client.post("/entries/field", json={"date": "2026-09-01", "weight": 95.0})
+    assert resp.get_json()["status"] == "warning"
+
+
+def test_save_field_no_neighbors_no_warning(logged_in_client):
+    client, _ = logged_in_client
+    # The very first entry ever — nothing to compare against.
+    resp = client.post("/entries/field", json={"date": "2026-09-01", "weight": 300.0})
+    assert resp.get_json()["status"] == "saved"
+
+
+def test_save_field_editing_existing_entry_does_not_compare_to_itself(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 80.0})
+    # Re-editing that same day to a very different value: only neighbor is
+    # itself, which the query excludes, so there's nothing to warn against.
+    resp = client.post("/entries/field", json={"date": "2026-09-01", "weight": 200.0})
+    assert resp.get_json()["status"] == "saved"

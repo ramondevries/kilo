@@ -199,6 +199,41 @@ def entries_window():
     return jsonify(days=_grid_page(user, end_date))
 
 
+OUTLIER_THRESHOLD = 0.10
+
+
+def _outlier_warning(user, entry_date, weight):
+    """A human-readable warning if `weight` differs from the nearest real
+    entry before or after entry_date by more than OUTLIER_THRESHOLD, else
+    None. Compares against actual logged entries (not interpolated days),
+    checking whichever date is being edited itself excluded."""
+    before = (
+        WeightEntry.query.filter(
+            WeightEntry.user_id == user.id, WeightEntry.entry_date < entry_date
+        )
+        .order_by(WeightEntry.entry_date.desc())
+        .first()
+    )
+    after = (
+        WeightEntry.query.filter(
+            WeightEntry.user_id == user.id, WeightEntry.entry_date > entry_date
+        )
+        .order_by(WeightEntry.entry_date.asc())
+        .first()
+    )
+
+    for neighbor in (before, after):
+        if neighbor is None or not neighbor.weight:
+            continue
+        diff_ratio = abs(weight - neighbor.weight) / neighbor.weight
+        if diff_ratio > OUTLIER_THRESHOLD:
+            return (
+                f"{weight:g} is {diff_ratio * 100:.0f}% different from your entry "
+                f"of {neighbor.weight:g} on {neighbor.entry_date.isoformat()}."
+            )
+    return None
+
+
 @bp.route("/entries/field", methods=["POST"])
 @login_required
 def save_field():
@@ -224,6 +259,11 @@ def save_field():
         return jsonify(error="invalid weight"), 400
     if not (1 <= weight <= 1000):
         return jsonify(error="weight out of range"), 400
+
+    if not data.get("confirm"):
+        warning = _outlier_warning(user, entry_date, weight)
+        if warning:
+            return jsonify(status="warning", message=warning)
 
     note = (data.get("note") or "").strip()[:280] or None
 

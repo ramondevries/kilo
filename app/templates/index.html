@@ -109,6 +109,17 @@
       </div>
     </div>
   </div>
+
+  <div class="modal-overlay" id="outlier-prompt" hidden>
+    <div class="modal-box">
+      <h3>Unusual value</h3>
+      <p id="outlier-message"></p>
+      <div class="modal-actions">
+        <button type="button" id="outlier-correct" class="button-secondary">Correct it</button>
+        <button type="button" id="outlier-confirm">Save anyway</button>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -614,6 +625,37 @@
     highlightedRow = row;
   }
 
+  // Shown when the server flags a weight as an outlier (>10% off from the
+  // nearest real entry before/after it — see _outlier_warning in
+  // routes.py). "Save anyway" retries the same save with confirm: true,
+  // which the server accepts unconditionally.
+  const outlierPrompt = document.getElementById('outlier-prompt');
+  const outlierMessage = document.getElementById('outlier-message');
+  const outlierCorrectBtn = document.getElementById('outlier-correct');
+  const outlierConfirmBtn = document.getElementById('outlier-confirm');
+  let pendingOutlierConfirm = null;
+
+  function hideOutlierPrompt() {
+    outlierPrompt.hidden = true;
+    pendingOutlierConfirm = null;
+  }
+
+  function showOutlierPrompt(message, onConfirm, onCorrect) {
+    outlierMessage.textContent = message;
+    outlierPrompt.hidden = false;
+    pendingOutlierConfirm = onConfirm;
+    outlierCorrectBtn.onclick = () => {
+      hideOutlierPrompt();
+      if (onCorrect) onCorrect();
+    };
+  }
+
+  outlierConfirmBtn.addEventListener('click', () => {
+    const confirmFn = pendingOutlierConfirm;
+    hideOutlierPrompt();
+    if (confirmFn) confirmFn();
+  });
+
   function bindRow(row) {
     const weightInput = row.querySelector('.day-weight');
     const noteValue = row.querySelector('.day-note-value');
@@ -630,7 +672,7 @@
     }
     refreshNoteDisplay();
 
-    async function save() {
+    async function save(confirm) {
       statusEl.textContent = 'Saving…';
       try {
         const resp = await fetch('{{ url_for("main.save_field") }}', {
@@ -640,11 +682,17 @@
             date: row.dataset.date,
             weight: weightInput.value,
             note: noteValue.value,
+            confirm: !!confirm,
           }),
         });
         const data = await resp.json();
         if (!resp.ok) {
           statusEl.textContent = data.error || 'Error saving';
+          return;
+        }
+        if (data.status === 'warning') {
+          statusEl.textContent = '';
+          showOutlierPrompt(data.message, () => save(true), () => weightInput.focus());
           return;
         }
         statusEl.textContent = 'Saved';
@@ -655,7 +703,10 @@
       }
     }
 
-    weightInput.addEventListener('change', save);
+    // Not `save` directly: the change Event object would otherwise be
+    // passed as save's `confirm` argument and (being truthy) silently
+    // skip the outlier check on every normal edit.
+    weightInput.addEventListener('change', () => save());
     weightInput.addEventListener('focus', () => setHighlightedRow(row));
 
     noteBtn.addEventListener('click', (e) => {
@@ -822,7 +873,7 @@
     hideTodayPrompt();
   });
 
-  todayPromptOkBtn.addEventListener('click', async () => {
+  async function saveTodayPrompt(confirm) {
     const weight = todayPromptWeight.value;
     if (!weight) {
       todayPromptWeight.focus();
@@ -834,12 +885,16 @@
       const resp = await fetch('{{ url_for("main.save_field") }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-        body: JSON.stringify({ date: todayDate, weight, note: '' }),
+        body: JSON.stringify({ date: todayDate, weight, note: '', confirm: !!confirm }),
       });
       const data = await resp.json();
       if (!resp.ok) {
         todayPromptError.textContent = data.error || 'Could not save.';
         todayPromptError.hidden = false;
+        return;
+      }
+      if (data.status === 'warning') {
+        showOutlierPrompt(data.message, () => saveTodayPrompt(true), () => todayPromptWeight.focus());
         return;
       }
       const todayRow = dayRows.querySelector('.day-row[data-date="' + todayDate + '"]');
@@ -852,14 +907,19 @@
     } finally {
       todayPromptOkBtn.disabled = false;
     }
-  });
+  }
+
+  todayPromptOkBtn.addEventListener('click', () => saveTodayPrompt(false));
 
   todayPromptWeight.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') todayPromptOkBtn.click();
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !todayPrompt.hidden) {
+    if (e.key !== 'Escape') return;
+    if (!outlierPrompt.hidden) {
+      hideOutlierPrompt();
+    } else if (!todayPrompt.hidden) {
       rememberTodayPromptSkipped();
       hideTodayPrompt();
     }
