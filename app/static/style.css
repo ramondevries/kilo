@@ -363,17 +363,15 @@ code {
 .day-row {
   padding: 0.4rem;
   border-bottom: 1px solid var(--border);
+  transition: background-color 0.3s ease;
 }
 
 .day-row:last-child { border-bottom: none; }
 
+/* Stays applied until a different point is selected from the chart (see
+   scrollToDate/highlightedRow) rather than fading out on a timer. */
 .day-row-highlight {
-  animation: day-row-flash 1.6s ease;
-}
-
-@keyframes day-row-flash {
-  0% { background: var(--chart-fill); }
-  100% { background: transparent; }
+  background: var(--chart-fill);
 }
 
 .day-date { font-size: 0.9rem; }
