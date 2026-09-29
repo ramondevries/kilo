@@ -29,6 +29,10 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
+  /* .chart-wrap uses a 100vw full-bleed trick; 100vw can be a few px wider
+     than the visible viewport when the scrollbar isn't an overlay, which
+     would otherwise add an unwanted horizontal scrollbar. */
+  overflow-x: hidden;
 }
 
 .site-header {
@@ -136,6 +140,15 @@ body {
   border-radius: 10px;
   padding: 1rem;
   margin-bottom: 1.5rem;
+  /* Break out of the centered .container to span the full viewport width,
+     regardless of the container's max-width. */
+  position: relative;
+  left: 50%;
+  right: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  box-sizing: border-box;
 }
 
 .chart-header {
@@ -191,6 +204,10 @@ body {
 h2 {
   margin-top: 0;
   font-size: 1.05rem;
+}
+
+.entries h2 {
+  text-align: center;
 }
 
 .entry-form {
