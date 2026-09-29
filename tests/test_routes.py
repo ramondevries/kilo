@@ -673,3 +673,10 @@ def test_changes_use_moving_average_and_need_enough_history(logged_in_client):
     assert by_days[14]["change"] == pytest.approx(1.4)
     assert by_days[30]["change"] is None
     assert by_days[365]["g_per_day"] is None
+
+
+def test_today_prompt_skip_key_is_per_user(logged_in_client):
+    client, user_id = logged_in_client
+    html = client.get("/").data.decode()
+    assert f"'weightTracker.todayPromptSkippedDate.' + {user_id}" in html
+

@@ -881,7 +881,9 @@
   // a viewer convenience, not data the server needs to know about).
   const todayDate = {{ today_date|tojson }};
   const todayEntryMissing = {{ today_entry_missing|tojson }};
-  const SKIP_STORAGE_KEY = 'weightTracker.todayPromptSkippedDate';
+  // Per user, so skipping as one account doesn't hide the prompt for another
+  // account used on the same browser.
+  const SKIP_STORAGE_KEY = 'weightTracker.todayPromptSkippedDate.' + {{ current_user.id|tojson }};
 
   function wasTodayPromptSkipped() {
     try {
