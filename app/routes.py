@@ -17,6 +17,7 @@ from app.auth import get_current_user, login_required
 from app.csv_io import export_csv, parse_csv
 from app.forms import ImportForm, SettingsForm, SignupForm
 from app.models import WeightEntry
+from app.utils import to_kg
 
 bp = Blueprint("main", __name__)
 
@@ -78,6 +79,15 @@ def _available_range_keys(entries):
     ]
 
 
+def _chart_bmis(entries, user, unit):
+    """Per-entry BMI, in the same order as chart_labels/chart_values, or
+    None when the user hasn't set a height yet (BMI coloring needs it)."""
+    if not user.height_cm:
+        return None
+    height_m = user.height_cm / 100
+    return [to_kg(e.weight, unit) / (height_m ** 2) for e in entries]
+
+
 def _overview(user):
     unit = current_app.config["WEIGHT_UNIT"]
     entries = _entries_sorted(user)
@@ -85,6 +95,7 @@ def _overview(user):
         "stats": _stats(entries),
         "chart_labels": [e.entry_date.isoformat() for e in entries],
         "chart_values": [e.weight for e in entries],
+        "chart_bmis": _chart_bmis(entries, user, unit),
         "bmi": user.bmi(unit),
         "unit": unit,
         "available_ranges": _available_range_keys(entries),

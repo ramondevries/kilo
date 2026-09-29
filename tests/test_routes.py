@@ -2,6 +2,8 @@ import io
 import re
 from datetime import date, timedelta
 
+import pytest
+
 from app import db
 from app.models import User, WeightEntry
 from tests.conftest import signup_and_verify
@@ -384,3 +386,31 @@ def test_chart_range_falls_back_to_all_when_stored_range_unavailable(logged_in_c
     assert buttons["5y"]["hidden"] is True
     assert buttons["all"]["active"] is True
     assert buttons["5y"]["active"] is False
+
+
+def test_chart_bmis_null_without_height(logged_in_client):
+    client, _ = logged_in_client
+    resp = client.post("/entries/field", json={"date": "2026-09-23", "weight": 80.0})
+    assert resp.get_json()["chart_bmis"] is None
+
+
+def test_chart_bmis_computed_with_height(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/settings", data={"height_value": "180", "height_unit": "cm"})
+
+    client.post("/entries/field", json={"date": "2026-09-23", "weight": 81.0})
+    resp = client.post("/entries/field", json={"date": "2026-09-24", "weight": 90.0})
+    data = resp.get_json()
+
+    assert data["chart_labels"] == ["2026-09-23", "2026-09-24"]
+    assert data["chart_bmis"] == pytest.approx([25.0, 27.777777777777775])
+
+
+def test_chart_bmis_cleared_alongside_entry(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/settings", data={"height_value": "180", "height_unit": "cm"})
+    client.post("/entries/field", json={"date": "2026-09-23", "weight": 81.0})
+
+    resp = client.post("/entries/field", json={"date": "2026-09-23", "weight": ""})
+    data = resp.get_json()
+    assert data["chart_bmis"] == []
