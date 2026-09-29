@@ -1,4 +1,5 @@
 import hashlib
+from datetime import UTC, datetime
 
 KG_PER_LB = 0.45359237
 
@@ -19,3 +20,8 @@ def to_kg(value, unit):
 
 def from_kg(value_kg, unit):
     return value_kg / KG_PER_LB if unit == "lb" else value_kg
+
+
+def utcnow():
+    # Naive UTC, matching the naive DateTime columns stored in SQLite.
+    return datetime.now(UTC).replace(tzinfo=None)

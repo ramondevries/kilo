@@ -10,6 +10,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    session,
     url_for,
 )
 
@@ -379,6 +380,9 @@ def export_entries():
     user = get_current_user()
     unit = current_app.config["WEIGHT_UNIT"]
     csv_text = export_csv(_entries_sorted(user), unit)
+    # Unlocks the "remove my data" flow (see app/account.py), which insists
+    # on a download first.
+    session["data_exported"] = True
     return Response(
         csv_text,
         mimetype="text/csv",

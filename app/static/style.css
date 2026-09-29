@@ -707,3 +707,8 @@ code {
   color: var(--muted);
   border: 1px solid var(--border);
 }
+
+.button-danger {
+  background: var(--danger);
+  color: #fff;
+}

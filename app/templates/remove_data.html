@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Remove my data — Kilo Tracker{% endblock %}
+
+{% block content %}
+  <section class="add-entry">
+    <h2>Remove my data</h2>
+    <p>This permanently deletes your account, all your weigh-ins and notes,
+      and your settings. It can't be undone.</p>
+
+    <h3>Step 1: Download your data</h3>
+    {% if exported %}
+      <p>Downloaded. You can <a href="{{ url_for('main.export_entries') }}">download it again</a>.</p>
+    {% else %}
+      <p>Download a copy of your weigh-ins before they're deleted. This is required.</p>
+      <a class="button-link" href="{{ url_for('main.export_entries') }}">Download my data (CSV)</a>
+      <p><a href="{{ url_for('account.remove_data') }}">I've downloaded it — continue</a></p>
+    {% endif %}
+
+    {% if exported %}
+      <h3>Step 2: Confirm by email</h3>
+      {% if code_pending %}
+        <p>We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in 10 minutes.</p>
+        <form method="post" action="{{ url_for('account.confirm_removal') }}" class="entry-form">
+          {{ form.hidden_tag() }}
+          <div class="field">
+            {{ form.code.label }}
+            {{ form.code(placeholder="123456", autofocus=true, maxlength=6, inputmode="numeric") }}
+          </div>
+          <button type="submit" class="button-danger">Delete everything</button>
+        </form>
+        <form method="post" action="{{ url_for('account.send_removal_code') }}" class="inline-form">
+          {{ form.csrf_token }}
+          <button type="submit" class="link-button">Resend code</button>
+        </form>
+      {% else %}
+        <p>We'll email a confirmation code to <strong>{{ email }}</strong>.</p>
+        <form method="post" action="{{ url_for('account.send_removal_code') }}">
+          {{ form.csrf_token }}
+          <button type="submit" class="button-danger">Send confirmation code</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </section>
+{% endblock %}

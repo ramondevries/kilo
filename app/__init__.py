@@ -36,8 +36,9 @@ def create_app(test_config=None):
     csrf.init_app(app)
     mail.init_app(app)
 
-    from . import auth, routes
+    from . import account, auth, routes
     app.register_blueprint(routes.bp)
+    app.register_blueprint(account.bp)
     app.register_blueprint(auth.bp)
 
     with app.app_context():
@@ -58,8 +59,13 @@ def _add_missing_columns():
     if "user" not in inspector.get_table_names():
         return
     existing = {col["name"] for col in inspector.get_columns("user")}
-    if "moving_avg_days" not in existing:
-        db.session.execute(
-            text("ALTER TABLE user ADD COLUMN moving_avg_days INTEGER NOT NULL DEFAULT 30")
-        )
-        db.session.commit()
+    new_columns = {
+        "moving_avg_days": "INTEGER NOT NULL DEFAULT 30",
+        "delete_code_hash": "VARCHAR(255)",
+        "delete_code_expires_at": "DATETIME",
+        "delete_code_attempts": "INTEGER NOT NULL DEFAULT 0",
+    }
+    for name, ddl in new_columns.items():
+        if name not in existing:
+            db.session.execute(text(f"ALTER TABLE user ADD COLUMN {name} {ddl}"))
+    db.session.commit()

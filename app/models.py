@@ -33,6 +33,12 @@ class User(db.Model):
     code_expires_at = db.Column(db.DateTime, nullable=True)
     code_attempts = db.Column(db.Integer, nullable=False, default=0)
 
+    # Separate from the sign-in code above: confirms the "remove my data"
+    # request, so a sign-up attempt for this email can't clobber it.
+    delete_code_hash = db.Column(db.String(255), nullable=True)
+    delete_code_expires_at = db.Column(db.DateTime, nullable=True)
+    delete_code_attempts = db.Column(db.Integer, nullable=False, default=0)
+
     height_cm = db.Column(db.Float, nullable=True)
     height_unit = db.Column(db.String(2), nullable=False, default="cm")
     dark_mode = db.Column(db.Boolean, nullable=False, default=False)
