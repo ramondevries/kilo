@@ -11,15 +11,19 @@
   <header class="site-header">
     <a class="brand" href="{{ url_for('main.index') }}">Kilo Tracker</a>
     {% if current_user %}
-      <nav class="account-nav">
-        <img class="avatar" src="{{ current_user.gravatar_url(40) }}" alt="" width="20" height="20">
-        <span>{{ current_email or "Signed in" }}</span>
-        <a href="{{ url_for('main.settings') }}">Settings</a>
-        <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="link-button">Log out</button>
-        </form>
-      </nav>
+      <div class="account-menu" id="account-menu">
+        <button type="button" class="account-trigger" id="account-trigger" aria-haspopup="true" aria-expanded="false">
+          <img class="avatar" src="{{ current_user.gravatar_url(40) }}" alt="" width="20" height="20">
+          <span>{{ current_email or "Signed in" }}</span>
+        </button>
+        <div class="account-dropdown" id="account-dropdown">
+          <a class="dropdown-item" href="{{ url_for('main.settings') }}">Settings</a>
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="dropdown-item">Log out</button>
+          </form>
+        </div>
+      </div>
     {% endif %}
   </header>
 
@@ -36,6 +40,33 @@
 
     {% block content %}{% endblock %}
   </main>
+
+  <script>
+    (function () {
+      var trigger = document.getElementById('account-trigger');
+      var dropdown = document.getElementById('account-dropdown');
+      if (!trigger || !dropdown) return;
+
+      function close() {
+        dropdown.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+
+      trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var opening = !dropdown.classList.contains('open');
+        dropdown.classList.toggle('open', opening);
+        trigger.setAttribute('aria-expanded', String(opening));
+      });
+
+      dropdown.addEventListener('click', function (e) { e.stopPropagation(); });
+
+      document.addEventListener('click', close);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') close();
+      });
+    })();
+  </script>
 
   {% block scripts %}{% endblock %}
 </body>
