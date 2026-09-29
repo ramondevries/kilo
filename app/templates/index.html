@@ -1,7 +1,28 @@
 {% extends "base.html" %}
 
+{% block body_class %}dashboard-body{% endblock %}
+{% block main_class %}dashboard-main{% endblock %}
+
 {% block content %}
-  <div class="sticky-top">
+  <div class="dashboard">
+    <section class="chart-wrap">
+      <div class="chart-header">
+        <div class="range-buttons" id="range-buttons">
+          {% for key, label, _days in chart_ranges %}
+            <button
+              type="button"
+              class="range-btn{{ ' active' if key == chart_range }}"
+              data-range="{{ key }}"
+              {{ 'hidden' if key not in available_ranges }}
+            >{{ label }}</button>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="weight-chart"></canvas>
+      </div>
+    </section>
+
     <section class="stats">
       {% if stats %}
         <div class="stat-card">
@@ -40,54 +61,38 @@
       </div>
     </section>
 
-    <section class="chart-wrap">
-      <div class="chart-header">
-        <div class="range-buttons" id="range-buttons">
-          {% for key, label, _days in chart_ranges %}
-            <button
-              type="button"
-              class="range-btn{{ ' active' if key == chart_range }}"
-              data-range="{{ key }}"
-              {{ 'hidden' if key not in available_ranges }}
-            >{{ label }}</button>
-          {% endfor %}
-        </div>
+    <section class="entries">
+      <h2>Daily log</h2>
+      <div class="day-grid-header">
+        <span>Date</span>
+        <span>Weight ({{ unit }})</span>
+        <span>Note</span>
       </div>
-      <canvas id="weight-chart" height="90"></canvas>
+      <div class="day-rows" id="day-rows">
+        {% for day in grid_days %}
+          <div class="day-row" data-date="{{ day.date }}">
+            <span class="day-date">{{ day.date }}</span>
+            <input type="number" step="0.1" class="day-weight" value="{{ day.weight if day.weight is not none else '' }}" placeholder="—">
+            <span class="note-wrap">
+              <button type="button" class="note-btn{{ ' has-note' if day.note }}" aria-label="View or edit note">📝</button>
+              <span class="note-preview">{{ day.note or 'No note' }}</span>
+              <div class="note-popover" hidden>
+                <textarea class="note-textarea" maxlength="280" placeholder="Add a note…"></textarea>
+                <div class="note-popover-actions">
+                  <button type="button" class="note-cancel">Cancel</button>
+                  <button type="button" class="note-save">Save</button>
+                </div>
+              </div>
+              <input type="hidden" class="day-note-value" value="{{ day.note }}">
+            </span>
+            <span class="day-status" aria-live="polite"></span>
+          </div>
+        {% endfor %}
+      </div>
+      <div id="scroll-sentinel" data-oldest="{{ grid_days[-1].date if grid_days else '' }}"></div>
+      <p class="loading-hint" id="loading-hint" hidden>Loading more days…</p>
     </section>
   </div>
-
-  <section class="entries">
-    <h2>Daily log</h2>
-    <div class="day-grid-header">
-      <span>Date</span>
-      <span>Weight ({{ unit }})</span>
-      <span>Note</span>
-    </div>
-    <div class="day-rows" id="day-rows">
-      {% for day in grid_days %}
-        <div class="day-row" data-date="{{ day.date }}">
-          <span class="day-date">{{ day.date }}</span>
-          <input type="number" step="0.1" class="day-weight" value="{{ day.weight if day.weight is not none else '' }}" placeholder="—">
-          <span class="note-wrap">
-            <button type="button" class="note-btn{{ ' has-note' if day.note }}" aria-label="View or edit note">📝</button>
-            <span class="note-preview">{{ day.note or 'No note' }}</span>
-            <div class="note-popover" hidden>
-              <textarea class="note-textarea" maxlength="280" placeholder="Add a note…"></textarea>
-              <div class="note-popover-actions">
-                <button type="button" class="note-cancel">Cancel</button>
-                <button type="button" class="note-save">Save</button>
-              </div>
-            </div>
-            <input type="hidden" class="day-note-value" value="{{ day.note }}">
-          </span>
-          <span class="day-status" aria-live="polite"></span>
-        </div>
-      {% endfor %}
-    </div>
-    <div id="scroll-sentinel" data-oldest="{{ grid_days[-1].date if grid_days else '' }}"></div>
-    <p class="loading-hint" id="loading-hint" hidden>Loading more days…</p>
-  </section>
 {% endblock %}
 
 {% block scripts %}
@@ -316,6 +321,9 @@
     },
     options: {
       responsive: true,
+      // The chart's wrapper is now a flex/grid panel with a dynamic height
+      // (not a fixed canvas height), so let the chart fill it exactly.
+      maintainAspectRatio: false,
       // Data updates (autosave, range switching) happen often; animating a
       // full redraw each time just re-runs the per-point/segment styling
       // across extra frames for no benefit.
@@ -530,6 +538,7 @@
 
   document.querySelectorAll('.day-row').forEach(bindRow);
 
+  const entriesPanel = document.querySelector('.entries');
   const dayRows = document.getElementById('day-rows');
   const sentinel = document.getElementById('scroll-sentinel');
   const loadingHint = document.getElementById('loading-hint');
@@ -583,9 +592,12 @@
     }
   }
 
+  // .entries now scrolls internally (the page itself no longer does), so
+  // the observer must watch intersection against that panel, not the
+  // default (browser viewport) root.
   const observer = new IntersectionObserver((observed) => {
     if (observed[0].isIntersecting) loadNextPage();
-  }, { rootMargin: '300px' });
+  }, { root: entriesPanel, rootMargin: '300px' });
 
   if (!exhausted) observer.observe(sentinel);
 

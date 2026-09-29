@@ -29,10 +29,38 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  /* .chart-wrap uses a 100vw full-bleed trick; 100vw can be a few px wider
-     than the visible viewport when the scrollbar isn't an overlay, which
-     would otherwise add an unwanted horizontal scrollbar. */
   overflow-x: hidden;
+}
+
+/* Dashboard page (index, signed in): header + graph never scroll — the
+   whole page is height-locked to the viewport and only the daily-log
+   panel scrolls internally. Other pages (settings, sign-in, etc.) don't
+   set this class and keep the normal document-flow scrolling body. */
+body.dashboard-body {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+body.dashboard-body .site-header {
+  flex: 0 0 auto;
+}
+
+main.dashboard-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+main.dashboard-main .flashes {
+  flex: 0 0 auto;
+  margin: 0.75rem 1.5rem 0;
 }
 
 .site-header {
@@ -92,10 +120,9 @@ body {
 .flash-error { background: #fbe9e7; color: var(--danger); }
 
 .stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  min-height: 0;
 }
 
 .stat-card {
@@ -123,38 +150,86 @@ body {
 .stat-value.up { color: var(--danger); }
 .stat-value.down { color: var(--accent); }
 
-.sticky-top {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: var(--bg);
-  padding-top: 0.25rem;
-  margin: 0 -1.5rem;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+/* Dashboard layout: chart (top-left/top), stats (below chart in
+   landscape, left column in portrait) and the daily log (right column,
+   the only panel that scrolls) — see the orientation-specific
+   grid-template-areas below for the actual placement. */
+.dashboard {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  overflow: hidden;
+}
+
+@media (orientation: landscape) {
+  .dashboard {
+    grid-template-columns: minmax(0, 1fr) auto;
+    /* Chart gets the dynamic space; stats is just one compact row of
+       cards and only needs its natural content height. */
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      "chart log"
+      "stats log";
+  }
+
+  .stats {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+
+  .stats .stat-card {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+@media (orientation: portrait) {
+  .dashboard {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas:
+      "chart chart"
+      "stats log";
+  }
+
+  .stats {
+    flex-direction: column;
+    overflow-y: auto;
+  }
 }
 
 .chart-wrap {
+  grid-area: chart;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1rem;
-  margin-bottom: 1.5rem;
-  /* Break out of the centered .container to span the full viewport width,
-     regardless of the container's max-width. */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chart-canvas-wrap {
   position: relative;
-  left: 50%;
-  right: 50%;
-  width: 100vw;
-  margin-left: -50vw;
-  margin-right: -50vw;
-  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.stats { grid-area: stats; }
+
+.entries {
+  grid-area: log;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .chart-header {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 0.6rem;
+  flex: 0 0 auto;
 }
 
 .range-buttons {
@@ -210,6 +285,13 @@ h2 {
   text-align: center;
 }
 
+/* .entries scrolls internally as a dashboard grid item now (see the
+   grid-area rule above); it isn't stacked in normal document flow, so
+   the shared .add-entry, .entries bottom margin doesn't apply here. */
+.entries {
+  margin-bottom: 0;
+}
+
 .entry-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -262,8 +344,11 @@ code {
 
 .day-grid-header, .day-row {
   display: grid;
-  grid-template-columns: 110px 100px 44px 1fr;
-  gap: 0.6rem;
+  /* All fixed widths (no 1fr): the daily-log panel sizes itself to this
+     content's natural width in landscape mode, so it needs a well-defined
+     intrinsic size rather than a flexible track that wants to fill space. */
+  grid-template-columns: 100px 90px 40px 56px;
+  gap: 0.5rem;
   align-items: center;
 }
 

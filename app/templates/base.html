@@ -7,7 +7,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <header class="site-header">
     <a class="brand" href="{{ url_for('main.index') }}">Weight Tracker</a>
     {% if current_user %}
@@ -23,7 +23,7 @@
     {% endif %}
   </header>
 
-  <main class="container">
+  <main class="{% block main_class %}container{% endblock %}">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <ul class="flashes">
