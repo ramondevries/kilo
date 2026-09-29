@@ -162,62 +162,89 @@
   function rgbToCss(c) {
     return `rgb(${c.r}, ${c.g}, ${c.b})`;
   }
+  function rgbToCssAlpha(c, a) {
+    return `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`;
+  }
   const RED_RGB = hexToRgb(dangerColor);
   const GREEN_PEAK_RGB = hexToRgb(accentColor);
   const GREEN_EDGE_RGB = lerpRgb(GREEN_PEAK_RGB, { r: 255, g: 255, b: 255 }, 0.45);
 
-  function computeBmiColor(bmi) {
-    if (bmi <= 17 || bmi >= 30) return rgbToCss(RED_RGB);
-    if (bmi < 20) {
-      return rgbToCss(lerpRgb(RED_RGB, GREEN_EDGE_RGB, (bmi - 17) / (20 - 17)));
-    }
-    if (bmi <= 25) {
-      return rgbToCss(lerpRgb(GREEN_EDGE_RGB, GREEN_PEAK_RGB, 1 - Math.abs(bmi - 22.5) / 2.5));
-    }
-    return rgbToCss(lerpRgb(GREEN_EDGE_RGB, RED_RGB, (bmi - 25) / (30 - 25)));
+  function computeBmiRgb(bmi) {
+    if (bmi <= 17 || bmi >= 30) return RED_RGB;
+    if (bmi < 20) return lerpRgb(RED_RGB, GREEN_EDGE_RGB, (bmi - 17) / (20 - 17));
+    if (bmi <= 25) return lerpRgb(GREEN_EDGE_RGB, GREEN_PEAK_RGB, 1 - Math.abs(bmi - 22.5) / 2.5);
+    return lerpRgb(GREEN_EDGE_RGB, RED_RGB, (bmi - 25) / (30 - 25));
   }
 
-  // Precomputed BMI -> color lookup table (0.1 resolution). Outside
+  // Precomputed BMI -> color lookup tables (0.1 resolution): one solid
+  // (line/points), one translucent (area fill, same hue). Outside
   // [17, 30] the color is flat red either way, so a modest range with
   // clamping is all that's needed.
   const BMI_LUT_MIN = 10;
   const BMI_LUT_MAX = 40;
   const BMI_LUT_STEP = 0.1;
+  const BMI_FILL_ALPHA = 0.15;
   const BMI_COLOR_LUT = [];
+  const BMI_FILL_LUT = [];
   for (let bmi = BMI_LUT_MIN; bmi <= BMI_LUT_MAX + 1e-9; bmi += BMI_LUT_STEP) {
-    BMI_COLOR_LUT.push(computeBmiColor(bmi));
+    const rgb = computeBmiRgb(bmi);
+    BMI_COLOR_LUT.push(rgbToCss(rgb));
+    BMI_FILL_LUT.push(rgbToCssAlpha(rgb, BMI_FILL_ALPHA));
+  }
+
+  function bmiLutIndex(bmi) {
+    const clamped = Math.min(BMI_LUT_MAX, Math.max(BMI_LUT_MIN, bmi));
+    return Math.round((clamped - BMI_LUT_MIN) / BMI_LUT_STEP);
   }
 
   function bmiColor(bmi) {
     if (bmi === null || bmi === undefined || Number.isNaN(bmi)) return chartLine;
-    const clamped = Math.min(BMI_LUT_MAX, Math.max(BMI_LUT_MIN, bmi));
-    const idx = Math.round((clamped - BMI_LUT_MIN) / BMI_LUT_STEP);
-    return BMI_COLOR_LUT[idx];
+    return BMI_COLOR_LUT[bmiLutIndex(bmi)];
+  }
+
+  function bmiFillColor(bmi) {
+    if (bmi === null || bmi === undefined || Number.isNaN(bmi)) return chartFill;
+    return BMI_FILL_LUT[bmiLutIndex(bmi)];
   }
 
   // Per-point/per-segment colors for the data currently on the chart,
   // rebuilt only when that data changes (see rebuildBmiColorCaches).
   let currentPointColors = null;
   let currentSegmentColors = null;
+  let currentSegmentFillColors = null;
 
   function rebuildBmiColorCaches() {
     if (!currentBmis) {
       currentPointColors = null;
       currentSegmentColors = null;
+      currentSegmentFillColors = null;
       return;
     }
     currentPointColors = currentBmis.map((b) => (b == null ? chartLine : bmiColor(b)));
     currentSegmentColors = [];
+    currentSegmentFillColors = [];
     for (let i = 0; i < currentBmis.length - 1; i++) {
       const b0 = currentBmis[i];
       const b1 = currentBmis[i + 1];
-      currentSegmentColors.push(b0 == null || b1 == null ? chartLine : bmiColor((b0 + b1) / 2));
+      if (b0 == null || b1 == null) {
+        currentSegmentColors.push(chartLine);
+        currentSegmentFillColors.push(chartFill);
+      } else {
+        const avg = (b0 + b1) / 2;
+        currentSegmentColors.push(bmiColor(avg));
+        currentSegmentFillColors.push(bmiFillColor(avg));
+      }
     }
   }
 
   function segmentBmiColor(ctx) {
     if (!currentSegmentColors) return chartLine;
     return currentSegmentColors[ctx.p0DataIndex] ?? chartLine;
+  }
+
+  function segmentBmiFillColor(ctx) {
+    if (!currentSegmentFillColors) return chartFill;
+    return currentSegmentFillColors[ctx.p0DataIndex] ?? chartFill;
   }
 
   function pointBmiColor(ctx) {
@@ -325,7 +352,7 @@
         borderColor: chartLine,
         borderWidth: 1,
         backgroundColor: chartFill,
-        segment: { borderColor: segmentBmiColor },
+        segment: { borderColor: segmentBmiColor, backgroundColor: segmentBmiFillColor },
         tension: 0.25,
         fill: true,
         pointStyle: 'circle',
