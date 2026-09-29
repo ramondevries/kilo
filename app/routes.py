@@ -42,27 +42,38 @@ CHART_RANGE_KEYS = {key for key, _label, _days in CHART_RANGES}
 ALWAYS_SHOWN_RANGES = {"1w", "all"}
 
 
-def _stats(entries):
+CHANGE_PERIODS = (7, 14, 30, 90, 180, 365)
+
+
+def _stats(entries, moving_average, unit):
     if not entries:
         return None
 
     latest = entries[-1]
     first = entries[0]
-    stats = {
+    return {
         "current": latest.weight,
         "start": first.weight,
         "total_change": latest.weight - first.weight,
-        "change_7d": None,
-        "change_30d": None,
+        "changes": _moving_average_changes(moving_average, unit),
     }
 
-    for days, key in ((7, "change_7d"), (30, "change_30d")):
-        cutoff = latest.entry_date - timedelta(days=days)
-        baseline = next((e for e in entries if e.entry_date <= cutoff), None)
-        if baseline is not None:
-            stats[key] = latest.weight - baseline.weight
 
-    return stats
+def _moving_average_changes(moving_average, unit):
+    """Change in the moving average between the latest day and N days
+    earlier, for each period in CHANGE_PERIODS. `moving_average` is the
+    daily series (one value per calendar day, ending at the latest entry),
+    so N days back is simply N indices back. A period with less history than
+    that is None. `change` is in the display unit; `g_per_day` is grams/day
+    regardless of unit."""
+    changes = []
+    for days in CHANGE_PERIODS:
+        change = g_per_day = None
+        if len(moving_average) > days:
+            change = moving_average[-1] - moving_average[-1 - days]
+            g_per_day = to_kg(change, unit) * 1000 / days
+        changes.append({"days": days, "change": change, "g_per_day": g_per_day})
+    return changes
 
 
 def _entries_sorted(user):
@@ -151,13 +162,14 @@ def _overview(user):
     chart_labels, chart_values, chart_bmis, chart_real = _daily_series(
         entries, unit, user.height_cm
     )
+    chart_moving_average = _moving_average(chart_values, user.moving_avg_days)
     return {
-        "stats": _stats(entries),
+        "stats": _stats(entries, chart_moving_average, unit),
         "chart_labels": chart_labels,
         "chart_values": chart_values,
         "chart_bmis": chart_bmis,
         "chart_real": chart_real,
-        "chart_moving_average": _moving_average(chart_values, user.moving_avg_days),
+        "chart_moving_average": chart_moving_average,
         "moving_avg_days": user.moving_avg_days,
         "bmi": user.bmi(unit),
         "unit": unit,

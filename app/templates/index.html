@@ -29,24 +29,6 @@
           <span class="stat-label">Current</span>
           <span class="stat-value" id="stat-current">{{ "%.1f"|format(stats.current) }} {{ unit }}</span>
         </div>
-        <div class="stat-card">
-          <span class="stat-label">7-day change</span>
-          <span class="stat-value {{ 'down' if stats.change_7d and stats.change_7d < 0 else 'up' if stats.change_7d }}" id="stat-7d">
-            {{ "%+.1f"|format(stats.change_7d) ~ " " ~ unit if stats.change_7d is not none else "—" }}
-          </span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">30-day change</span>
-          <span class="stat-value {{ 'down' if stats.change_30d and stats.change_30d < 0 else 'up' if stats.change_30d }}" id="stat-30d">
-            {{ "%+.1f"|format(stats.change_30d) ~ " " ~ unit if stats.change_30d is not none else "—" }}
-          </span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Total change</span>
-          <span class="stat-value {{ 'down' if stats.total_change < 0 else 'up' }}" id="stat-total">
-            {{ "%+.1f"|format(stats.total_change) }} {{ unit }}
-          </span>
-        </div>
       {% else %}
         <p class="empty" id="stat-empty">No entries yet — add your weight below.</p>
       {% endif %}
@@ -59,6 +41,15 @@
           <a class="stat-hint" href="{{ url_for('main.settings') }}">Set your height</a>
         {% endif %}
       </div>
+      {% if stats %}
+        {% for c in stats.changes %}
+          <div class="stat-card" data-days="{{ c.days }}">
+            <span class="stat-label">{{ c.days }}-day change</span>
+            <span class="stat-value change-value {{ 'down' if c.change is not none and c.change < 0 else 'up' if c.change }}">{{ "%+.1f"|format(c.change) ~ " " ~ unit if c.change is not none else "—" }}</span>
+            <span class="stat-sub change-rate {{ 'down' if c.g_per_day is not none and c.g_per_day < 0 else 'up' if c.g_per_day }}">{{ "%+.0f"|format(c.g_per_day) ~ " g/day" if c.g_per_day is not none else "—" }}</span>
+          </div>
+        {% endfor %}
+      {% endif %}
     </section>
 
     <section class="entries">
@@ -625,6 +616,13 @@
     return sign + value.toFixed(1) + ' ' + unitLabel;
   }
 
+  function setChangeCell(cell, value, digits, suffix) {
+    const missing = value === null || value === undefined;
+    cell.textContent = missing ? '—' : (value > 0 ? '+' : '') + value.toFixed(digits) + suffix;
+    cell.classList.toggle('up', !missing && value > 0);
+    cell.classList.toggle('down', !missing && value < 0);
+  }
+
   function updateOverview(data) {
     fullLabels = data.chart_labels;
     fullValues = data.chart_values;
@@ -638,9 +636,12 @@
     const currentEl = document.getElementById('stat-current');
     if (stats && currentEl) {
       currentEl.textContent = stats.current.toFixed(1) + ' ' + unitLabel;
-      document.getElementById('stat-7d').textContent = fmtSigned(stats.change_7d);
-      document.getElementById('stat-30d').textContent = fmtSigned(stats.change_30d);
-      document.getElementById('stat-total').textContent = fmtSigned(stats.total_change);
+      stats.changes.forEach((c) => {
+        const card = document.querySelector('.stat-card[data-days="' + c.days + '"]');
+        if (!card) return;
+        setChangeCell(card.querySelector('.change-value'), c.change, 1, ' ' + unitLabel);
+        setChangeCell(card.querySelector('.change-rate'), c.g_per_day, 0, ' g/day');
+      });
     }
 
     const bmiEl = document.getElementById('stat-bmi');

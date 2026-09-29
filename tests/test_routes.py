@@ -653,3 +653,23 @@ def test_chart_moving_average_length_matches_interpolated_series(logged_in_clien
     resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 74.0})
     data = resp.get_json()
     assert len(data["chart_moving_average"]) == len(data["chart_values"])
+
+
+def _post_weights(client, weights, start=date(2026, 1, 1)):
+    for i, w in enumerate(weights):
+        d = (start + timedelta(days=i)).isoformat()
+        resp = client.post("/entries/field", json={"date": d, "weight": w, "confirm": True})
+    return resp.get_json()
+
+
+def test_changes_use_moving_average_and_need_enough_history(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/settings", data={"height_value": "180", "height_unit": "cm", "moving_avg_days": "1"})
+    # 15 days of history: 0..14, weight rising 0.1 kg/day (window 1 = raw values)
+    data = _post_weights(client, [80.0 + 0.1 * i for i in range(15)])
+    by_days = {c["days"]: c for c in data["stats"]["changes"]}
+    assert by_days[7]["change"] == pytest.approx(0.7)
+    assert by_days[7]["g_per_day"] == pytest.approx(100.0)
+    assert by_days[14]["change"] == pytest.approx(1.4)
+    assert by_days[30]["change"] is None
+    assert by_days[365]["g_per_day"] is None
