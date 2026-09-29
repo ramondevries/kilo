@@ -22,18 +22,19 @@ bp = Blueprint("main", __name__)
 
 GRID_PAGE_SIZE = 30
 
-# (key, label, days spanned — None means "all data"). 1w and all are always
-# shown; the rest only appear once the user's data actually spans that long.
+# (key, label, days spanned — None means "all data"), in display order.
+# 1w and all are always shown; the rest only appear once the user's data
+# actually spans that long.
 CHART_RANGES = [
-    ("1w", "1W", 7),
-    ("1m", "1M", 30),
-    ("3m", "3M", 91),
-    ("1y", "1Y", 365),
-    ("5y", "5Y", 5 * 365),
-    ("10y", "10Y", 10 * 365),
-    ("15y", "15Y", 15 * 365),
-    ("20y", "20Y", 20 * 365),
     ("all", "All", None),
+    ("20y", "20Y", 20 * 365),
+    ("15y", "15Y", 15 * 365),
+    ("10y", "10Y", 10 * 365),
+    ("5y", "5Y", 5 * 365),
+    ("1y", "1Y", 365),
+    ("3m", "3M", 91),
+    ("1m", "1M", 30),
+    ("1w", "1W", 7),
 ]
 CHART_RANGE_KEYS = {key for key, _label, _days in CHART_RANGES}
 ALWAYS_SHOWN_RANGES = {"1w", "all"}
