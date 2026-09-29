@@ -735,6 +735,7 @@
     if (loading || exhausted) return false;
     loading = true;
     loadingHint.hidden = false;
+    document.body.classList.add('is-loading-entries');
     try {
       const resp = await fetch('{{ url_for("main.entries_window") }}?before=' + oldest);
       const data = await resp.json();
@@ -748,6 +749,7 @@
     } finally {
       loading = false;
       loadingHint.hidden = true;
+      document.body.classList.remove('is-loading-entries');
     }
   }
 

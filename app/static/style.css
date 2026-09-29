@@ -32,6 +32,15 @@ body {
   overflow-x: hidden;
 }
 
+/* Shown while more daily-log entries are being fetched (infinite scroll).
+   !important overrides buttons/inputs that set their own cursor — this is
+   a temporary global "background work in progress" state, not a style
+   meant to be locally overridden. */
+body.is-loading-entries,
+body.is-loading-entries * {
+  cursor: progress !important;
+}
+
 /* Dashboard page (index, signed in): header + graph never scroll — the
    whole page is height-locked to the viewport and only the daily-log
    panel scrolls internally. Other pages (settings, sign-in, etc.) don't
