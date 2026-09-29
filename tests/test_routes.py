@@ -708,3 +708,12 @@ def test_total_change_is_empty_with_a_single_entry(logged_in_client):
     total = data["stats"]["total"]
     assert total["days"] == 0 and total["change"] is None and total["g_per_day"] is None
     assert data["stats"]["entry_count"] == 1
+
+
+def test_export_filename_contains_todays_date(logged_in_client):
+    client, _ = logged_in_client
+    resp = client.get("/settings/export")
+    assert (
+        f"filename=weight-export-{date.today().isoformat()}.csv"
+        in resp.headers["Content-Disposition"]
+    )

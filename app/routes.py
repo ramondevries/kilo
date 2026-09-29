@@ -395,7 +395,9 @@ def export_entries():
     return Response(
         csv_text,
         mimetype="text/csv",
-        headers={"Content-Disposition": "attachment; filename=weight-export.csv"},
+        headers={
+            "Content-Disposition": f"attachment; filename=weight-export-{date.today().isoformat()}.csv"
+        },
     )
 
 
