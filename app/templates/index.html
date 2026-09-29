@@ -201,6 +201,51 @@
     return currentPointColors[ctx.dataIndex] ?? chartLine;
   }
 
+  // X-axis tick density depends on the selected range: the default
+  // category-scale autoSkip just thins ticks by pixel width, which doesn't
+  // know or care about calendar boundaries — so for a multi-year range it
+  // can show an arbitrary, uneven mix of dates rather than "one per year".
+  // Instead we take manual control (autoSkip: false) and only label the
+  // first point of each calendar unit for the current range.
+  const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const YEARLY_TICK_RANGES = new Set(['5y', '10y', '15y', '20y']);
+  const MONTHLY_TICK_RANGES = new Set(['3m', '1y']);
+  const DAILY_TICK_RANGES = new Set(['1w', '1m']);
+
+  let currentLabels = fullLabels;
+
+  function tickGranularity() {
+    if (YEARLY_TICK_RANGES.has(currentRange)) return 'year';
+    if (MONTHLY_TICK_RANGES.has(currentRange)) return 'month';
+    if (DAILY_TICK_RANGES.has(currentRange)) return 'day';
+    // "all" (or any future range) has no fixed span, so infer from what's
+    // actually on screen right now.
+    if (currentLabels.length < 2) return 'day';
+    const spanDays = (new Date(currentLabels[currentLabels.length - 1]) - new Date(currentLabels[0])) / 86400000;
+    if (spanDays > 2 * 365) return 'year';
+    if (spanDays > 60) return 'month';
+    return 'day';
+  }
+
+  function xTickLabel(_value, index) {
+    const label = currentLabels[index];
+    if (!label) return '';
+    const granularity = tickGranularity();
+    const prev = index > 0 ? currentLabels[index - 1] : null;
+
+    if (granularity === 'year') {
+      const year = label.slice(0, 4);
+      return prev && prev.slice(0, 4) === year ? '' : year;
+    }
+    if (granularity === 'month') {
+      const yearMonth = label.slice(0, 7);
+      if (prev && prev.slice(0, 7) === yearMonth) return '';
+      const month = Number(label.slice(5, 7)) - 1;
+      return MONTH_ABBR[month] + ' ' + label.slice(0, 4);
+    }
+    return String(Number(label.slice(8, 10)));
+  }
+
   const chartCtx = document.getElementById('weight-chart');
   const chart = new Chart(chartCtx, {
     type: 'line',
@@ -229,7 +274,13 @@
       animation: false,
       interaction: { mode: 'nearest', intersect: false },
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: false } },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { autoSkip: false, maxRotation: 0, callback: xTickLabel },
+        },
+        y: { beginAtZero: false },
+      },
       onClick(evt, elements, chartInstance) {
         if (!elements.length) return;
         const dateStr = chartInstance.data.labels[elements[0].index];
@@ -269,6 +320,7 @@
     }
 
     currentBmis = bmis;
+    currentLabels = labels;
     rebuildBmiColorCaches();
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
