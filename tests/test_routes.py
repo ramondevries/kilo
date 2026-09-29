@@ -687,3 +687,24 @@ def test_current_weight_and_bmi_use_the_moving_average(logged_in_client):
     # 2-day window: (80 + 90) / 2, not the latest 90
     assert data["stats"]["current"] == pytest.approx(85.0)
     assert data["bmi"] == pytest.approx(85.0 / 2.0 ** 2)
+
+
+def test_total_change_and_entry_summary(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/settings", data={"height_value": "180", "height_unit": "cm", "moving_avg_days": "1"})
+    data = _post_weights(client, [80.0, 79.0, 78.0, 77.0], start=date(2026, 1, 1))
+    stats = data["stats"]
+    assert stats["total"]["days"] == 3
+    assert stats["total"]["change"] == pytest.approx(-3.0)
+    assert stats["total"]["g_per_day"] == pytest.approx(-1000.0)
+    assert stats["first_date"] == "2026-01-01"
+    assert stats["last_date"] == "2026-01-04"
+    assert stats["entry_count"] == 4
+
+
+def test_total_change_is_empty_with_a_single_entry(logged_in_client):
+    client, _ = logged_in_client
+    data = _post_weights(client, [80.0])
+    total = data["stats"]["total"]
+    assert total["days"] == 0 and total["change"] is None and total["g_per_day"] is None
+    assert data["stats"]["entry_count"] == 1

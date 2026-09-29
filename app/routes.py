@@ -53,29 +53,38 @@ def _stats(entries, moving_average, unit):
 
     latest = entries[-1]
     first = entries[0]
+    # The series has one value per calendar day from the first entry to the
+    # last, so its length - 1 is the number of days the data spans.
+    total_days = len(moving_average) - 1
     return {
         "current": moving_average[-1],
         "start": first.weight,
         "total_change": latest.weight - first.weight,
         "changes": _moving_average_changes(moving_average, unit),
+        "total": _period_change(moving_average, total_days, unit),
+        "first_date": first.entry_date.isoformat(),
+        "last_date": latest.entry_date.isoformat(),
+        "entry_count": len(entries),
     }
 
 
+def _period_change(moving_average, days, unit):
+    """Change in the moving average between the latest day and `days` days
+    earlier. `moving_average` is the daily series (one value per calendar
+    day, ending at the latest entry), so N days back is simply N indices
+    back. None when there's less history than that (or days is 0).
+    `change` is in the display unit; `g_per_day` is grams/day regardless of
+    unit."""
+    change = g_per_day = None
+    if days > 0 and len(moving_average) > days:
+        change = moving_average[-1] - moving_average[-1 - days]
+        g_per_day = to_kg(change, unit) * 1000 / days
+    return {"days": days, "change": change, "g_per_day": g_per_day}
+
+
 def _moving_average_changes(moving_average, unit):
-    """Change in the moving average between the latest day and N days
-    earlier, for each period in CHANGE_PERIODS. `moving_average` is the
-    daily series (one value per calendar day, ending at the latest entry),
-    so N days back is simply N indices back. A period with less history than
-    that is None. `change` is in the display unit; `g_per_day` is grams/day
-    regardless of unit."""
-    changes = []
-    for days in CHANGE_PERIODS:
-        change = g_per_day = None
-        if len(moving_average) > days:
-            change = moving_average[-1] - moving_average[-1 - days]
-            g_per_day = to_kg(change, unit) * 1000 / days
-        changes.append({"days": days, "change": change, "g_per_day": g_per_day})
-    return changes
+    """`_period_change` for each period in CHANGE_PERIODS."""
+    return [_period_change(moving_average, days, unit) for days in CHANGE_PERIODS]
 
 
 def _bmi(moving_average, height_cm, unit):

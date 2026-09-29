@@ -249,6 +249,13 @@ html[data-theme="dark"] .brand-logo-dark { display: block; }
   font-weight: 600;
 }
 
+.stat-key {
+  color: var(--muted);
+  font-weight: 400;
+  display: inline-block;
+  min-width: 2.6em;
+}
+
 /* Dashboard layout: chart (top-left/top), stats (below chart in
    landscape, left column in portrait) and the daily log (right column,
    the only panel that scrolls) — see the orientation-specific
@@ -273,9 +280,10 @@ html[data-theme="dark"] .brand-logo-dark { display: block; }
       "stats log";
   }
 
-  /* Two rows of four boxes: Current, BMI, then the six x-day changes. */
+  /* Two rows of five boxes: Current, BMI, the six x-day changes, the
+     total change and the entries summary. */
   .stats {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 

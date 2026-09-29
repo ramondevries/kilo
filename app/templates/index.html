@@ -49,6 +49,18 @@
             <span class="stat-sub change-rate {{ 'down' if c.g_per_day is not none and c.g_per_day < 0 else 'up' if c.g_per_day }}">{{ "%+.0f"|format(c.g_per_day) ~ " g/day" if c.g_per_day is not none else "—" }}</span>
           </div>
         {% endfor %}
+        {% set t = stats.total %}
+        <div class="stat-card" id="stat-total-card">
+          <span class="stat-label" id="stat-total-label">{{ t.days }}-day change</span>
+          <span class="stat-value change-value {{ 'down' if t.change is not none and t.change < 0 else 'up' if t.change }}">{{ "%+.1f"|format(t.change) ~ " " ~ unit if t.change is not none else "—" }}</span>
+          <span class="stat-sub change-rate {{ 'down' if t.g_per_day is not none and t.g_per_day < 0 else 'up' if t.g_per_day }}">{{ "%+.0f"|format(t.g_per_day) ~ " g/day" if t.g_per_day is not none else "—" }}</span>
+        </div>
+        <div class="stat-card stat-entries" id="stat-entries-card">
+          <span class="stat-label">Entries</span>
+          <span class="stat-sub"><span class="stat-key">First</span> <span id="stat-first-date">{{ stats.first_date }}</span></span>
+          <span class="stat-sub"><span class="stat-key">Last</span> <span id="stat-last-date">{{ stats.last_date }}</span></span>
+          <span class="stat-sub"><span class="stat-key">Total</span> <span id="stat-entry-count">{{ stats.entry_count }}</span></span>
+        </div>
       {% endif %}
     </section>
 
@@ -640,6 +652,18 @@
     const currentEl = document.getElementById('stat-current');
     if (stats && currentEl) {
       currentEl.textContent = stats.current.toFixed(1) + ' ' + unitLabel;
+      const totalCard = document.getElementById('stat-total-card');
+      if (totalCard) {
+        document.getElementById('stat-total-label').textContent = stats.total.days + '-day change';
+        setChangeCell(totalCard.querySelector('.change-value'), stats.total.change, 1, ' ' + unitLabel);
+        setChangeCell(totalCard.querySelector('.change-rate'), stats.total.g_per_day, 0, ' g/day');
+      }
+      const firstEl = document.getElementById('stat-first-date');
+      if (firstEl) {
+        firstEl.textContent = stats.first_date;
+        document.getElementById('stat-last-date').textContent = stats.last_date;
+        document.getElementById('stat-entry-count').textContent = stats.entry_count;
+      }
       stats.changes.forEach((c) => {
         const card = document.querySelector('.stat-card[data-days="' + c.days + '"]');
         if (!card) return;
