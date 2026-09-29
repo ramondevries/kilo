@@ -90,11 +90,21 @@ main.dashboard-main .flashes {
 }
 
 .brand {
-  font-weight: 600;
-  font-size: 1.1rem;
-  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
 }
+
+.brand-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+/* Both wordmarks are in the markup; show the one for the active theme. */
+.brand-logo-dark,
+html[data-theme="dark"] .brand-logo-light { display: none; }
+html[data-theme="dark"] .brand-logo-dark { display: block; }
 
 .account-menu {
   position: relative;

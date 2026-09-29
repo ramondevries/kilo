@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 224 139" width="672" height="417">
+  <title>Kilo wordmark (light)</title>
+  <g transform="translate(-193 -28)" stroke-width="14" stroke-linecap="round" fill="none">
+    <line x1="220" y1="55" x2="220" y2="140" stroke="#1F2328"/>
+    <line x1="227" y1="116" x2="256" y2="92" stroke="#E5484D"/>
+    <line x1="227" y1="116" x2="256" y2="140" stroke="#2BA86A"/>
+    <line x1="285" y1="95" x2="285" y2="140" stroke="#1F2328"/>
+    <line x1="315" y1="55" x2="315" y2="140" stroke="#1F2328"/>
+    <circle cx="367" cy="117.5" r="22.5" stroke="#1F2328"/>
+    <circle cx="285" cy="68" r="9" fill="#1F2328" stroke="none"/>
+  </g>
+</svg>
