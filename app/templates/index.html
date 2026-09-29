@@ -106,7 +106,9 @@
   let fullLabels = {{ chart_labels|tojson }};
   let fullValues = {{ chart_values|tojson }};
   let fullBmis = {{ chart_bmis|tojson }};
+  let fullReal = {{ chart_real|tojson }};
   let currentBmis = fullBmis;
+  let currentReal = fullReal;
   let currentRange = {{ chart_range|tojson }};
   const RANGE_DAYS = Object.fromEntries(
     {{ chart_ranges|tojson }}.map(([key, _label, days]) => [key, days])
@@ -202,6 +204,21 @@
     return currentPointColors[ctx.dataIndex] ?? chartLine;
   }
 
+  // Interpolated (gap-filled) points are plotted so the line stays
+  // continuous, but they aren't real measurements — no dot, and no
+  // tooltip value, for those; only real entries show either.
+  function isRealPoint(dataIndex) {
+    return !currentReal || currentReal[dataIndex] !== false;
+  }
+
+  function pointRadiusFor(ctx) {
+    return isRealPoint(ctx.dataIndex) ? 1 : 0;
+  }
+
+  function pointHoverRadiusFor(ctx) {
+    return isRealPoint(ctx.dataIndex) ? 5 : 0;
+  }
+
   // X-axis tick density depends on the selected range: the default
   // category-scale autoSkip just thins ticks by pixel width, which doesn't
   // know or care about calendar boundaries — so for a multi-year range it
@@ -281,10 +298,10 @@
         tension: 0.25,
         fill: true,
         pointStyle: 'circle',
-        pointRadius: 1,
+        pointRadius: pointRadiusFor,
         pointBorderWidth: 0,
         pointBackgroundColor: pointBmiColor,
-        pointHoverRadius: 5,
+        pointHoverRadius: pointHoverRadiusFor,
       }]
     },
     options: {
@@ -294,7 +311,13 @@
       // across extra frames for no benefit.
       animation: false,
       interaction: { mode: 'nearest', intersect: false },
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          // Interpolated points carry no real value — don't show one.
+          filter: (item) => isRealPoint(item.dataIndex),
+        },
+      },
       scales: {
         x: {
           grid: { color: xGridStyle, tickColor: xGridStyle },
@@ -322,6 +345,7 @@
     let labels = fullLabels;
     let values = fullValues;
     let bmis = fullBmis;
+    let reals = fullReal;
 
     if (days) {
       const cutoff = new Date();
@@ -331,16 +355,19 @@
       labels = [];
       values = [];
       bmis = fullBmis ? [] : null;
+      reals = [];
       for (let i = 0; i < fullLabels.length; i++) {
         if (fullLabels[i] >= cutoffStr) {
           labels.push(fullLabels[i]);
           values.push(fullValues[i]);
           if (fullBmis) bmis.push(fullBmis[i]);
+          reals.push(fullReal[i]);
         }
       }
     }
 
     currentBmis = bmis;
+    currentReal = reals;
     currentLabels = labels;
     rebuildBmiColorCaches();
     rebuildTickCache();
@@ -386,6 +413,7 @@
     fullLabels = data.chart_labels;
     fullValues = data.chart_values;
     fullBmis = data.chart_bmis;
+    fullReal = data.chart_real;
     applyRange(currentRange);
     if (data.available_ranges) applyAvailableRanges(data.available_ranges);
 

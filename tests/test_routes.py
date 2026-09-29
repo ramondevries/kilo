@@ -427,6 +427,14 @@ def test_chart_fills_gaps_with_linear_interpolation(logged_in_client):
         "2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05",
     ]
     assert data["chart_values"] == pytest.approx([70.0, 75.0, 80.0, 85.0, 90.0])
+    assert data["chart_real"] == [True, False, False, False, True]
+
+
+def test_chart_real_flags_every_point_true_when_no_gaps(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 70.0})
+    resp = client.post("/entries/field", json={"date": "2026-09-02", "weight": 71.0})
+    assert resp.get_json()["chart_real"] == [True, True]
 
 
 def test_chart_series_single_entry_has_no_gaps_to_fill(logged_in_client):
@@ -435,6 +443,7 @@ def test_chart_series_single_entry_has_no_gaps_to_fill(logged_in_client):
     data = resp.get_json()
     assert data["chart_labels"] == ["2026-09-23"]
     assert data["chart_values"] == [79.0]
+    assert data["chart_real"] == [True]
 
 
 def test_chart_bmis_use_interpolated_weight(logged_in_client):

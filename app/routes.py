@@ -90,17 +90,20 @@ def _daily_series(entries, unit, height_cm):
     the weight for the ones with no real entry keeps the spacing uniform
     and the line continuous.
 
-    Returns (labels, values, bmis) — bmis is None when height isn't set.
+    Returns (labels, values, bmis, is_real) — bmis is None when height isn't
+    set; is_real flags which days are actual measurements vs. interpolated
+    fill, so the chart can hide dots/tooltip values for the latter.
     Stats/BMI cards use the real entries directly and are unaffected by
     this interpolation.
     """
     if not entries:
-        return [], [], None
+        return [], [], None, []
 
     start = entries[0].entry_date
     total_days = (entries[-1].entry_date - start).days
 
     values = []
+    is_real = []
     prev_offset = 0
     prev_weight = entries[0].weight
     for entry in entries[1:]:
@@ -108,9 +111,11 @@ def _daily_series(entries, unit, height_cm):
         gap = offset - prev_offset
         for step in range(gap):
             values.append(prev_weight + (entry.weight - prev_weight) * (step / gap))
+            is_real.append(step == 0)
         prev_offset = offset
         prev_weight = entry.weight
     values.append(prev_weight)
+    is_real.append(True)
 
     labels = [(start + timedelta(days=i)).isoformat() for i in range(total_days + 1)]
 
@@ -119,18 +124,21 @@ def _daily_series(entries, unit, height_cm):
         height_m = height_cm / 100
         bmis = [to_kg(v, unit) / (height_m ** 2) for v in values]
 
-    return labels, values, bmis
+    return labels, values, bmis, is_real
 
 
 def _overview(user):
     unit = current_app.config["WEIGHT_UNIT"]
     entries = _entries_sorted(user)
-    chart_labels, chart_values, chart_bmis = _daily_series(entries, unit, user.height_cm)
+    chart_labels, chart_values, chart_bmis, chart_real = _daily_series(
+        entries, unit, user.height_cm
+    )
     return {
         "stats": _stats(entries),
         "chart_labels": chart_labels,
         "chart_values": chart_values,
         "chart_bmis": chart_bmis,
+        "chart_real": chart_real,
         "bmi": user.bmi(unit),
         "unit": unit,
         "available_ranges": _available_range_keys(entries),
