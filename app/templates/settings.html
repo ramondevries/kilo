@@ -1,13 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Settings — Kilo Tracker
-  <section class="add-entry">
-    <h2>Remove my data</h2>
-    <p>Permanently delete your account and all your weigh-ins. You'll be asked
-      to download your data and confirm with a code sent by email first.</p>
-    <a class="button-link button-danger" href="{{ url_for('account.remove_data') }}">Remove my data…</a>
-  </section>
-{% endblock %}
+{% block title %}Settings — Kilo Tracker{% endblock %}
 
 {% block content %}
   <section class="add-entry">
@@ -73,5 +66,12 @@
     <h2>Export data</h2>
     <p>Download all your weigh-ins as a CSV file (date, weight in kilograms, note).</p>
     <a class="button-link" href="{{ url_for('main.export_entries') }}">Export CSV</a>
+  </section>
+
+  <section class="add-entry">
+    <h2>Remove my data</h2>
+    <p>Permanently delete your account and all your weigh-ins. You'll be asked
+      to download your data and confirm with a code sent by email first.</p>
+    <a class="button-link button-danger" href="{{ url_for('account.remove_data') }}">Remove my data…</a>
   </section>
 {% endblock %}

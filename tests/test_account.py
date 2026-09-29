@@ -67,3 +67,10 @@ def test_remove_pages_require_login(client):
     assert client.get("/settings/remove").status_code == 302
     assert client.post("/settings/remove/send-code").status_code == 302
     assert client.post("/settings/remove/confirm", data={"code": "123456"}).status_code == 302
+
+
+def test_settings_page_links_to_remove_data(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/settings").data.decode()
+    assert "<title>Settings — Kilo Tracker</title>" in html
+    assert 'href="/settings/remove"' in html
