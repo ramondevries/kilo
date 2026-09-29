@@ -62,11 +62,13 @@
     </section>
 
     <section class="entries">
-      <h2>Daily log</h2>
-      <div class="day-grid-header">
-        <span>Date</span>
-        <span>Weight ({{ unit }})</span>
-        <span>Note</span>
+      <div class="entries-head">
+        <h2>Daily log</h2>
+        <div class="day-grid-header">
+          <span>Date</span>
+          <span>Weight ({{ unit }})</span>
+          <span>Note</span>
+        </div>
       </div>
       <div class="day-rows" id="day-rows">
         {% for day in grid_days %}

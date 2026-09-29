@@ -359,6 +359,18 @@ h2 {
   margin-bottom: 0;
 }
 
+/* Title + column headers stay pinned while the rows scroll. The negative
+   margins/top offset pull the sticky block over .entries' padding so rows
+   don't show through the gap above it. */
+.entries-head {
+  position: sticky;
+  top: -1.25rem;
+  z-index: 2;
+  margin: -1.25rem -1.25rem 0;
+  padding: 1.25rem 1.25rem 0;
+  background: var(--surface);
+}
+
 .entry-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
