@@ -1,8 +1,10 @@
+from flask import current_app
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileRequired
 from wtforms import BooleanField, FloatField, IntegerField, SelectField, StringField
-from wtforms.validators import DataRequired, Email, Length, NumberRange, Regexp
+from wtforms.validators import DataRequired, Email, Length, NumberRange, Regexp, ValidationError
 
+from app.email_utils import MxCheckError, check_mx
 from app.models import User
 
 
@@ -10,6 +12,17 @@ class SignupForm(FlaskForm):
     email = StringField(
         "Email", validators=[DataRequired(), Email(), Length(max=255)]
     )
+
+    def validate_email(self, field):
+        # Runs only after the format checks above pass (WTForms stops the
+        # chain on the first failing validator, but inline validators run
+        # regardless — so skip if there are already errors).
+        if field.errors or not current_app.config["CHECK_EMAIL_MX"]:
+            return
+        try:
+            check_mx(field.data)
+        except MxCheckError as exc:
+            raise ValidationError(str(exc))
 
 
 class VerifyCodeForm(FlaskForm):

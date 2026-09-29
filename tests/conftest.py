@@ -13,6 +13,8 @@ def app():
             "TESTING": True,
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
             "WTF_CSRF_ENABLED": False,
+            # No real DNS in tests; test_mx.py turns this on with a stubbed resolver.
+            "CHECK_EMAIL_MX": False,
         }
     )
 
