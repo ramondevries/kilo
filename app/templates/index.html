@@ -114,6 +114,14 @@
   // BMI false-color scale: red at/below 17 and at/above 30, peak green at
   // 22.5, green (varying intensity) across 20-25, gradual green->red
   // through 17-20 and 25-30. Only used once height (and so BMI) is known.
+  //
+  // Chart.js re-invokes scriptable style options (segment.borderColor,
+  // pointBackgroundColor) for every segment/point on every redraw — which
+  // fires on every hover/mousemove, not just on data changes. So the color
+  // math itself is precomputed into a lookup table ONCE at load, and the
+  // per-point/per-segment results are cached ONCE per data change (see
+  // rebuildBmiColorCaches) — the scriptable callbacks below do a plain
+  // array lookup, no math, no allocation, on the hot (per-redraw) path.
   function hexToRgb(hex) {
     const clean = hex.replace('#', '');
     const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
@@ -134,8 +142,7 @@
   const GREEN_PEAK_RGB = hexToRgb(accentColor);
   const GREEN_EDGE_RGB = lerpRgb(GREEN_PEAK_RGB, { r: 255, g: 255, b: 255 }, 0.45);
 
-  function bmiColor(bmi) {
-    if (bmi === null || bmi === undefined || Number.isNaN(bmi)) return chartLine;
+  function computeBmiColor(bmi) {
     if (bmi <= 17 || bmi >= 30) return rgbToCss(RED_RGB);
     if (bmi < 20) {
       return rgbToCss(lerpRgb(RED_RGB, GREEN_EDGE_RGB, (bmi - 17) / (20 - 17)));
@@ -146,18 +153,52 @@
     return rgbToCss(lerpRgb(GREEN_EDGE_RGB, RED_RGB, (bmi - 25) / (30 - 25)));
   }
 
+  // Precomputed BMI -> color lookup table (0.1 resolution). Outside
+  // [17, 30] the color is flat red either way, so a modest range with
+  // clamping is all that's needed.
+  const BMI_LUT_MIN = 10;
+  const BMI_LUT_MAX = 40;
+  const BMI_LUT_STEP = 0.1;
+  const BMI_COLOR_LUT = [];
+  for (let bmi = BMI_LUT_MIN; bmi <= BMI_LUT_MAX + 1e-9; bmi += BMI_LUT_STEP) {
+    BMI_COLOR_LUT.push(computeBmiColor(bmi));
+  }
+
+  function bmiColor(bmi) {
+    if (bmi === null || bmi === undefined || Number.isNaN(bmi)) return chartLine;
+    const clamped = Math.min(BMI_LUT_MAX, Math.max(BMI_LUT_MIN, bmi));
+    const idx = Math.round((clamped - BMI_LUT_MIN) / BMI_LUT_STEP);
+    return BMI_COLOR_LUT[idx];
+  }
+
+  // Per-point/per-segment colors for the data currently on the chart,
+  // rebuilt only when that data changes (see rebuildBmiColorCaches).
+  let currentPointColors = null;
+  let currentSegmentColors = null;
+
+  function rebuildBmiColorCaches() {
+    if (!currentBmis) {
+      currentPointColors = null;
+      currentSegmentColors = null;
+      return;
+    }
+    currentPointColors = currentBmis.map((b) => (b == null ? chartLine : bmiColor(b)));
+    currentSegmentColors = [];
+    for (let i = 0; i < currentBmis.length - 1; i++) {
+      const b0 = currentBmis[i];
+      const b1 = currentBmis[i + 1];
+      currentSegmentColors.push(b0 == null || b1 == null ? chartLine : bmiColor((b0 + b1) / 2));
+    }
+  }
+
   function segmentBmiColor(ctx) {
-    if (!currentBmis) return chartLine;
-    const b0 = currentBmis[ctx.p0DataIndex];
-    const b1 = currentBmis[ctx.p1DataIndex];
-    if (b0 == null || b1 == null) return chartLine;
-    return bmiColor((b0 + b1) / 2);
+    if (!currentSegmentColors) return chartLine;
+    return currentSegmentColors[ctx.p0DataIndex] ?? chartLine;
   }
 
   function pointBmiColor(ctx) {
-    if (!currentBmis) return chartLine;
-    const bmi = currentBmis[ctx.dataIndex];
-    return bmi == null ? chartLine : bmiColor(bmi);
+    if (!currentPointColors) return chartLine;
+    return currentPointColors[ctx.dataIndex] ?? chartLine;
   }
 
   const chartCtx = document.getElementById('weight-chart');
@@ -182,6 +223,10 @@
     },
     options: {
       responsive: true,
+      // Data updates (autosave, range switching) happen often; animating a
+      // full redraw each time just re-runs the per-point/segment styling
+      // across extra frames for no benefit.
+      animation: false,
       interaction: { mode: 'nearest', intersect: false },
       plugins: { legend: { display: false } },
       scales: { y: { beginAtZero: false } },
@@ -191,7 +236,10 @@
         if (dateStr) scrollToDate(dateStr);
       },
       onHover(evt, elements) {
-        evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+        const cursor = elements.length ? 'pointer' : 'default';
+        if (evt.native.target.style.cursor !== cursor) {
+          evt.native.target.style.cursor = cursor;
+        }
       },
     }
   });
@@ -221,6 +269,7 @@
     }
 
     currentBmis = bmis;
+    rebuildBmiColorCaches();
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
     chart.update();
