@@ -251,13 +251,23 @@
     const granularity = tickGranularity();
     const prev = index > 0 ? currentLabels[index - 1] : null;
 
+    // The underlying series is a contiguous run of calendar days, so every
+    // month/year boundary AFTER the first point necessarily lands exactly
+    // on that period's 1st day. The very first point of whatever window is
+    // currently shown is the exception — a range cutoff (or the user's
+    // very first entry) rarely lands on the 1st of a month/year, so
+    // labeling it with that period's full name would claim a complete
+    // month/year that isn't actually fully represented. Suppress it there.
     if (granularity === 'year') {
       const year = label.slice(0, 4);
-      return prev && prev.slice(0, 4) === year ? '' : year;
+      if (prev && prev.slice(0, 4) === year) return '';
+      if (index === 0 && label.slice(5, 10) !== '01-01') return '';
+      return year;
     }
     if (granularity === 'month') {
       const yearMonth = label.slice(0, 7);
       if (prev && prev.slice(0, 7) === yearMonth) return '';
+      if (index === 0 && label.slice(8, 10) !== '01') return '';
       const month = Number(label.slice(5, 7)) - 1;
       return MONTH_ABBR[month] + ' ' + label.slice(0, 4);
     }
