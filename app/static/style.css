@@ -162,6 +162,14 @@ body {
   cursor: pointer;
 }
 
+/* The generic `button { display: inline-block }` rule below is an author
+   rule, which beats the browser's built-in `[hidden] { display: none }`
+   UA rule regardless of specificity — so a hidden range button would
+   otherwise still render. Force it back off explicitly. */
+.range-btn[hidden] {
+  display: none;
+}
+
 .range-btn.active {
   background: var(--accent);
   color: white;
