@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileRequired
-from wtforms import BooleanField, FloatField, SelectField, StringField
+from wtforms import BooleanField, FloatField, IntegerField, SelectField, StringField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, Regexp
 
 from app.models import User
@@ -27,6 +27,9 @@ class SettingsForm(FlaskForm):
         "Unit", choices=[(u, u) for u in User.HEIGHT_UNITS], validators=[DataRequired()]
     )
     dark_mode = BooleanField("Dark mode")
+    moving_avg_days = IntegerField(
+        "Moving average (days)", default=30, validators=[NumberRange(min=1, max=3650)]
+    )
 
 
 class ImportForm(FlaskForm):

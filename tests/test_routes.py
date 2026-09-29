@@ -569,3 +569,55 @@ def test_save_field_editing_existing_entry_does_not_compare_to_itself(logged_in_
     # itself, which the query excludes, so there's nothing to warn against.
     resp = client.post("/entries/field", json={"date": "2026-09-01", "weight": 200.0})
     assert resp.get_json()["status"] == "saved"
+
+
+def test_moving_avg_days_defaults_to_30(logged_in_client, app):
+    _, user_id = logged_in_client
+    with app.app_context():
+        user = db.session.get(User, user_id)
+        assert user.moving_avg_days == 30
+
+
+def test_settings_updates_moving_avg_days(logged_in_client, app):
+    client, user_id = logged_in_client
+    client.post(
+        "/settings",
+        data={"height_value": "180", "height_unit": "cm", "moving_avg_days": "14"},
+    )
+    with app.app_context():
+        user = db.session.get(User, user_id)
+        assert user.moving_avg_days == 14
+
+
+def test_chart_moving_average_default_window(logged_in_client):
+    client, _ = logged_in_client
+    # Weights stay within the 10% outlier threshold of each other so every
+    # post actually saves.
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 70.0})
+    client.post("/entries/field", json={"date": "2026-09-02", "weight": 75.0})
+    resp = client.post("/entries/field", json={"date": "2026-09-03", "weight": 80.0})
+    data = resp.get_json()
+    # window=30 covers the whole (short) series, so this is a running mean.
+    assert data["chart_moving_average"] == pytest.approx([70.0, 72.5, 75.0])
+
+
+def test_chart_moving_average_uses_custom_window(logged_in_client):
+    client, _ = logged_in_client
+    client.post(
+        "/settings",
+        data={"height_value": "180", "height_unit": "cm", "moving_avg_days": "2"},
+    )
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 70.0})
+    client.post("/entries/field", json={"date": "2026-09-02", "weight": 75.0})
+    resp = client.post("/entries/field", json={"date": "2026-09-03", "weight": 80.0})
+    data = resp.get_json()
+    # window=2: [70, (70+75)/2, (75+80)/2]
+    assert data["chart_moving_average"] == pytest.approx([70.0, 72.5, 77.5])
+
+
+def test_chart_moving_average_length_matches_interpolated_series(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/entries/field", json={"date": "2026-09-01", "weight": 70.0})
+    resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 74.0})
+    data = resp.get_json()
+    assert len(data["chart_moving_average"]) == len(data["chart_values"])

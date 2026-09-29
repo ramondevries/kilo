@@ -134,11 +134,15 @@
   const dangerColor = rootStyle.getPropertyValue('--danger').trim();
   const accentColor = rootStyle.getPropertyValue('--accent').trim();
   const gridLineColor = rootStyle.getPropertyValue('--border').trim();
+  const movingAvgColor = rootStyle.getPropertyValue('--chart-moving-avg').trim();
+  const overallAvgColor = rootStyle.getPropertyValue('--chart-overall-avg').trim();
 
   let fullLabels = {{ chart_labels|tojson }};
   let fullValues = {{ chart_values|tojson }};
   let fullBmis = {{ chart_bmis|tojson }};
   let fullReal = {{ chart_real|tojson }};
+  let fullMovingAvg = {{ chart_moving_average|tojson }};
+  const movingAvgDays = {{ moving_avg_days|tojson }};
   let currentBmis = fullBmis;
   let currentReal = fullReal;
   let currentRange = {{ chart_range|tojson }};
@@ -412,6 +416,25 @@
         pointBorderWidth: 0,
         pointBackgroundColor: pointBmiColor,
         pointHoverRadius: pointHoverRadiusFor,
+      }, {
+        label: movingAvgDays + '-day average',
+        data: [],
+        borderColor: movingAvgColor,
+        borderWidth: 1.5,
+        fill: false,
+        tension: 0,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+      }, {
+        label: 'Overall average',
+        data: [],
+        borderColor: overallAvgColor,
+        borderWidth: 1,
+        borderDash: [4, 4],
+        fill: false,
+        tension: 0,
+        pointRadius: 0,
+        pointHoverRadius: 0,
       }]
     },
     options: {
@@ -427,8 +450,10 @@
       plugins: {
         legend: { display: false },
         tooltip: {
-          // Interpolated points carry no real value — don't show one.
-          filter: (item) => shouldShowTooltip(item.dataIndex),
+          // Interpolated points carry no real value — don't show one. The
+          // average lines always have a value at every plotted point
+          // though, so that filter only applies to the weight series.
+          filter: (item) => item.datasetIndex !== 0 || shouldShowTooltip(item.dataIndex),
         },
       },
       scales: {
@@ -467,10 +492,10 @@
   // (1W-1Y, all under the cap) already show.
   const MAX_PLOT_POINTS = 1000;
 
-  function decimateForDisplay(labels, values, bmis, reals) {
+  function decimateForDisplay(labels, values, bmis, reals, movingAvg) {
     const n = labels.length;
     if (n <= MAX_PLOT_POINTS) {
-      return { labels, values, bmis, reals };
+      return { labels, values, bmis, reals, movingAvg };
     }
 
     const bucketSize = n / MAX_PLOT_POINTS;
@@ -478,6 +503,7 @@
     const outValues = [];
     const outBmis = bmis ? [] : null;
     const outReals = [];
+    const outMovingAvg = [];
 
     for (let b = 0; b < MAX_PLOT_POINTS; b++) {
       const start = Math.floor(b * bucketSize);
@@ -487,8 +513,10 @@
       let valueSum = 0;
       let bmiSum = 0;
       let bmiCount = 0;
+      let movingAvgSum = 0;
       for (let i = start; i < end; i++) {
         valueSum += values[i];
+        movingAvgSum += movingAvg[i];
         if (bmis && bmis[i] != null) {
           bmiSum += bmis[i];
           bmiCount++;
@@ -499,6 +527,7 @@
 
       outLabels.push(labels[midIndex]);
       outValues.push(valueSum / count);
+      outMovingAvg.push(movingAvgSum / count);
       if (outBmis) outBmis.push(bmiCount ? bmiSum / bmiCount : null);
       // A bucket spanning more than one source day is now a synthetic
       // average, not an individual measurement — no dot/tooltip for it. A
@@ -507,7 +536,7 @@
       outReals.push(count === 1 ? reals[start] : false);
     }
 
-    return { labels: outLabels, values: outValues, bmis: outBmis, reals: outReals };
+    return { labels: outLabels, values: outValues, bmis: outBmis, reals: outReals, movingAvg: outMovingAvg };
   }
 
   function applyRange(rangeKey) {
@@ -517,6 +546,7 @@
     let values = fullValues;
     let bmis = fullBmis;
     let reals = fullReal;
+    let movingAvg = fullMovingAvg;
 
     if (days) {
       const cutoff = new Date();
@@ -527,18 +557,26 @@
       values = [];
       bmis = fullBmis ? [] : null;
       reals = [];
+      movingAvg = [];
       for (let i = 0; i < fullLabels.length; i++) {
         if (fullLabels[i] >= cutoffStr) {
           labels.push(fullLabels[i]);
           values.push(fullValues[i]);
           if (fullBmis) bmis.push(fullBmis[i]);
           reals.push(fullReal[i]);
+          movingAvg.push(fullMovingAvg[i]);
         }
       }
     }
 
+    // The dotted overall-average line reflects whatever period is
+    // currently graphed (the selected range), not all-time history —
+    // computed from the range-filtered values before decimation so it
+    // stays exact regardless of how coarse the bucketing below gets.
+    const overallAvg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+
     currentDecimated = labels.length > MAX_PLOT_POINTS;
-    ({ labels, values, bmis, reals } = decimateForDisplay(labels, values, bmis, reals));
+    ({ labels, values, bmis, reals, movingAvg } = decimateForDisplay(labels, values, bmis, reals, movingAvg));
 
     currentBmis = bmis;
     currentReal = reals;
@@ -547,6 +585,8 @@
     rebuildTickCache();
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
+    chart.data.datasets[1].data = movingAvg;
+    chart.data.datasets[2].data = overallAvg == null ? [] : labels.map(() => overallAvg);
     chart.update();
 
     document.querySelectorAll('.range-btn').forEach((btn) => {
@@ -588,6 +628,7 @@
     fullValues = data.chart_values;
     fullBmis = data.chart_bmis;
     fullReal = data.chart_real;
+    fullMovingAvg = data.chart_moving_average;
     applyRange(currentRange);
     if (data.available_ranges) applyAvailableRanges(data.available_ranges);
 

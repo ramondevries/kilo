@@ -1,3 +1,4 @@
+from collections import deque
 from datetime import date, timedelta
 
 from flask import (
@@ -127,6 +128,23 @@ def _daily_series(entries, unit, height_cm):
     return labels, values, bmis, is_real
 
 
+def _moving_average(values, window):
+    """Trailing average at each index, over up to `window` preceding values
+    (fewer at the start of the series, so it needs no burn-in period)."""
+    if not values:
+        return []
+    result = []
+    running_sum = 0.0
+    buf = deque()
+    for v in values:
+        buf.append(v)
+        running_sum += v
+        if len(buf) > window:
+            running_sum -= buf.popleft()
+        result.append(running_sum / len(buf))
+    return result
+
+
 def _overview(user):
     unit = current_app.config["WEIGHT_UNIT"]
     entries = _entries_sorted(user)
@@ -139,6 +157,8 @@ def _overview(user):
         "chart_values": chart_values,
         "chart_bmis": chart_bmis,
         "chart_real": chart_real,
+        "chart_moving_average": _moving_average(chart_values, user.moving_avg_days),
+        "moving_avg_days": user.moving_avg_days,
         "bmi": user.bmi(unit),
         "unit": unit,
         "available_ranges": _available_range_keys(entries),
@@ -300,6 +320,7 @@ def settings():
 
     if request.method == "GET":
         form.dark_mode.data = user.dark_mode
+        form.moving_avg_days.data = user.moving_avg_days
         if user.height_cm is not None:
             form.height_unit.data = user.height_unit
             if user.height_unit == "m":
@@ -313,6 +334,7 @@ def settings():
         user.height_cm = value * 100 if unit == "m" else value
         user.height_unit = unit
         user.dark_mode = form.dark_mode.data
+        user.moving_avg_days = form.moving_avg_days.data
         db.session.commit()
         flash("Settings updated.", "success")
         return redirect(url_for("main.settings"))
