@@ -22,6 +22,22 @@ bp = Blueprint("main", __name__)
 
 GRID_PAGE_SIZE = 30
 
+# (key, label, days spanned — None means "all data"). 1w and all are always
+# shown; the rest only appear once the user's data actually spans that long.
+CHART_RANGES = [
+    ("1w", "1W", 7),
+    ("1m", "1M", 30),
+    ("3m", "3M", 91),
+    ("1y", "1Y", 365),
+    ("5y", "5Y", 5 * 365),
+    ("10y", "10Y", 10 * 365),
+    ("15y", "15Y", 15 * 365),
+    ("20y", "20Y", 20 * 365),
+    ("all", "All", None),
+]
+CHART_RANGE_KEYS = {key for key, _label, _days in CHART_RANGES}
+ALWAYS_SHOWN_RANGES = {"1w", "all"}
+
 
 def _stats(entries):
     if not entries:
@@ -52,6 +68,15 @@ def _entries_sorted(user):
     )
 
 
+def _available_range_keys(entries):
+    span_days = (date.today() - entries[0].entry_date).days if entries else 0
+    return [
+        key
+        for key, _label, days in CHART_RANGES
+        if key in ALWAYS_SHOWN_RANGES or (days is not None and span_days >= days)
+    ]
+
+
 def _overview(user):
     unit = current_app.config["WEIGHT_UNIT"]
     entries = _entries_sorted(user)
@@ -61,6 +86,7 @@ def _overview(user):
         "chart_values": [e.weight for e in entries],
         "bmi": user.bmi(unit),
         "unit": unit,
+        "available_ranges": _available_range_keys(entries),
     }
 
 
@@ -90,11 +116,15 @@ def index():
         return render_template("login.html", form=SignupForm())
 
     grid_days = _grid_page(user, date.today())
+    overview = _overview(user)
+    chart_range = user.chart_range if user.chart_range in overview["available_ranges"] else "all"
     return render_template(
         "index.html",
         grid_days=grid_days,
         grid_page_size=GRID_PAGE_SIZE,
-        **_overview(user),
+        chart_ranges=CHART_RANGES,
+        chart_range=chart_range,
+        **overview,
     )
 
 
@@ -148,6 +178,20 @@ def save_field():
 
     db.session.commit()
     return jsonify(status="saved", **_overview(user))
+
+
+@bp.route("/chart-range", methods=["POST"])
+@login_required
+def set_chart_range():
+    data = request.get_json(silent=True) or {}
+    range_key = data.get("range")
+    if range_key not in CHART_RANGE_KEYS:
+        return jsonify(error="invalid range"), 400
+
+    user = get_current_user()
+    user.chart_range = range_key
+    db.session.commit()
+    return jsonify(status="saved")
 
 
 @bp.route("/settings", methods=["GET", "POST"])

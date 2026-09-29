@@ -41,6 +41,18 @@
     </section>
 
     <section class="chart-wrap">
+      <div class="chart-header">
+        <div class="range-buttons" id="range-buttons">
+          {% for key, label, _days in chart_ranges %}
+            <button
+              type="button"
+              class="range-btn{{ ' active' if key == chart_range }}"
+              data-range="{{ key }}"
+              {{ 'hidden' if key not in available_ranges }}
+            >{{ label }}</button>
+          {% endfor %}
+        </div>
+      </div>
       <canvas id="weight-chart" height="90"></canvas>
     </section>
   </div>
@@ -88,14 +100,21 @@
   const chartLine = rootStyle.getPropertyValue('--chart-line').trim();
   const chartFill = rootStyle.getPropertyValue('--chart-fill').trim();
 
+  let fullLabels = {{ chart_labels|tojson }};
+  let fullValues = {{ chart_values|tojson }};
+  let currentRange = {{ chart_range|tojson }};
+  const RANGE_DAYS = Object.fromEntries(
+    {{ chart_ranges|tojson }}.map(([key, _label, days]) => [key, days])
+  );
+
   const chartCtx = document.getElementById('weight-chart');
   const chart = new Chart(chartCtx, {
     type: 'line',
     data: {
-      labels: {{ chart_labels|tojson }},
+      labels: fullLabels,
       datasets: [{
         label: 'Weight (' + unitLabel + ')',
-        data: {{ chart_values|tojson }},
+        data: fullValues,
         borderColor: chartLine,
         backgroundColor: chartFill,
         tension: 0.25,
@@ -123,6 +142,59 @@
     }
   });
 
+  function applyRange(rangeKey) {
+    currentRange = rangeKey;
+    const days = RANGE_DAYS[rangeKey];
+    let labels = fullLabels;
+    let values = fullValues;
+
+    if (days) {
+      const cutoff = new Date();
+      cutoff.setHours(0, 0, 0, 0);
+      cutoff.setDate(cutoff.getDate() - days);
+      const cutoffStr = cutoff.toISOString().slice(0, 10);
+      labels = [];
+      values = [];
+      for (let i = 0; i < fullLabels.length; i++) {
+        if (fullLabels[i] >= cutoffStr) {
+          labels.push(fullLabels[i]);
+          values.push(fullValues[i]);
+        }
+      }
+    }
+
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = values;
+    chart.update();
+
+    document.querySelectorAll('.range-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.range === rangeKey);
+    });
+  }
+
+  function applyAvailableRanges(keys) {
+    document.querySelectorAll('.range-btn').forEach((btn) => {
+      btn.hidden = !keys.includes(btn.dataset.range);
+    });
+  }
+
+  document.querySelectorAll('.range-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      applyRange(btn.dataset.range);
+      try {
+        await fetch('{{ url_for("main.set_chart_range") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ range: btn.dataset.range }),
+        });
+      } catch (err) {
+        // best-effort persistence; the chart itself already reflects the choice
+      }
+    });
+  });
+
+  applyRange(currentRange);
+
   function fmtSigned(value) {
     if (value === null || value === undefined) return '—';
     const sign = value > 0 ? '+' : '';
@@ -130,9 +202,10 @@
   }
 
   function updateOverview(data) {
-    chart.data.labels = data.chart_labels;
-    chart.data.datasets[0].data = data.chart_values;
-    chart.update();
+    fullLabels = data.chart_labels;
+    fullValues = data.chart_values;
+    applyRange(currentRange);
+    if (data.available_ranges) applyAvailableRanges(data.available_ranges);
 
     const stats = data.stats;
     const currentEl = document.getElementById('stat-current');

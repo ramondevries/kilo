@@ -1,4 +1,5 @@
 import io
+import re
 from datetime import date, timedelta
 
 from app import db
@@ -298,3 +299,88 @@ def test_export_then_import_round_trips(logged_in_client, app):
     with app.app_context():
         entries = WeightEntry.query.filter_by(user_id=user_id).order_by(WeightEntry.entry_date).all()
         assert [e.weight for e in entries] == [79.7, 80.1]
+
+
+def _add_entry(app, user_id, days_ago, weight=70.0):
+    with app.app_context():
+        db.session.add(
+            WeightEntry(
+                user_id=user_id, entry_date=date.today() - timedelta(days=days_ago), weight=weight
+            )
+        )
+        db.session.commit()
+
+
+def _range_buttons(html):
+    """Map range key -> {'hidden': bool, 'active': bool} parsed from the rendered buttons."""
+    result = {}
+    for tag in re.findall(r"<button\b[^>]*data-range=[^>]*>", html):
+        key = re.search(r'data-range="(\w+)"', tag).group(1)
+        result[key] = {"hidden": " hidden" in tag, "active": "active" in tag}
+    return result
+
+
+def test_chart_range_default_is_all_with_only_always_shown_buttons(logged_in_client):
+    client, _ = logged_in_client
+    buttons = _range_buttons(client.get("/").data.decode())
+
+    assert buttons["all"]["active"] is True
+    assert buttons["1w"]["hidden"] is False
+    assert buttons["all"]["hidden"] is False
+    for key in ("1m", "3m", "1y", "5y", "10y", "15y", "20y"):
+        assert buttons[key]["hidden"] is True, f"{key} should be hidden with no data"
+
+
+def test_chart_range_buttons_unlock_as_data_spans_grow(logged_in_client, app):
+    client, user_id = logged_in_client
+    _add_entry(app, user_id, days_ago=0)
+    _add_entry(app, user_id, days_ago=400)
+
+    buttons = _range_buttons(client.get("/").data.decode())
+    for key in ("1w", "1m", "3m", "1y", "all"):
+        assert buttons[key]["hidden"] is False, f"{key} should be visible (400-day span)"
+    for key in ("5y", "10y", "15y", "20y"):
+        assert buttons[key]["hidden"] is True, f"{key} should still be hidden"
+
+
+def test_set_chart_range_persists_and_reflects_on_reload(logged_in_client, app):
+    client, user_id = logged_in_client
+    _add_entry(app, user_id, days_ago=0)
+    _add_entry(app, user_id, days_ago=40)
+
+    resp = client.post("/chart-range", json={"range": "1m"})
+    assert resp.status_code == 200
+    with app.app_context():
+        user = db.session.get(User, user_id)
+        assert user.chart_range == "1m"
+
+    buttons = _range_buttons(client.get("/").data.decode())
+    assert buttons["1m"]["active"] is True
+    assert buttons["all"]["active"] is False
+
+
+def test_set_chart_range_rejects_invalid_value(logged_in_client, app):
+    client, user_id = logged_in_client
+    resp = client.post("/chart-range", json={"range": "bogus"})
+    assert resp.status_code == 400
+    with app.app_context():
+        assert db.session.get(User, user_id).chart_range == "all"
+
+
+def test_set_chart_range_requires_login(client):
+    resp = client.post("/chart-range", json={"range": "1m"})
+    assert resp.status_code == 302
+
+
+def test_chart_range_falls_back_to_all_when_stored_range_unavailable(logged_in_client, app):
+    client, user_id = logged_in_client
+    _add_entry(app, user_id, days_ago=0)
+    with app.app_context():
+        user = db.session.get(User, user_id)
+        user.chart_range = "5y"  # stale preference; data doesn't span 5 years
+        db.session.commit()
+
+    buttons = _range_buttons(client.get("/").data.decode())
+    assert buttons["5y"]["hidden"] is True
+    assert buttons["all"]["active"] is True
+    assert buttons["5y"]["active"] is False
