@@ -532,6 +532,10 @@
     return { labels: outLabels, values: outValues, bmis: outBmis, reals: outReals, movingAvg: outMovingAvg };
   }
 
+  // The moving average is only drawn on the short ranges; on 5Y and longer
+  // it's just noise on top of an already-decimated line.
+  const MOVING_AVG_RANGES = new Set(['1w', '1m', '3m', '1y']);
+
   function applyRange(rangeKey) {
     currentRange = rangeKey;
     const days = RANGE_DAYS[rangeKey];
@@ -578,7 +582,7 @@
     rebuildTickCache();
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
-    chart.data.datasets[1].data = movingAvg;
+    chart.data.datasets[1].data = MOVING_AVG_RANGES.has(rangeKey) ? movingAvg : [];
     chart.data.datasets[2].data = overallAvg == null ? [] : labels.map(() => overallAvg);
     chart.update();
 
