@@ -271,10 +271,28 @@
   }
 
   // Interpolated (gap-filled) points are plotted so the line stays
-  // continuous, but they aren't real measurements — no dot, and no
-  // tooltip value, for those; only real entries show either.
+  // continuous, but they aren't real measurements — no dot for those;
+  // only real entries get one. (Tooltip visibility is separate, see
+  // shouldShowTooltip below — decimated views need it to behave
+  // differently.)
   function isRealPoint(dataIndex) {
     return !currentReal || currentReal[dataIndex] !== false;
+  }
+
+  // On a decimated (averaged, zoomed-out) range, virtually every plotted
+  // point spans more than one source day, so decimateForDisplay marks it
+  // real: false — correctly, it isn't any single day's real measurement.
+  // But reusing isRealPoint for the tooltip filter meant that on 10Y+/All,
+  // where almost nothing survives as a single-day bucket, hover showed no
+  // tooltip anywhere at all. An averaged point still has a meaningful
+  // value worth showing on hover, so once a range is actually decimated,
+  // every point gets a tooltip; the real-only rule only applies at full
+  // daily resolution, where "not a real measurement" still means
+  // something distinct from "here's the average around this date".
+  let currentDecimated = false;
+
+  function shouldShowTooltip(dataIndex) {
+    return currentDecimated || isRealPoint(dataIndex);
   }
 
   function pointRadiusFor(ctx) {
@@ -399,7 +417,7 @@
         legend: { display: false },
         tooltip: {
           // Interpolated points carry no real value — don't show one.
-          filter: (item) => isRealPoint(item.dataIndex),
+          filter: (item) => shouldShowTooltip(item.dataIndex),
         },
       },
       scales: {
@@ -508,6 +526,7 @@
       }
     }
 
+    currentDecimated = labels.length > MAX_PLOT_POINTS;
     ({ labels, values, bmis, reals } = decimateForDisplay(labels, values, bmis, reals));
 
     currentBmis = bmis;
