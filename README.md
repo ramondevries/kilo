@@ -1,4 +1,4 @@
-# Weight Tracker
+# Kilo Tracker
 
 A small Flask app for logging your weight over time: add daily entries, see
 a trend chart, and track 7-day/30-day/total change.
