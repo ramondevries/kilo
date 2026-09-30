@@ -28,7 +28,7 @@
       {% if stats %}
         <div class="stat-card">
           <span class="stat-label">Current</span>
-          <span class="stat-value" id="stat-current">{{ "%.1f"|format(stats.current) }} {{ unit }}</span>
+          <span class="stat-value" id="stat-current">{{ "%.1f"|format(stats.current) }} kg</span>
         </div>
       {% else %}
         <p class="empty" id="stat-empty">No entries yet — add your weight below.</p>
@@ -46,14 +46,14 @@
         {% for c in stats.changes %}
           <div class="stat-card" data-days="{{ c.days }}">
             <span class="stat-label">{{ c.days }}-day change</span>
-            <span class="stat-value change-value {{ 'down' if c.change is not none and c.change < 0 else 'up' if c.change }}">{{ "%+.1f"|format(c.change) ~ " " ~ unit if c.change is not none else "—" }}</span>
+            <span class="stat-value change-value {{ 'down' if c.change is not none and c.change < 0 else 'up' if c.change }}">{{ "%+.1f"|format(c.change) ~ " kg" if c.change is not none else "—" }}</span>
             <span class="stat-sub change-rate {{ 'down' if c.g_per_day is not none and c.g_per_day < 0 else 'up' if c.g_per_day }}">{{ "%+.0f"|format(c.g_per_day) ~ " g/day" if c.g_per_day is not none else "—" }}</span>
           </div>
         {% endfor %}
         {% set t = stats.total %}
         <div class="stat-card" id="stat-total-card">
           <span class="stat-label" id="stat-total-label">{{ t.days }}-day change</span>
-          <span class="stat-value change-value {{ 'down' if t.change is not none and t.change < 0 else 'up' if t.change }}">{{ "%+.1f"|format(t.change) ~ " " ~ unit if t.change is not none else "—" }}</span>
+          <span class="stat-value change-value {{ 'down' if t.change is not none and t.change < 0 else 'up' if t.change }}">{{ "%+.1f"|format(t.change) ~ " kg" if t.change is not none else "—" }}</span>
           <span class="stat-sub change-rate {{ 'down' if t.g_per_day is not none and t.g_per_day < 0 else 'up' if t.g_per_day }}">{{ "%+.0f"|format(t.g_per_day) ~ " g/day" if t.g_per_day is not none else "—" }}</span>
         </div>
         <div class="stat-card stat-entries" id="stat-entries-card">
@@ -80,7 +80,7 @@
         </div>
         <div class="day-grid-header">
           <span>Date</span>
-          <span>Weight ({{ unit }})</span>
+          <span>Weight (kg)</span>
           <span>Note</span>
         </div>
       </div>
@@ -115,7 +115,7 @@
       <h3>Log today's weight?</h3>
       <p>You haven't recorded a weight for today yet.</p>
       <div class="field">
-        <label for="today-prompt-weight">Weight ({{ unit }})</label>
+        <label for="today-prompt-weight">Weight (kg)</label>
         <input type="number" step="0.1" data-decimal-only id="today-prompt-weight" placeholder="e.g. 82.4">
       </div>
       <p class="flash flash-error" id="today-prompt-error" hidden></p>
@@ -142,7 +142,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-  const unitLabel = {{ unit|tojson }};
 
   const rootStyle = getComputedStyle(document.documentElement);
   const chartLine = rootStyle.getPropertyValue('--chart-line').trim();
@@ -296,13 +295,11 @@
   // "zones" (red high / green healthy / red low) regardless of where the
   // line's trend actually falls in time.
   const heightCm = {{ (current_user.height_cm if current_user else none)|tojson }};
-  const KG_PER_LB = 0.45359237;
   // One gradient stop per color stop (top of the chart = highest BMI).
   const BMI_GRADIENT_STOPS = [BMI_LUT_MAX, ...BMI_COLOR_STOPS.map((s) => s[0]).reverse(), BMI_LUT_MIN];
 
   function weightForBmi(bmi, heightM) {
-    const kg = bmi * heightM * heightM;
-    return unitLabel === 'lb' ? kg / KG_PER_LB : kg;
+    return bmi * heightM * heightM;
   }
 
   function verticalBmiGradient(context) {
@@ -437,7 +434,7 @@
     data: {
       labels: fullLabels,
       datasets: [{
-        label: 'Weight (' + unitLabel + ')',
+        label: 'Weight (kg)',
         data: fullValues,
         borderColor: chartLine,
         borderWidth: 1,
@@ -674,7 +671,7 @@
   function fmtSigned(value) {
     if (value === null || value === undefined) return '—';
     const sign = value > 0 ? '+' : '';
-    return sign + value.toFixed(1) + ' ' + unitLabel;
+    return sign + value.toFixed(1) + ' kg';
   }
 
   function setChangeCell(cell, value, digits, suffix) {
@@ -696,11 +693,11 @@
     const stats = data.stats;
     const currentEl = document.getElementById('stat-current');
     if (stats && currentEl) {
-      currentEl.textContent = stats.current.toFixed(1) + ' ' + unitLabel;
+      currentEl.textContent = stats.current.toFixed(1) + ' kg';
       const totalCard = document.getElementById('stat-total-card');
       if (totalCard) {
         document.getElementById('stat-total-label').textContent = stats.total.days + '-day change';
-        setChangeCell(totalCard.querySelector('.change-value'), stats.total.change, 1, ' ' + unitLabel);
+        setChangeCell(totalCard.querySelector('.change-value'), stats.total.change, 1, ' kg');
         setChangeCell(totalCard.querySelector('.change-rate'), stats.total.g_per_day, 0, ' g/day');
       }
       const firstEl = document.getElementById('stat-first-date');
@@ -712,7 +709,7 @@
       stats.changes.forEach((c) => {
         const card = document.querySelector('.stat-card[data-days="' + c.days + '"]');
         if (!card) return;
-        setChangeCell(card.querySelector('.change-value'), c.change, 1, ' ' + unitLabel);
+        setChangeCell(card.querySelector('.change-value'), c.change, 1, ' kg');
         setChangeCell(card.querySelector('.change-rate'), c.g_per_day, 0, ' g/day');
       });
     }

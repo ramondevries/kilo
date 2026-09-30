@@ -4,7 +4,6 @@ from datetime import date, timedelta
 from flask import (
     Blueprint,
     Response,
-    current_app,
     flash,
     jsonify,
     redirect,
@@ -19,7 +18,7 @@ from app.auth import get_current_user, login_required
 from app.csv_io import export_csv, parse_csv
 from app.forms import ImportForm, SettingsForm, SignupForm
 from app.models import WeightEntry
-from app.utils import DECIMAL_RE, to_kg
+from app.utils import DECIMAL_RE
 
 bp = Blueprint("main", __name__)
 
@@ -47,7 +46,7 @@ ALWAYS_SHOWN_RANGES = {"1w", "all"}
 CHANGE_PERIODS = (7, 14, 30, 90, 180, 365)
 
 
-def _stats(entries, moving_average, unit):
+def _stats(entries, moving_average):
     if not entries:
         return None
 
@@ -60,39 +59,38 @@ def _stats(entries, moving_average, unit):
         "current": moving_average[-1],
         "start": first.weight,
         "total_change": latest.weight - first.weight,
-        "changes": _moving_average_changes(moving_average, unit),
-        "total": _period_change(moving_average, total_days, unit),
+        "changes": _moving_average_changes(moving_average),
+        "total": _period_change(moving_average, total_days),
         "first_date": first.entry_date.isoformat(),
         "last_date": latest.entry_date.isoformat(),
         "entry_count": len(entries),
     }
 
 
-def _period_change(moving_average, days, unit):
+def _period_change(moving_average, days):
     """Change in the moving average between the latest day and `days` days
     earlier. `moving_average` is the daily series (one value per calendar
     day, ending at the latest entry), so N days back is simply N indices
     back. None when there's less history than that (or days is 0).
-    `change` is in the display unit; `g_per_day` is grams/day regardless of
-    unit."""
+    `change` is in kg; `g_per_day` is grams/day."""
     change = g_per_day = None
     if days > 0 and len(moving_average) > days:
         change = moving_average[-1] - moving_average[-1 - days]
-        g_per_day = to_kg(change, unit) * 1000 / days
+        g_per_day = change * 1000 / days
     return {"days": days, "change": change, "g_per_day": g_per_day}
 
 
-def _moving_average_changes(moving_average, unit):
+def _moving_average_changes(moving_average):
     """`_period_change` for each period in CHANGE_PERIODS."""
-    return [_period_change(moving_average, days, unit) for days in CHANGE_PERIODS]
+    return [_period_change(moving_average, days) for days in CHANGE_PERIODS]
 
 
-def _bmi(moving_average, height_cm, unit):
+def _bmi(moving_average, height_cm):
     """BMI from the current (latest) moving-average weight; None without a
     height or any entries."""
     if not height_cm or not moving_average:
         return None
-    return to_kg(moving_average[-1], unit) / ((height_cm / 100) ** 2)
+    return moving_average[-1] / ((height_cm / 100) ** 2)
 
 
 def _entries_sorted(user):
@@ -110,7 +108,7 @@ def _available_range_keys(entries):
     ]
 
 
-def _daily_series(entries, unit, height_cm):
+def _daily_series(entries, height_cm):
     """Every calendar day from the first entry to the last, inclusive.
 
     A category-axis chart spaces its labels evenly regardless of the actual
@@ -153,7 +151,7 @@ def _daily_series(entries, unit, height_cm):
     bmis = None
     if height_cm:
         height_m = height_cm / 100
-        bmis = [to_kg(v, unit) / (height_m ** 2) for v in values]
+        bmis = [v / (height_m ** 2) for v in values]
 
     return labels, values, bmis, is_real
 
@@ -176,22 +174,20 @@ def _moving_average(values, window):
 
 
 def _overview(user):
-    unit = current_app.config["WEIGHT_UNIT"]
     entries = _entries_sorted(user)
     chart_labels, chart_values, chart_bmis, chart_real = _daily_series(
-        entries, unit, user.height_cm
+        entries, user.height_cm
     )
     chart_moving_average = _moving_average(chart_values, user.moving_avg_days)
     return {
-        "stats": _stats(entries, chart_moving_average, unit),
+        "stats": _stats(entries, chart_moving_average),
         "chart_labels": chart_labels,
         "chart_values": chart_values,
         "chart_bmis": chart_bmis,
         "chart_real": chart_real,
         "chart_moving_average": chart_moving_average,
         "moving_avg_days": user.moving_avg_days,
-        "bmi": _bmi(chart_moving_average, user.height_cm, unit),
-        "unit": unit,
+        "bmi": _bmi(chart_moving_average, user.height_cm),
         "available_ranges": _available_range_keys(entries),
     }
 
@@ -390,8 +386,7 @@ def settings():
 @login_required
 def export_entries():
     user = get_current_user()
-    unit = current_app.config["WEIGHT_UNIT"]
-    csv_text = export_csv(_entries_sorted(user), unit)
+    csv_text = export_csv(_entries_sorted(user))
     # Unlocks the "remove my data" flow (see app/account.py), which insists
     # on a download first.
     session["data_exported"] = True
@@ -416,8 +411,7 @@ def import_entries():
                 flash(error, "error")
         return redirect(url_for("main.settings"))
 
-    unit = current_app.config["WEIGHT_UNIT"]
-    rows, errors = parse_csv(form.csv_file.data.read(), unit)
+    rows, errors = parse_csv(form.csv_file.data.read())
 
     imported = 0
     for entry_date, weight, note in rows:

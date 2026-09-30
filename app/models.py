@@ -1,7 +1,7 @@
 from datetime import date
 
 from app import db
-from app.utils import to_kg, utcnow
+from app.utils import utcnow
 
 
 class WeightEntry(db.Model):
@@ -55,21 +55,6 @@ class User(db.Model):
 
     def gravatar_url(self, size=80, default="mp"):
         return f"https://www.gravatar.com/avatar/{self.email_hash}?s={size}&d={default}"
-
-    def latest_weight_kg(self, weight_unit):
-        entry = self.entries.order_by(WeightEntry.entry_date.desc()).first()
-        if entry is None:
-            return None
-        return to_kg(entry.weight, weight_unit)
-
-    def bmi(self, weight_unit):
-        if not self.height_cm:
-            return None
-        weight_kg = self.latest_weight_kg(weight_unit)
-        if weight_kg is None:
-            return None
-        height_m = self.height_cm / 100
-        return weight_kg / (height_m ** 2)
 
     def __repr__(self):
         return f"<User {self.email_hash[:8]}…>"

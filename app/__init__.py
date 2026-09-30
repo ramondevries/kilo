@@ -39,7 +39,6 @@ def create_app(test_config=None):
         SECRET_KEY=os.environ.get("SECRET_KEY", "dev"),
         SQLALCHEMY_DATABASE_URI="sqlite:///" + os.path.join(app.instance_path, "weight.db"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        WEIGHT_UNIT=os.environ.get("WEIGHT_UNIT", "kg"),
         MAIL_SERVER=os.environ.get("MAIL_SERVER", "localhost"),
         MAIL_PORT=int(os.environ.get("MAIL_PORT", 25)),
         MAIL_USE_TLS=os.environ.get("MAIL_USE_TLS", "0") == "1",

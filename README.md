@@ -20,7 +20,7 @@ python run.py
 Then open http://127.0.0.1:5000. Data is stored in `instance/weight.db`
 (SQLite, created automatically).
 
-Set `WEIGHT_UNIT=lb` (default `kg`) to change the displayed unit.
+Weights are in kilograms and heights in centimetres or metres.
 
 ## Email sign-up
 
