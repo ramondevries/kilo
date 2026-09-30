@@ -790,3 +790,20 @@ def test_number_fields_are_marked_decimal_only(logged_in_client):
     assert b"data-decimal-only" in client.get("/settings").data
     index = client.get("/").data
     assert index.count(b"data-decimal-only") >= 2
+
+
+def test_settings_page_has_back_link_to_dashboard(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/settings").data.decode()
+    assert re.search(r'<a class="back-link" href="/"', html)
+
+
+def test_remove_data_page_has_back_link_to_settings(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/settings/remove").data.decode()
+    assert re.search(r'<a class="back-link" href="/settings"', html)
+
+
+def test_about_page_has_back_link_to_dashboard(client):
+    html = client.get("/about").data.decode()
+    assert re.search(r'<a class="back-link" href="/"', html)

@@ -388,6 +388,42 @@ h2 {
   text-align: center;
 }
 
+/* Card title row with a round back arrow on the left. */
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.page-head h2 { margin: 0; }
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.back-link svg { transition: transform 0.15s ease; }
+
+.back-link:hover,
+.back-link:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.back-link:hover svg,
+.back-link:focus-visible svg { transform: translateX(-2px); }
+
 /* .entries scrolls internally as a dashboard grid item now (see the
    grid-area rule above); it isn't stacked in normal document flow, so
    the shared .add-entry, .entries bottom margin doesn't apply here. */

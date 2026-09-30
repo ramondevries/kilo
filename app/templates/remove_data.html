@@ -1,10 +1,14 @@
 {% extends "base.html" %}
+{% from "_back_link.html" import back_link %}
 
 {% block title %}Remove my data — Kilo Tracker{% endblock %}
 
 {% block content %}
   <section class="add-entry">
-    <h2>Remove my data</h2>
+    <div class="page-head">
+      {{ back_link(url_for('main.settings'), "Back to settings") }}
+      <h2>Remove my data</h2>
+    </div>
     <p>This permanently deletes your account, all your weigh-ins and notes,
       and your settings. It can't be undone.</p>
 

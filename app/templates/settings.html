@@ -1,10 +1,14 @@
 {% extends "base.html" %}
+{% from "_back_link.html" import back_link %}
 
 {% block title %}Settings — Kilo Tracker{% endblock %}
 
 {% block content %}
   <section class="add-entry">
-    <h2>Settings</h2>
+    <div class="page-head">
+      {{ back_link(url_for('main.index'), "Back to the dashboard") }}
+      <h2>Settings</h2>
+    </div>
     <form method="post" class="entry-form">
       {{ form.hidden_tag() }}
       <div class="field field-wide">

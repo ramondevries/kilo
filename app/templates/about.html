@@ -1,10 +1,14 @@
 {% extends "base.html" %}
+{% from "_back_link.html" import back_link %}
 
 {% block title %}About — Kilo Tracker{% endblock %}
 
 {% block content %}
   <section class="add-entry">
-    <h2>About Kilo Tracker</h2>
+    <div class="page-head">
+      {{ back_link(url_for('main.index'), "Back to the dashboard") }}
+      <h2>About Kilo Tracker</h2>
+    </div>
     <p>For many years I tracked my weight with
       <a href="https://www.fourmilab.ch/hackdiet/online/hdo.html" target="_blank" rel="noopener">The Hacker's Diet Online</a>,
       created by
@@ -29,6 +33,5 @@
     <p>That hash also doubles as your Gravatar id — if you have an avatar set
       up at <a href="https://gravatar.com" target="_blank" rel="noopener">gravatar.com</a>,
       it shows up automatically once you're signed in.</p>
-    <p><a href="{{ url_for('main.index') }}">&larr; Back</a></p>
   </section>
 {% endblock %}
