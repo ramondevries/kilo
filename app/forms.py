@@ -33,16 +33,30 @@ class VerifyCodeForm(FlaskForm):
 
 
 class SettingsForm(FlaskForm):
-    height_value = FloatField(
-        "Height", validators=[DataRequired(), NumberRange(min=1, max=300)]
-    )
+    MIN_HEIGHT_CM = 50
+    MAX_HEIGHT_CM = 275
+
+    height_value = FloatField("Height", validators=[DataRequired()])
     height_unit = SelectField(
         "Unit", choices=[(u, u) for u in User.HEIGHT_UNITS], validators=[DataRequired()]
     )
     dark_mode = BooleanField("Dark mode")
+
     moving_avg_days = IntegerField(
         "Moving average (days)", default=30, validators=[NumberRange(min=1, max=3650)]
     )
+
+    def validate_height_value(self, field):
+        # The range is in centimetres, so convert first — the entered number
+        # means 180 in "cm" but 1.8 in "m".
+        if field.data is None or self.height_unit.data not in User.HEIGHT_UNITS:
+            return  # the field/unit report their own errors
+        height_cm = field.data * 100 if self.height_unit.data == "m" else field.data
+        if not self.MIN_HEIGHT_CM <= height_cm <= self.MAX_HEIGHT_CM:
+            raise ValidationError(
+                f"Height must be between {self.MIN_HEIGHT_CM} and {self.MAX_HEIGHT_CM} cm "
+                f"({self.MIN_HEIGHT_CM / 100:g} and {self.MAX_HEIGHT_CM / 100:g} m)."
+            )
 
 
 class ImportForm(FlaskForm):

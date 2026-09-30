@@ -727,3 +727,37 @@ def test_print_stylesheet_is_linked_for_print_only(logged_in_client):
     assert re.search(r'<link[^>]+print\.css[^>]+media="print"', html)
     assert client.get("/static/print.css").status_code == 200
 
+
+@pytest.mark.parametrize(
+    "value,unit,ok",
+    [
+        ("50", "cm", True),
+        ("275", "cm", True),
+        ("49.9", "cm", False),
+        ("275.1", "cm", False),
+        ("0.5", "m", True),
+        ("2.75", "m", True),
+        ("0.49", "m", False),
+        ("2.76", "m", False),
+        ("180", "m", False),
+        ("1.8", "cm", False),
+    ],
+)
+def test_height_must_be_between_50_and_275_cm(logged_in_client, app, value, unit, ok):
+    client, user_id = logged_in_client
+    resp = client.post("/settings", data={"height_value": value, "height_unit": unit})
+    user = db.session.get(User, user_id)
+    if ok:
+        assert resp.status_code == 302
+        assert user.height_cm == pytest.approx(float(value) * (100 if unit == "m" else 1))
+    else:
+        assert resp.status_code == 200
+        assert b"between 50 and 275 cm" in resp.data
+        assert user.height_cm is None
+
+
+def test_non_numeric_height_is_rejected_without_crashing(logged_in_client):
+    client, _ = logged_in_client
+    resp = client.post("/settings", data={"height_value": "tall", "height_unit": "cm"})
+    assert resp.status_code == 200
+
