@@ -146,8 +146,9 @@
   const rootStyle = getComputedStyle(document.documentElement);
   const chartLine = rootStyle.getPropertyValue('--chart-line').trim();
   const chartFill = rootStyle.getPropertyValue('--chart-fill').trim();
-  const dangerColor = rootStyle.getPropertyValue('--danger').trim();
-  const accentColor = rootStyle.getPropertyValue('--accent').trim();
+  const dangerColor = rootStyle.getPropertyValue('--chart-red').trim();
+  const accentColor = rootStyle.getPropertyValue('--chart-green').trim();
+  const warnColor = rootStyle.getPropertyValue('--chart-yellow').trim();
   const gridLineColor = rootStyle.getPropertyValue('--border').trim();
   const movingAvgColor = rootStyle.getPropertyValue('--chart-moving-avg').trim();
   const overallAvgColor = rootStyle.getPropertyValue('--chart-overall-avg').trim();
@@ -197,18 +198,39 @@
   }
   const RED_RGB = hexToRgb(dangerColor);
   const GREEN_PEAK_RGB = hexToRgb(accentColor);
-  const GREEN_EDGE_RGB = lerpRgb(GREEN_PEAK_RGB, { r: 255, g: 255, b: 255 }, 0.45);
+  const YELLOW_RGB = hexToRgb(warnColor);
+
+  // Traffic-light scale: red / amber / green bands with short blends
+  // between them, [bmi, color] in ascending order. Green is the healthy
+  // range (about 19-24.5), amber is a narrow band just outside it (17.5-19
+  // and 26-27), red is clearly out of range (<= 16, >= 29). Flat outside
+  // the ends.
+  const BMI_COLOR_STOPS = [
+    [16, RED_RGB],
+    [17.5, YELLOW_RGB],
+    [19, GREEN_PEAK_RGB],
+    [24.5, GREEN_PEAK_RGB],
+    [26, YELLOW_RGB],
+    [27, YELLOW_RGB],
+    [29, RED_RGB],
+  ];
 
   function computeBmiRgb(bmi) {
-    if (bmi <= 17 || bmi >= 30) return RED_RGB;
-    if (bmi < 20) return lerpRgb(RED_RGB, GREEN_EDGE_RGB, (bmi - 17) / (20 - 17));
-    if (bmi <= 25) return lerpRgb(GREEN_EDGE_RGB, GREEN_PEAK_RGB, 1 - Math.abs(bmi - 22.5) / 2.5);
-    return lerpRgb(GREEN_EDGE_RGB, RED_RGB, (bmi - 25) / (30 - 25));
+    const stops = BMI_COLOR_STOPS;
+    if (bmi <= stops[0][0]) return stops[0][1];
+    for (let i = 1; i < stops.length; i++) {
+      if (bmi <= stops[i][0]) {
+        const [b0, c0] = stops[i - 1];
+        const [b1, c1] = stops[i];
+        return lerpRgb(c0, c1, (bmi - b0) / (b1 - b0));
+      }
+    }
+    return stops[stops.length - 1][1];
   }
 
   // Precomputed BMI -> color lookup tables (0.1 resolution): one solid
   // (line/points), one translucent (area fill, same hue). Outside
-  // [17, 30] the color is flat red either way, so a modest range with
+  // [16, 29] the color is flat red either way, so a modest range with
   // clamping is all that's needed.
   const BMI_LUT_MIN = 10;
   const BMI_LUT_MAX = 40;
@@ -274,7 +296,8 @@
   // line's trend actually falls in time.
   const heightCm = {{ (current_user.height_cm if current_user else none)|tojson }};
   const KG_PER_LB = 0.45359237;
-  const BMI_GRADIENT_STOPS = [BMI_LUT_MAX, 30, 25, 22.5, 20, 17, BMI_LUT_MIN];
+  // One gradient stop per color stop (top of the chart = highest BMI).
+  const BMI_GRADIENT_STOPS = [BMI_LUT_MAX, ...BMI_COLOR_STOPS.map((s) => s[0]).reverse(), BMI_LUT_MIN];
 
   function weightForBmi(bmi, heightM) {
     const kg = bmi * heightM * heightM;

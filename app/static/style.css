@@ -7,6 +7,11 @@
   --accent: #2f6f4f;
   --danger: #b3261e;
   --chart-line: #2f6f4f;
+  /* BMI-zone colours for the chart fill and dots: the brighter logo palette
+     rather than the UI --danger/--accent. */
+  --chart-red: #f0444a;
+  --chart-green: #1fbf6a;
+  --chart-yellow: #ffc933;
   --chart-fill: rgba(47, 111, 79, 0.12);
   --chart-moving-avg: #2563eb;
   --chart-overall-avg: #000000;
@@ -25,6 +30,9 @@ html[data-theme="dark"] {
   --accent: #4fbf87;
   --danger: #ff7a70;
   --chart-line: #4fbf87;
+  --chart-red: #ff6369;
+  --chart-green: #3dd68c;
+  --chart-yellow: #ffd54a;
   --chart-fill: rgba(79, 191, 135, 0.18);
   --chart-moving-avg: #5b9bff;
   --chart-overall-avg: #e9ece9;
