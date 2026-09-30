@@ -467,6 +467,23 @@ button.back-link {
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
 .field-wide { grid-column: 1 / -1; }
 
+/* A text input with its submit button on the same line. */
+.input-with-button {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.input-with-button input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.input-with-button button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 label { font-size: var(--fs-ui); color: var(--muted); }
 
 input, button, select {

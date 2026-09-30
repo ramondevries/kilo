@@ -93,3 +93,9 @@ def test_signin_code_is_valid_for_30_minutes(client, app):
         user = User.query.filter_by(email_hash=hash_email("ttl@example.com")).first()
         remaining = user.code_expires_at - utcnow()
         assert timedelta(minutes=29) < remaining <= timedelta(minutes=30)
+
+
+def test_send_code_button_sits_next_to_the_email_input(client):
+    html = client.get("/").data.decode()
+    row = html[html.index('class="input-with-button"'):]
+    assert row.index('name="email"') < row.index("Send code") < row.index("</div>")
