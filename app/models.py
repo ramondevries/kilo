@@ -1,7 +1,7 @@
-from datetime import date, datetime
+from datetime import date
 
 from app import db
-from app.utils import to_kg
+from app.utils import to_kg, utcnow
 
 
 class WeightEntry(db.Model):
@@ -27,7 +27,7 @@ class User(db.Model):
     # the plaintext address so a database breach doesn't expose it.
     email_hash = db.Column(db.String(64), nullable=False, unique=True, index=True)
     verified_at = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
     code_hash = db.Column(db.String(255), nullable=True)
     code_expires_at = db.Column(db.DateTime, nullable=True)
