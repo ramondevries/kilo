@@ -1,3 +1,18 @@
+# Kilo Tracker - a small weight-tracking web app.
+# Copyright (C) 2026 Ramón de Vries <ramon@11tools.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version. See the LICENSE file for the full text.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+"""Database models: `WeightEntry` and `User`."""
+
 from datetime import date
 
 from app import db
@@ -5,6 +20,7 @@ from app.utils import utcnow
 
 
 class WeightEntry(db.Model):
+    """One weight (in kg) recorded by a user for a calendar day; unique per user and date."""
     __table_args__ = (db.UniqueConstraint("user_id", "entry_date", name="uq_user_entry_date"),)
 
     id = db.Column(db.Integer, primary_key=True)
@@ -18,6 +34,11 @@ class WeightEntry(db.Model):
 
 
 class User(db.Model):
+    """A registered user.
+
+    Identified by a SHA-256 hash of their email (never the address itself). Holds
+    the sign-in and account-removal codes plus display settings.
+    """
     MAX_CODE_ATTEMPTS = 5
     HEIGHT_UNITS = ("cm", "m")
 
@@ -51,9 +72,11 @@ class User(db.Model):
 
     @property
     def is_verified(self):
+        """True once the user has entered a correct emailed code."""
         return self.verified_at is not None
 
     def gravatar_url(self, size=80, default="mp"):
+        """URL of the user's Gravatar avatar; the email hash doubles as the Gravatar id."""
         return f"https://www.gravatar.com/avatar/{self.email_hash}?s={size}&d={default}"
 
     def __repr__(self):

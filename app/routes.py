@@ -1,3 +1,24 @@
+# Kilo Tracker - a small weight-tracking web app.
+# Copyright (C) 2026 Ramón de Vries <ramon@11tools.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version. See the LICENSE file for the full text.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+"""Dashboard and JSON endpoints.
+
+The dashboard (`/`) shows the weight chart, the stat boxes and an
+infinite-scrolling daily log. The other routes save single entries, page
+through older days, store view preferences, and handle settings and CSV
+import/export.
+"""
+
 from collections import deque
 from datetime import date, timedelta
 
@@ -47,6 +68,10 @@ CHANGE_PERIODS = (7, 14, 30, 90, 180, 365)
 
 
 def _stats(entries, moving_average):
+    """Headline numbers for the stat boxes, or None without entries.
+
+    All changes are based on the moving average (see `_period_change`).
+    """
     if not entries:
         return None
 
@@ -94,12 +119,14 @@ def _bmi(moving_average, height_cm):
 
 
 def _entries_sorted(user):
+    """The user's entries, oldest first."""
     return (
         WeightEntry.query.filter_by(user_id=user.id).order_by(WeightEntry.entry_date.asc()).all()
     )
 
 
 def _available_range_keys(entries):
+    """Chart range keys to offer: 1W and All always, the others once the data spans at least that long."""
     span_days = (date.today() - entries[0].entry_date).days if entries else 0
     return [
         key
@@ -174,6 +201,12 @@ def _moving_average(values, window):
 
 
 def _overview(user):
+    """Everything the dashboard needs, as one dict.
+
+    Stats, the chart series (labels, weights, BMIs, moving average), the BMI and the
+    available ranges. It is also returned as JSON after each save so the page can
+    refresh in place.
+    """
     entries = _entries_sorted(user)
     chart_labels, chart_values, chart_bmis, chart_real = _daily_series(
         entries, user.height_cm
@@ -213,6 +246,7 @@ def _grid_page(user, end_date, size=GRID_PAGE_SIZE):
 
 @bp.route("/", methods=["GET"])
 def index():
+    """The dashboard for signed-in users, the sign-in page otherwise."""
     user = get_current_user()
     if user is None:
         return render_template("login.html", form=SignupForm())
@@ -236,6 +270,7 @@ def index():
 @bp.route("/entries/window", methods=["GET"])
 @login_required
 def entries_window():
+    """Older days for the daily log's infinite scroll: the page of days before `before` (an ISO date)."""
     before_str = request.args.get("before")
     try:
         end_date = date.fromisoformat(before_str) - timedelta(days=1)
@@ -284,6 +319,12 @@ def _outlier_warning(user, entry_date, weight):
 @bp.route("/entries/field", methods=["POST"])
 @login_required
 def save_field():
+    """Create, update or clear one day's weight and note (JSON).
+
+    Validates the weight. It may answer with status "warning" for a large jump from
+    neighbouring entries; the client overrides that by sending `confirm`. Returns
+    the refreshed overview.
+    """
     data = request.get_json(silent=True) or {}
     try:
         entry_date = date.fromisoformat(data.get("date", ""))
@@ -331,6 +372,7 @@ def save_field():
 @bp.route("/settings/dark-mode", methods=["POST"])
 @login_required
 def set_dark_mode():
+    """Store the user's dark-mode preference."""
     data = request.get_json(silent=True) or {}
     user = get_current_user()
     user.dark_mode = bool(data.get("dark_mode"))
@@ -341,6 +383,7 @@ def set_dark_mode():
 @bp.route("/chart-range", methods=["POST"])
 @login_required
 def set_chart_range():
+    """Remember the user's selected chart range."""
     data = request.get_json(silent=True) or {}
     range_key = data.get("range")
     if range_key not in CHART_RANGE_KEYS:
@@ -355,6 +398,7 @@ def set_chart_range():
 @bp.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
+    """View and update the user's settings."""
     user = get_current_user()
     form = SettingsForm()
 
@@ -385,6 +429,7 @@ def settings():
 @bp.route("/settings/export", methods=["GET"])
 @login_required
 def export_entries():
+    """Download all entries as CSV, and mark the data as downloaded for the removal flow."""
     user = get_current_user()
     csv_text = export_csv(_entries_sorted(user))
     # Unlocks the "remove my data" flow (see app/account.py), which insists
@@ -402,6 +447,7 @@ def export_entries():
 @bp.route("/settings/import", methods=["POST"])
 @login_required
 def import_entries():
+    """Import entries from an uploaded CSV file, overwriting entries on the same dates."""
     user = get_current_user()
     form = ImportForm()
 

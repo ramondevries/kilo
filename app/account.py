@@ -1,3 +1,24 @@
+# Kilo Tracker - a small weight-tracking web app.
+# Copyright (C) 2026 Ramón de Vries <ramon@11tools.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version. See the LICENSE file for the full text.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+"""Account data removal ("Remove my data").
+
+A three-step flow behind /settings/remove: the user first downloads their data
+(the CSV export sets a flag in the session), then requests a confirmation code
+by email, and finally enters that code to permanently delete their account and
+all their weight entries.
+"""
+
 import secrets
 from datetime import timedelta
 
@@ -15,6 +36,7 @@ bp = Blueprint("account", __name__)
 
 
 def _code_pending(user):
+    """True if the user has an unexpired removal code waiting to be entered."""
     return bool(
         user.delete_code_hash
         and user.delete_code_expires_at
@@ -25,6 +47,7 @@ def _code_pending(user):
 @bp.route("/settings/remove", methods=["GET"])
 @login_required
 def remove_data():
+    """Show the removal page: the download step, then the confirmation step."""
     user = get_current_user()
     return render_template(
         "remove_data.html",
@@ -39,6 +62,7 @@ def remove_data():
 @bp.route("/settings/remove/send-code", methods=["POST"])
 @login_required
 def send_removal_code():
+    """Email a new confirmation code. Needs a data download earlier in this session."""
     user = get_current_user()
     email = session.get("email")
     if not session.get("data_exported"):
@@ -61,6 +85,11 @@ def send_removal_code():
 @bp.route("/settings/remove/confirm", methods=["POST"])
 @login_required
 def confirm_removal():
+    """Delete the account and all its data if the emailed code is correct.
+
+    Refuses if the data wasn't downloaded in this session, the code has expired,
+    or there were too many wrong attempts.
+    """
     user = get_current_user()
     form = VerifyCodeForm()
     if not session.get("data_exported"):

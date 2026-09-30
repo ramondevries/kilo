@@ -1,3 +1,24 @@
+# Kilo Tracker - a small weight-tracking web app.
+# Copyright (C) 2026 Ramón de Vries <ramon@11tools.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version. See the LICENSE file for the full text.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+"""Application factory and shared extensions for Kilo Tracker.
+
+Creates the Flask app (`create_app`), wires up SQLAlchemy, CSRF protection and
+Flask-Mail, configures SQLite for use by several processes (WAL mode), and adds
+columns that newer versions of the app expect to databases created by older
+ones.
+"""
+
 import os
 import sqlite3
 
@@ -34,6 +55,12 @@ def _configure_sqlite(dbapi_connection, connection_record):
 
 
 def create_app(test_config=None):
+    """Build and configure the Flask application.
+
+    `test_config`, if given, overrides the default configuration (the tests use it
+    to point at an in-memory database). Settings such as SECRET_KEY, the mail
+    server and CHECK_EMAIL_MX come from environment variables.
+    """
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("SECRET_KEY", "dev"),

@@ -1,3 +1,22 @@
+# Kilo Tracker - a small weight-tracking web app.
+# Copyright (C) 2026 Ramón de Vries <ramon@11tools.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version. See the LICENSE file for the full text.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+"""CSV import and export of weight entries.
+
+The format is one `date,weight[,note]` line per entry, with dates as d-M-yy or
+d-M-yyyy and weights in kilograms.
+"""
+
 import csv
 import io
 from datetime import date
@@ -7,7 +26,7 @@ MAX_WEIGHT_KG = 1000
 
 
 class CsvRowError(Exception):
-    pass
+    """A CSV row could not be parsed."""
 
 
 def parse_ddmyy(text):
@@ -28,6 +47,7 @@ def parse_ddmyy(text):
 
 
 def format_ddmyy(d):
+    """Format a date as d-M-yy, e.g. 23-9-26 (the reverse of `parse_ddmyy`)."""
     return f"{d.day}-{d.month}-{d.strftime('%y')}"
 
 
@@ -73,6 +93,7 @@ def parse_csv(file_bytes):
 
 
 def export_csv(entries):
+    """Render entries as CSV text: `date,weight,note`, with the weight in kg to one decimal."""
     buf = io.StringIO()
     writer = csv.writer(buf)
     for entry in entries:

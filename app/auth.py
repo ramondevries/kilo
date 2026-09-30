@@ -1,3 +1,25 @@
+# Kilo Tracker - a small weight-tracking web app.
+# Copyright (C) 2026 Ramón de Vries <ramon@11tools.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version. See the LICENSE file for the full text.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+"""Passwordless email sign-in.
+
+Users enter their email and get a 6-digit code (valid for
+SIGNIN_CODE_TTL_MINUTES); entering it signs them in. Only a SHA-256 hash of the
+email is stored - the plaintext address lives only in the session of the
+signed-in user. Also holds the `login_required` decorator and the template
+context shared by all pages.
+"""
+
 import secrets
 from datetime import timedelta
 from functools import wraps
@@ -13,7 +35,9 @@ from app.utils import SIGNIN_CODE_TTL_MINUTES, hash_email, normalize_email, utcn
 
 bp = Blueprint("auth", __name__)
 
+
 def get_current_user():
+    """The signed-in `User` for this request, or None."""
     user_id = session.get("user_id")
     if user_id is None:
         return None
@@ -21,6 +45,8 @@ def get_current_user():
 
 
 def login_required(view):
+    """Redirect to the front page unless a user is signed in."""
+
     @wraps(view)
     def wrapped(*args, **kwargs):
         if get_current_user() is None:
@@ -33,6 +59,7 @@ def login_required(view):
 
 @bp.app_context_processor
 def inject_current_user():
+    """Template context for every page: the user, their email and the theme."""
     user = get_current_user()
     return {
         "current_user": user,
@@ -42,6 +69,7 @@ def inject_current_user():
 
 
 def _issue_code(user, email):
+    """Create a new sign-in code for `user`: store its hash and expiry, then email it."""
     code = f"{secrets.randbelow(1_000_000):06d}"
     user.code_hash = generate_password_hash(code)
     user.code_expires_at = utcnow() + timedelta(minutes=SIGNIN_CODE_TTL_MINUTES)
@@ -52,6 +80,7 @@ def _issue_code(user, email):
 
 @bp.route("/signup", methods=["GET", "POST"])
 def signup():
+    """Show the email form; on submit, email a code and go to the verify page."""
     form = SignupForm()
     if form.validate_on_submit():
         email = normalize_email(form.email.data)
@@ -72,6 +101,7 @@ def signup():
 
 @bp.route("/verify", methods=["GET", "POST"])
 def verify():
+    """Check the emailed code and sign the user in. Codes expire and allow a limited number of attempts."""
     email = session.get("pending_email")
     if not email:
         flash("Enter your email to get a verification code.", "error")
@@ -111,6 +141,7 @@ def verify():
 
 @bp.route("/verify/resend", methods=["POST"])
 def resend_code():
+    """Send a fresh sign-in code to the email address being verified."""
     email = session.get("pending_email")
     if not email:
         return redirect(url_for("auth.signup"))
@@ -127,6 +158,7 @@ def resend_code():
 
 @bp.route("/logout", methods=["POST"])
 def logout():
+    """Sign out by clearing the user from the session."""
     session.pop("user_id", None)
     session.pop("email", None)
     flash("Signed out.", "success")
@@ -135,4 +167,5 @@ def logout():
 
 @bp.route("/about")
 def about():
+    """The About page: an introduction and how sign-in works."""
     return render_template("about.html", ttl_minutes=SIGNIN_CODE_TTL_MINUTES)
