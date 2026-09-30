@@ -411,9 +411,14 @@
       if (prev && prev.slice(0, 7) === yearMonth) return '';
       if (index === 0 && label.slice(8, 10) !== '01') return '';
       const month = Number(label.slice(5, 7)) - 1;
+      // Narrow screens, 1Y: label every second month (Jan, Mar, May, ...).
+      if (narrowScreen.matches && currentRange === '1y' && month % 2 !== 0) return '';
       const monthYear = narrowScreen.matches ? "'" + label.slice(2, 4) : label.slice(0, 4);
       return MONTH_ABBR[month] + ' ' + monthYear;
     }
+    // Narrow screens, 1M: label every second day, counting back from the
+    // latest so the newest day is always labeled.
+    if (narrowScreen.matches && currentRange === '1m' && (currentLabels.length - 1 - index) % 2 !== 0) return '';
     return String(Number(label.slice(8, 10)));
   }
 
