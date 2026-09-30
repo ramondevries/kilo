@@ -22,7 +22,7 @@
   <section class="add-entry">
     <h2>How signing in works</h2>
     <p>There are no passwords. Enter your email and we send a 6-digit code
-      that's valid for 10 minutes — enter it and you're signed in.</p>
+      that's valid for {{ ttl_minutes }} minutes — enter it and you're signed in.</p>
     <p>We never store your email address itself in our database. Instead we keep a one-way
       SHA-256 hash of it (the same scheme
       <a href="https://docs.gravatar.com/rest/hash/" target="_blank" rel="noopener">Gravatar uses</a>).

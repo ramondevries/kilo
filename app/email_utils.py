@@ -5,6 +5,7 @@ from flask import current_app
 from flask_mail import Message
 
 from app import mail
+from app.utils import DELETE_CODE_TTL_MINUTES, SIGNIN_CODE_TTL_MINUTES
 
 
 def send_verification_email(email, code):
@@ -13,7 +14,7 @@ def send_verification_email(email, code):
         recipients=[email],
         body=(
             f"Your verification code is {code}.\n\n"
-            "It expires in 10 minutes. If you didn't request this, ignore this email."
+            f"It expires in {SIGNIN_CODE_TTL_MINUTES} minutes. If you didn't request this, ignore this email."
         ),
     )
     mail.send(message)
@@ -27,7 +28,7 @@ def send_deletion_email(email, code):
         body=(
             f"Your confirmation code is {code}.\n\n"
             "Entering it will permanently delete your account and all your "
-            "weight data. It expires in 10 minutes. If you didn't request "
+            f"weight data. It expires in {DELETE_CODE_TTL_MINUTES} minutes. If you didn't request "
             "this, ignore this email and your data stays untouched."
         ),
     )

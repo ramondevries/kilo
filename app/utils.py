@@ -3,6 +3,11 @@ from datetime import UTC, datetime
 
 KG_PER_LB = 0.45359237
 
+# How long an emailed code stays valid. Deleting an account is destructive,
+# so its confirmation code gets a shorter window than the sign-in code.
+SIGNIN_CODE_TTL_MINUTES = 30
+DELETE_CODE_TTL_MINUTES = 10
+
 
 def normalize_email(email):
     return email.strip().lower()

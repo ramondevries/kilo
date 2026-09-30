@@ -79,3 +79,17 @@ def test_logout_clears_session(client, app):
     client.post("/logout", follow_redirects=True)
     with client.session_transaction() as sess:
         assert "user_id" not in sess
+
+
+def test_signin_code_is_valid_for_30_minutes(client, app):
+    from datetime import timedelta
+
+    from app.utils import utcnow
+
+    with mail.record_messages() as outbox:
+        client.post("/signup", data={"email": "ttl@example.com"})
+    assert "30 minutes" in outbox[0].body
+    with app.app_context():
+        user = User.query.filter_by(email_hash=hash_email("ttl@example.com")).first()
+        remaining = user.code_expires_at - utcnow()
+        assert timedelta(minutes=29) < remaining <= timedelta(minutes=30)

@@ -25,7 +25,7 @@ Set `WEIGHT_UNIT=lb` (default `kg`) to change the displayed unit.
 ## Email sign-up
 
 Visit `/signup` to sign up with just an email address: you'll receive a
-6-digit verification code by email (valid for 10 minutes) and entering it
+6-digit verification code by email (valid for 30 minutes) and entering it
 signs you in. By default outgoing mail is suppressed and the code is only
 logged to the console, so sign-up works out of the box with no mail server.
 

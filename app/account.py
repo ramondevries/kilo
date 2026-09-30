@@ -5,11 +5,11 @@ from flask import Blueprint, flash, redirect, render_template, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
-from app.auth import CODE_TTL_MINUTES, get_current_user, login_required
+from app.auth import get_current_user, login_required
 from app.email_utils import send_deletion_email
 from app.forms import VerifyCodeForm
 from app.models import User
-from app.utils import utcnow
+from app.utils import DELETE_CODE_TTL_MINUTES, utcnow
 
 bp = Blueprint("account", __name__)
 
@@ -32,6 +32,7 @@ def remove_data():
         exported=bool(session.get("data_exported")),
         code_pending=_code_pending(user),
         email=session.get("email"),
+        ttl_minutes=DELETE_CODE_TTL_MINUTES,
     )
 
 
@@ -49,7 +50,7 @@ def send_removal_code():
 
     code = f"{secrets.randbelow(1_000_000):06d}"
     user.delete_code_hash = generate_password_hash(code)
-    user.delete_code_expires_at = utcnow() + timedelta(minutes=CODE_TTL_MINUTES)
+    user.delete_code_expires_at = utcnow() + timedelta(minutes=DELETE_CODE_TTL_MINUTES)
     user.delete_code_attempts = 0
     db.session.commit()
     send_deletion_email(email, code)

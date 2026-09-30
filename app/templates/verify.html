@@ -5,7 +5,7 @@
 {% block content %}
   <section class="add-entry">
     <h2>Enter your code</h2>
-    <p>We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in 10 minutes.</p>
+    <p>We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in {{ ttl_minutes }} minutes.</p>
     <form method="post" action="{{ url_for('auth.verify') }}" class="entry-form">
       {{ form.hidden_tag() }}
       <div class="field">

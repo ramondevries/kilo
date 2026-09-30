@@ -20,7 +20,7 @@
     {% if exported %}
       <h3>Step 2: Confirm by email</h3>
       {% if code_pending %}
-        <p>We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in 10 minutes.</p>
+        <p>We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in {{ ttl_minutes }} minutes.</p>
         <form method="post" action="{{ url_for('account.confirm_removal') }}" class="entry-form">
           {{ form.hidden_tag() }}
           <div class="field">

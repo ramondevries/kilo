@@ -9,12 +9,9 @@ from app import db
 from app.email_utils import send_verification_email
 from app.forms import SignupForm, VerifyCodeForm
 from app.models import User
-from app.utils import hash_email, normalize_email, utcnow
+from app.utils import SIGNIN_CODE_TTL_MINUTES, hash_email, normalize_email, utcnow
 
 bp = Blueprint("auth", __name__)
-
-CODE_TTL_MINUTES = 10
-
 
 def get_current_user():
     user_id = session.get("user_id")
@@ -47,7 +44,7 @@ def inject_current_user():
 def _issue_code(user, email):
     code = f"{secrets.randbelow(1_000_000):06d}"
     user.code_hash = generate_password_hash(code)
-    user.code_expires_at = utcnow() + timedelta(minutes=CODE_TTL_MINUTES)
+    user.code_expires_at = utcnow() + timedelta(minutes=SIGNIN_CODE_TTL_MINUTES)
     user.code_attempts = 0
     db.session.commit()
     send_verification_email(email, code)
@@ -107,7 +104,9 @@ def verify():
             flash("Email verified — you're signed in.", "success")
             return redirect(url_for("main.index"))
 
-    return render_template("verify.html", form=form, email=email)
+    return render_template(
+        "verify.html", form=form, email=email, ttl_minutes=SIGNIN_CODE_TTL_MINUTES
+    )
 
 
 @bp.route("/verify/resend", methods=["POST"])
@@ -136,4 +135,4 @@ def logout():
 
 @bp.route("/about")
 def about():
-    return render_template("about.html")
+    return render_template("about.html", ttl_minutes=SIGNIN_CODE_TTL_MINUTES)
