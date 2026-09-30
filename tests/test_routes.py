@@ -814,3 +814,21 @@ def test_daily_log_has_scroll_to_top_button(logged_in_client):
     html = client.get("/").data.decode()
     assert 'id="scroll-top-btn"' in html
     assert html.index("Daily log") < html.index('id="scroll-top-btn"')
+
+
+def test_change_colours_flip_when_bmi_is_below_22(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/settings", data={"height_value": "180", "height_unit": "cm", "moving_avg_days": "1"})
+    # 60 kg at 1.80 m -> BMI 18.5
+    _post_weights(client, [61.0, 60.0])
+    assert 'class="stats bmi-low"' in client.get("/").data.decode()
+
+    # 81 kg at 1.80 m -> BMI 25.0
+    _post_weights(client, [81.0, 81.0])
+    assert "bmi-low" not in client.get("/").data.decode().split('<section class="stats')[1].split(">")[0]
+
+
+def test_change_colours_are_not_flipped_without_a_height(logged_in_client):
+    client, _ = logged_in_client
+    _post_weights(client, [61.0, 60.0])
+    assert 'class="stats"' in client.get("/").data.decode()

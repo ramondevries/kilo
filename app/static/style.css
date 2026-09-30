@@ -252,6 +252,10 @@ html[data-theme="dark"] .brand-logo-dark { display: block; }
 .stat-value.up, .stat-sub.up { color: var(--danger); }
 .stat-value.down, .stat-sub.down { color: var(--accent); }
 
+/* Under BMI 22, weight loss is the unwanted direction: swap the colours. */
+.stats.bmi-low .stat-value.up, .stats.bmi-low .stat-sub.up { color: var(--accent); }
+.stats.bmi-low .stat-value.down, .stats.bmi-low .stat-sub.down { color: var(--danger); }
+
 .stat-sub {
   font-size: var(--fs-small);
   font-weight: 600;

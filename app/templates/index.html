@@ -23,7 +23,8 @@
       </div>
     </section>
 
-    <section class="stats">
+    {# Below BMI 22 losing weight is the bad direction, so the change colours flip (see .bmi-low in style.css). #}
+    <section class="stats{{ ' bmi-low' if bmi is not none and bmi < 22 }}">
       {% if stats %}
         <div class="stat-card">
           <span class="stat-label">Current</span>
@@ -715,6 +716,10 @@
         setChangeCell(card.querySelector('.change-rate'), c.g_per_day, 0, ' g/day');
       });
     }
+
+    // Below BMI 22 the change colours flip: a loss is red, a gain green.
+    const statsEl = document.querySelector('.stats');
+    if (statsEl) statsEl.classList.toggle('bmi-low', data.bmi != null && data.bmi < 22);
 
     const bmiEl = document.getElementById('stat-bmi');
     if (bmiEl) {
