@@ -1,13 +1,36 @@
 import os
+import sqlite3
 
 from flask import Flask
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 
 db = SQLAlchemy()
 csrf = CSRFProtect()
 mail = Mail()
+
+
+SQLITE_BUSY_TIMEOUT_MS = 30_000
+
+
+@event.listens_for(Engine, "connect")
+def _configure_sqlite(dbapi_connection, connection_record):
+    """Make SQLite behave with several app processes (e.g. gunicorn workers)
+    sharing one database file.
+
+    WAL lets readers and the single writer work at the same time instead of
+    blocking each other; a long busy timeout makes a writer wait for the lock
+    rather than fail with "database is locked" after the 5s default."""
+    if not isinstance(dbapi_connection, sqlite3.Connection):
+        return
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")  # safe with WAL, fewer fsyncs
+    cursor.execute(f"PRAGMA busy_timeout={SQLITE_BUSY_TIMEOUT_MS}")
+    cursor.close()
 
 
 def create_app(test_config=None):
