@@ -3,6 +3,16 @@
 A small Flask app for logging your weight over time: add daily entries, see
 a trend chart, and track 7-day/30-day/total change.
 
+## Try it now
+
+Want to see where your weight is really heading? **Kilo Tracker is free to use
+at [kilo.11tools.com](https://kilo.11tools.com)** - no install, no password and
+nothing to pay. Sign in with just your email address, log your weight in
+seconds, and watch the trend line cut through the daily ups and downs. It works
+great on your phone, shows your BMI at a glance, and you can import or export
+all your data as CSV whenever you like. Give it a spin, and if you'd rather host
+it yourself, everything you need is below.
+
 ## Setup
 
 ```bash
