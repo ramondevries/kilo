@@ -482,6 +482,17 @@
     }
   });
 
+  // Chart.js only re-measures its container on screen resizes, so without
+  // this the chart prints at its on-screen size, scaled/clipped inside the
+  // print layout (see static/print.css). Re-measure when print mode starts
+  // (the print stylesheet has given the container its paper size by then)
+  // and again when it ends.
+  function resizeChart() { chart.resize(); }
+  window.addEventListener('beforeprint', resizeChart);
+  window.addEventListener('afterprint', resizeChart);
+  const printQuery = window.matchMedia('print');
+  if (printQuery.addEventListener) printQuery.addEventListener('change', resizeChart);
+
   // Long ranges (5Y+/All) can put many thousands of daily points — one per
   // calendar day, since gaps are interpolated — across maybe 1500px of
   // chart width: several points per pixel. A first attempt at fixing this

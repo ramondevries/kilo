@@ -719,3 +719,11 @@ def test_export_filename_contains_todays_date(logged_in_client):
         f"filename=weight-export-{date.today().isoformat()}.csv"
         in resp.headers["Content-Disposition"]
     )
+
+
+def test_print_stylesheet_is_linked_for_print_only(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    assert re.search(r'<link[^>]+print\.css[^>]+media="print"', html)
+    assert client.get("/static/print.css").status_code == 200
+

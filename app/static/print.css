@@ -1,0 +1,94 @@
+/* Print stylesheet (linked with media="print" from base.html): prints the
+   dashboard as a one-page report — chart on top, stat boxes below — instead
+   of the screen's height-locked, scrolling panel layout. The daily log and
+   all interactive chrome are left out. */
+
+@page {
+  size: A4 landscape;
+  margin: 12mm;
+}
+
+/* Always print with the light palette, even when dark mode is on. */
+html,
+html[data-theme="dark"] {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --text: #1f2420;
+  --muted: #5b665e;
+  --border: #dfe3df;
+  --accent: #2f6f4f;
+  --danger: #b3261e;
+}
+
+html, body {
+  background: #fff;
+  color: #1f2420;
+}
+
+/* Interactive or screen-only parts. */
+.account-menu,
+.flashes,
+.entries,
+.modal-overlay,
+.note-popover,
+input,
+select,
+textarea,
+.chart-header .range-btn:not(.active),
+#scroll-sentinel,
+#loading-hint {
+  display: none !important;
+}
+
+/* The wordmark: always the light one. */
+.brand-logo-dark { display: none !important; }
+.brand-logo-light { display: block !important; }
+
+/* Undo the viewport-locked dashboard: let it flow and paginate. */
+body.dashboard-body {
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+main.dashboard-main {
+  display: block;
+  height: auto;
+  overflow: visible;
+}
+
+.site-header {
+  padding: 0 0 4mm;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 5mm;
+}
+
+.dashboard {
+  display: block;
+  padding: 0;
+  overflow: visible;
+}
+
+/* A fixed height — the screen layout sizes the chart from the viewport,
+   which is meaningless on paper. */
+.chart-wrap {
+  height: 105mm;
+  margin-bottom: 5mm;
+  break-inside: avoid;
+}
+
+.chart-header {
+  justify-content: flex-end;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 3mm;
+  overflow: visible;
+  break-inside: avoid;
+}
+
+.stat-card {
+  break-inside: avoid;
+}

@@ -10,6 +10,7 @@
         data-light="{{ url_for('static', filename='kilo-icon-light.svg') }}"
         data-dark="{{ url_for('static', filename='kilo-icon-dark.svg') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='print.css') }}" media="print">
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <header class="site-header">
