@@ -106,6 +106,17 @@
     })();
   </script>
 
+  <script>
+    // Weight and height fields take digits and a decimal separator only:
+    // type="number" would otherwise also let through "e", "+" and "-".
+    // Delegated, so it covers the rows the daily log adds while scrolling.
+    document.addEventListener('beforeinput', function (e) {
+      var el = e.target;
+      if (!el || !el.matches || !el.matches('input[data-decimal-only]')) return;
+      if (e.data && /[^0-9.,]/.test(e.data)) e.preventDefault();
+    });
+  </script>
+
   {% block scripts %}{% endblock %}
 </body>
 </html>

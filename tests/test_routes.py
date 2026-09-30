@@ -761,3 +761,32 @@ def test_non_numeric_height_is_rejected_without_crashing(logged_in_client):
     resp = client.post("/settings", data={"height_value": "tall", "height_unit": "cm"})
     assert resp.status_code == 200
 
+
+@pytest.mark.parametrize("weight", ["1e2", "1_0", "nan", "inf", "-80", "+80", "abc", "8,0", "80.5.1"])
+def test_weight_must_be_a_plain_decimal(logged_in_client, weight):
+    client, _ = logged_in_client
+    resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight})
+    assert resp.status_code == 400
+    assert WeightEntry.query.count() == 0
+
+
+@pytest.mark.parametrize("weight", ["80", "80.5", "80.", "80.25"])
+def test_plain_decimal_weights_are_accepted(logged_in_client, weight):
+    client, _ = logged_in_client
+    resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight, "confirm": True})
+    assert resp.status_code == 200
+
+
+@pytest.mark.parametrize("height", ["1e2", "1_8", "nan", "-180", "+180"])
+def test_height_must_be_a_plain_decimal(logged_in_client, height):
+    client, user_id = logged_in_client
+    resp = client.post("/settings", data={"height_value": height, "height_unit": "cm"})
+    assert resp.status_code == 200
+    assert db.session.get(User, user_id).height_cm is None
+
+
+def test_number_fields_are_marked_decimal_only(logged_in_client):
+    client, _ = logged_in_client
+    assert b"data-decimal-only" in client.get("/settings").data
+    index = client.get("/").data
+    assert index.count(b"data-decimal-only") >= 2

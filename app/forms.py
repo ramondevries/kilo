@@ -6,6 +6,7 @@ from wtforms.validators import DataRequired, Email, Length, NumberRange, Regexp,
 
 from app.email_utils import MxCheckError, check_mx
 from app.models import User
+from app.utils import DECIMAL_RE
 
 
 class SignupForm(FlaskForm):
@@ -49,6 +50,10 @@ class SettingsForm(FlaskForm):
     def validate_height_value(self, field):
         # The range is in centimetres, so convert first — the entered number
         # means 180 in "cm" but 1.8 in "m".
+        raw = (field.raw_data or [""])[0].strip()
+        if not DECIMAL_RE.match(raw):
+            # FloatField would also take "1e2", "1_8" or "nan".
+            raise ValidationError("Enter the height as a plain number, e.g. 180 or 1.8.")
         if field.data is None or self.height_unit.data not in User.HEIGHT_UNITS:
             return  # the field/unit report their own errors
         height_cm = field.data * 100 if self.height_unit.data == "m" else field.data

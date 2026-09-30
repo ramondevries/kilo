@@ -1,7 +1,12 @@
 import hashlib
+import re
 from datetime import UTC, datetime
 
 KG_PER_LB = 0.45359237
+
+# A plain decimal number: digits with an optional decimal point. Stricter than
+# float(), which also accepts "1e2", "1_0", "nan" and "inf".
+DECIMAL_RE = re.compile(r"^(\d+(\.\d*)?|\.\d+)$")
 
 # How long an emailed code stays valid. Deleting an account is destructive,
 # so its confirmation code gets a shorter window than the sign-in code.

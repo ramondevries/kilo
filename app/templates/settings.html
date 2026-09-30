@@ -19,7 +19,7 @@
       <p class="field-wide">Your height is used to calculate your BMI.</p>
       <div class="field">
         {{ form.height_value.label }}
-        {{ form.height_value(step="0.1") }}
+        {{ form.height_value(step="0.1", **{"data-decimal-only": ""}) }}
         {% for error in form.height_value.errors %}
           <p class="flash flash-error">{{ error }}</p>
         {% endfor %}
