@@ -857,3 +857,10 @@ def test_mobile_layout_rules_and_viewport_are_present(logged_in_client):
     assert "@media (max-width: 720px)" in css
     # short year labels on the chart axis for narrow screens
     assert "matchMedia('(max-width: 720px)')" in html
+
+
+def test_account_dropdown_links_to_about_before_log_out(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    dropdown = html[html.index('id="account-dropdown"'):]
+    assert dropdown.index('href="/about"') < dropdown.index("Log out")
