@@ -185,6 +185,8 @@ def test_about_page_renders(client):
     resp = client.get("/about")
     assert resp.status_code == 200
     assert b"SHA-256" in resp.data
+    assert b"Hacker's Diet Online" in resp.data
+    assert b"mailto:info@11tools.com" in resp.data
 
 
 def test_default_theme_is_light(logged_in_client, app):
