@@ -807,3 +807,10 @@ def test_remove_data_page_has_back_link_to_settings(logged_in_client):
 def test_about_page_has_back_link_to_dashboard(client):
     html = client.get("/about").data.decode()
     assert re.search(r'<a class="back-link" href="/"', html)
+
+
+def test_daily_log_has_scroll_to_top_button(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    assert 'id="scroll-top-btn"' in html
+    assert html.index("Daily log") < html.index('id="scroll-top-btn"')

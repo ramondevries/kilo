@@ -414,6 +414,17 @@ h2 {
 
 .back-link svg { transition: transform 0.15s ease; }
 
+/* The same round button as a <button> (scroll-to-top in the daily log):
+   drop the global button padding/fill so it matches the back arrow. */
+button.back-link {
+  padding: 0;
+  cursor: pointer;
+}
+
+.log-head { justify-content: center; }
+.log-head .up-btn { width: 30px; height: 30px; }
+.log-head .up-btn svg { width: 18px; height: 18px; }
+
 .back-link:hover,
 .back-link:focus-visible {
   color: var(--accent);
@@ -423,6 +434,9 @@ h2 {
 
 .back-link:hover svg,
 .back-link:focus-visible svg { transform: translateX(-2px); }
+
+.up-btn:hover svg,
+.up-btn:focus-visible svg { transform: translateY(-2px); }
 
 /* .entries scrolls internally as a dashboard grid item now (see the
    grid-area rule above); it isn't stacked in normal document flow, so

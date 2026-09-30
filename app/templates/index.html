@@ -66,7 +66,17 @@
 
     <section class="entries">
       <div class="entries-head">
-        <h2>Daily log</h2>
+        <div class="page-head log-head">
+          <h2>Daily log</h2>
+          <button type="button" class="back-link up-btn" id="scroll-top-btn"
+                  aria-label="Scroll to the most recent entry" title="Most recent entry">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 19V5"/>
+              <path d="M6 11l6-6 6 6"/>
+            </svg>
+          </button>
+        </div>
         <div class="day-grid-header">
           <span>Date</span>
           <span>Weight ({{ unit }})</span>
@@ -832,6 +842,11 @@
   document.querySelectorAll('.day-row').forEach(bindRow);
 
   const entriesPanel = document.querySelector('.entries');
+
+  // Rows are newest-first, so the top of the panel is the most recent record.
+  document.getElementById('scroll-top-btn').addEventListener('click', () => {
+    entriesPanel.scrollTo({ top: 0, behavior: 'smooth' });
+  });
   const dayRows = document.getElementById('day-rows');
   const sentinel = document.getElementById('scroll-sentinel');
   const loadingHint = document.getElementById('loading-hint');
