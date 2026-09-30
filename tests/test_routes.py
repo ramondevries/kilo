@@ -847,3 +847,13 @@ def test_change_colours_are_not_flipped_without_a_height(logged_in_client):
     client, _ = logged_in_client
     _post_weights(client, [61.0, 60.0])
     assert 'class="stats"' in client.get("/").data.decode()
+
+
+def test_mobile_layout_rules_and_viewport_are_present(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    assert '<meta name="viewport" content="width=device-width, initial-scale=1">' in html
+    css = client.get("/static/style.css").data.decode()
+    assert "@media (max-width: 720px)" in css
+    # short year labels on the chart axis for narrow screens
+    assert "matchMedia('(max-width: 720px)')" in html

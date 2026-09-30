@@ -380,6 +380,13 @@
     return 'day';
   }
 
+  // On narrow screens the full 4-digit years crowd each other on the axis,
+  // so they're shortened to two digits (2025 -> 25, "Jan 2025" -> "Jan '25").
+  const narrowScreen = window.matchMedia('(max-width: 720px)');
+  function shortYear(year4) {
+    return narrowScreen.matches ? year4.slice(2) : year4;
+  }
+
   function computeTickText(index) {
     const label = currentLabels[index];
     if (!label) return '';
@@ -397,14 +404,15 @@
       const year = label.slice(0, 4);
       if (prev && prev.slice(0, 4) === year) return '';
       if (index === 0 && label.slice(5, 10) !== '01-01') return '';
-      return year;
+      return shortYear(year);
     }
     if (granularity === 'month') {
       const yearMonth = label.slice(0, 7);
       if (prev && prev.slice(0, 7) === yearMonth) return '';
       if (index === 0 && label.slice(8, 10) !== '01') return '';
       const month = Number(label.slice(5, 7)) - 1;
-      return MONTH_ABBR[month] + ' ' + label.slice(0, 4);
+      const monthYear = narrowScreen.matches ? "'" + label.slice(2, 4) : label.slice(0, 4);
+      return MONTH_ABBR[month] + ' ' + monthYear;
     }
     return String(Number(label.slice(8, 10)));
   }
@@ -427,6 +435,22 @@
   function xGridStyle(ctx) {
     return currentTickTexts[ctx.index] ? gridLineColor : 'transparent';
   }
+
+  // Relabel the axis when the window crosses the narrow-screen breakpoint
+  // (rotating a phone, resizing a desktop window).
+  // Chart.js draws its axis text on the canvas, so the CSS font sizes don't
+  // reach it: use a smaller size on narrow screens too.
+  function applyChartFontSize() {
+    Chart.defaults.font.size = narrowScreen.matches ? 10 : 12;
+  }
+  applyChartFontSize();
+  narrowScreen.addEventListener('change', () => {
+    applyChartFontSize();
+    chart.options.scales.x.ticks.font = { size: Chart.defaults.font.size };
+    chart.options.scales.y.ticks.font = { size: Chart.defaults.font.size };
+    rebuildTickCache();
+    chart.update();
+  });
 
   const chartCtx = document.getElementById('weight-chart');
   const chart = new Chart(chartCtx, {
