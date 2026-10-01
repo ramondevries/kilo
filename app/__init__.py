@@ -110,7 +110,7 @@ def _add_missing_columns():
         return
     existing = {col["name"] for col in inspector.get_columns("user")}
     new_columns = {
-        "moving_avg_days": "INTEGER NOT NULL DEFAULT 30",
+        "moving_avg_days": "INTEGER NOT NULL DEFAULT 10",
         "delete_code_hash": "VARCHAR(255)",
         "delete_code_expires_at": "DATETIME",
         "delete_code_attempts": "INTEGER NOT NULL DEFAULT 0",

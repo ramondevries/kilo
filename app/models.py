@@ -64,7 +64,7 @@ class User(db.Model):
     height_unit = db.Column(db.String(2), nullable=False, default="cm")
     dark_mode = db.Column(db.Boolean, nullable=False, default=False)
     chart_range = db.Column(db.String(4), nullable=False, default="all")
-    moving_avg_days = db.Column(db.Integer, nullable=False, default=30)
+    moving_avg_days = db.Column(db.Integer, nullable=False, default=10)
 
     entries = db.relationship(
         "WeightEntry", backref="user", cascade="all, delete-orphan", lazy="dynamic"

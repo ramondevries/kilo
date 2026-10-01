@@ -620,11 +620,11 @@ def test_save_field_editing_existing_entry_does_not_compare_to_itself(logged_in_
     assert resp.get_json()["status"] == "saved"
 
 
-def test_moving_avg_days_defaults_to_30(logged_in_client, app):
+def test_moving_avg_days_defaults_to_10(logged_in_client, app):
     _, user_id = logged_in_client
     with app.app_context():
         user = db.session.get(User, user_id)
-        assert user.moving_avg_days == 30
+        assert user.moving_avg_days == 10
 
 
 def test_settings_updates_moving_avg_days(logged_in_client, app):

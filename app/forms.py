@@ -63,7 +63,7 @@ class SettingsForm(FlaskForm):
     dark_mode = BooleanField("Dark mode")
 
     moving_avg_days = IntegerField(
-        "Moving average (days)", default=30, validators=[NumberRange(min=1, max=3650)]
+        "Moving average (days)", default=10, validators=[NumberRange(min=1, max=3650)]
     )
 
     def validate_height_value(self, field):
