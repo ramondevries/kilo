@@ -631,10 +631,17 @@
     let movingAvg = fullMovingAvg;
 
     if (days) {
+      // The first day shown: `days` days before today, as a LOCAL calendar
+      // date. (toISOString() would convert local midnight to UTC and, east of
+      // Greenwich, land on the previous day - one day too many in the chart.)
       const cutoff = new Date();
       cutoff.setHours(0, 0, 0, 0);
       cutoff.setDate(cutoff.getDate() - days);
-      const cutoffStr = cutoff.toISOString().slice(0, 10);
+      const cutoffStr = [
+        cutoff.getFullYear(),
+        String(cutoff.getMonth() + 1).padStart(2, '0'),
+        String(cutoff.getDate()).padStart(2, '0'),
+      ].join('-');
       labels = [];
       values = [];
       bmis = fullBmis ? [] : null;

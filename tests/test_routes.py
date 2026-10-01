@@ -895,3 +895,12 @@ def test_change_boxes_link_to_their_chart_ranges(logged_in_client):
     for days, key in ((7, "1w"), (14, "2w"), (30, "1m"), (90, "3m"), (180, "6m"), (365, "1y")):
         assert f'data-days="{days}" data-range="{key}"' in html
     assert 'id="stat-total-card" data-range="all"' in html
+
+
+def test_range_cutoff_uses_local_dates_not_utc(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    # toISOString() is UTC: east of Greenwich it moved the cutoff a day too
+    # early, so 1W/2W/1M each showed one day too many.
+    assert "toISOString().slice(0, 10)" not in html
+    assert "cutoff.getFullYear()" in html
