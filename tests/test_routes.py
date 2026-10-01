@@ -379,7 +379,7 @@ def test_chart_range_default_is_all_with_only_always_shown_buttons(logged_in_cli
     assert buttons["all"]["active"] is True
     assert buttons["1w"]["hidden"] is False
     assert buttons["all"]["hidden"] is False
-    for key in ("1m", "3m", "6m", "1y", "5y", "10y", "15y", "20y"):
+    for key in ("1m", "2w", "3m", "6m", "1y", "5y", "10y", "15y", "20y"):
         assert buttons[key]["hidden"] is True, f"{key} should be hidden with no data"
 
 
@@ -389,7 +389,7 @@ def test_chart_range_buttons_unlock_as_data_spans_grow(logged_in_client, app):
     _add_entry(app, user_id, days_ago=400)
 
     buttons = _range_buttons(client.get("/").data.decode())
-    for key in ("1w", "1m", "3m", "6m", "1y", "all"):
+    for key in ("1w", "2w", "1m", "3m", "6m", "1y", "all"):
         assert buttons[key]["hidden"] is False, f"{key} should be visible (400-day span)"
     for key in ("5y", "10y", "15y", "20y"):
         assert buttons[key]["hidden"] is True, f"{key} should still be hidden"
@@ -865,3 +865,33 @@ def test_account_dropdown_links_to_about_before_log_out(logged_in_client):
     html = client.get("/").data.decode()
     dropdown = html[html.index('id="account-dropdown"'):]
     assert dropdown.index('href="/about"') < dropdown.index("Log out")
+
+
+def test_two_week_range_sits_between_one_month_and_one_week(logged_in_client):
+    from app.routes import CHART_RANGES
+
+    keys = [key for key, _label, _days in CHART_RANGES]
+    assert keys.index("1m") + 1 == keys.index("2w") == keys.index("1w") - 1
+    assert dict((k, d) for k, _l, d in CHART_RANGES)["2w"] == 14
+
+    client, _ = logged_in_client
+    resp = client.post("/chart-range", json={"range": "2w"})
+    assert resp.status_code == 200
+
+
+def test_two_week_button_appears_once_data_spans_14_days(logged_in_client, app):
+    client, user_id = logged_in_client
+    _add_entry(app, user_id, days_ago=0)
+    _add_entry(app, user_id, days_ago=10)
+    assert _range_buttons(client.get("/").data.decode())["2w"]["hidden"] is True
+    _add_entry(app, user_id, days_ago=14)
+    assert _range_buttons(client.get("/").data.decode())["2w"]["hidden"] is False
+
+
+def test_change_boxes_link_to_their_chart_ranges(logged_in_client):
+    client, _ = logged_in_client
+    _post_weights(client, [80.0, 79.0])
+    html = client.get("/").data.decode()
+    for days, key in ((7, "1w"), (14, "2w"), (30, "1m"), (90, "3m"), (180, "6m"), (365, "1y")):
+        assert f'data-days="{days}" data-range="{key}"' in html
+    assert 'id="stat-total-card" data-range="all"' in html

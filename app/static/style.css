@@ -237,6 +237,19 @@ html[data-theme="dark"] .brand-logo-dark { display: block; }
   gap: 0.25rem;
 }
 
+/* The x-day change boxes act as shortcuts to the matching chart range. */
+.stat-card-link {
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.stat-card-link:hover,
+.stat-card-link:focus-visible {
+  border-color: var(--accent);
+  background: var(--bg);
+  outline: none;
+}
+
 .stat-label {
   font-size: var(--fs-small);
   color: var(--muted);

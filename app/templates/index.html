@@ -44,14 +44,16 @@
       </div>
       {% if stats %}
         {% for c in stats.changes %}
-          <div class="stat-card" data-days="{{ c.days }}">
+          <div class="stat-card stat-card-link" data-days="{{ c.days }}" data-range="{{ c.range }}"
+               role="button" tabindex="0" title="Show the {{ c.range|upper }} chart">
             <span class="stat-label">{{ c.days }}-day change</span>
             <span class="stat-value change-value {{ 'down' if c.change is not none and c.change < 0 else 'up' if c.change }}">{{ "%+.1f"|format(c.change) ~ " kg" if c.change is not none else "—" }}</span>
             <span class="stat-sub change-rate {{ 'down' if c.g_per_day is not none and c.g_per_day < 0 else 'up' if c.g_per_day }}">{{ "%+.0f"|format(c.g_per_day) ~ " g/day" if c.g_per_day is not none else "—" }}</span>
           </div>
         {% endfor %}
         {% set t = stats.total %}
-        <div class="stat-card" id="stat-total-card">
+        <div class="stat-card stat-card-link" id="stat-total-card" data-range="all"
+             role="button" tabindex="0" title="Show the whole history in the chart">
           <span class="stat-label" id="stat-total-label">{{ t.days }}-day change</span>
           <span class="stat-value change-value {{ 'down' if t.change is not none and t.change < 0 else 'up' if t.change }}">{{ "%+.1f"|format(t.change) ~ " kg" if t.change is not none else "—" }}</span>
           <span class="stat-sub change-rate {{ 'down' if t.g_per_day is not none and t.g_per_day < 0 else 'up' if t.g_per_day }}">{{ "%+.0f"|format(t.g_per_day) ~ " g/day" if t.g_per_day is not none else "—" }}</span>
@@ -363,7 +365,7 @@
   const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const YEARLY_TICK_RANGES = new Set(['5y', '10y', '15y', '20y']);
   const MONTHLY_TICK_RANGES = new Set(['3m', '6m', '1y']);
-  const DAILY_TICK_RANGES = new Set(['1w', '1m']);
+  const DAILY_TICK_RANGES = new Set(['1w', '2w', '1m']);
 
   let currentLabels = fullLabels;
 
@@ -617,7 +619,7 @@
 
   // The moving average is only drawn on the short ranges; on 5Y and longer
   // it's just noise on top of an already-decimated line.
-  const MOVING_AVG_RANGES = new Set(['1w', '1m', '3m', '6m', '1y']);
+  const MOVING_AVG_RANGES = new Set(['1w', '2w', '1m', '3m', '6m', '1y']);
 
   function applyRange(rangeKey) {
     currentRange = rangeKey;
@@ -694,6 +696,30 @@
       }
     });
   });
+
+  // Clicking a change box switches the chart to the matching range (7-day
+  // -> 1W, 14-day -> 2W, ..., total -> All). It clicks the range button so
+  // the choice is saved like any other; a range whose button is hidden (not
+  // enough history yet) is ignored.
+  function showRangeFromStat(card) {
+    const btn = document.querySelector('.range-btn[data-range="' + card.dataset.range + '"]');
+    if (btn && !btn.hidden) btn.click();
+  }
+
+  const statsPanel = document.querySelector('.stats');
+  if (statsPanel) {
+    statsPanel.addEventListener('click', (e) => {
+      const card = e.target.closest('.stat-card-link');
+      if (card) showRangeFromStat(card);
+    });
+    statsPanel.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const card = e.target.closest('.stat-card-link');
+      if (!card) return;
+      e.preventDefault();
+      showRangeFromStat(card);
+    });
+  }
 
   applyRange(currentRange);
 

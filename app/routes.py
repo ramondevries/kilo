@@ -58,6 +58,7 @@ CHART_RANGES = [
     ("6m", "6M", 182),
     ("3m", "3M", 91),
     ("1m", "1M", 30),
+    ("2w", "2W", 14),
     ("1w", "1W", 7),
 ]
 CHART_RANGE_KEYS = {key for key, _label, _days in CHART_RANGES}
@@ -65,6 +66,10 @@ ALWAYS_SHOWN_RANGES = {"1w", "all"}
 
 
 CHANGE_PERIODS = (7, 14, 30, 90, 180, 365)
+
+# The chart range each x-day change box jumps to when clicked. The total
+# change box (whole recorded span) jumps to "all".
+CHANGE_PERIOD_RANGES = {7: "1w", 14: "2w", 30: "1m", 90: "3m", 180: "6m", 365: "1y"}
 
 
 def _stats(entries, moving_average):
@@ -106,8 +111,12 @@ def _period_change(moving_average, days):
 
 
 def _moving_average_changes(moving_average):
-    """`_period_change` for each period in CHANGE_PERIODS."""
-    return [_period_change(moving_average, days) for days in CHANGE_PERIODS]
+    """`_period_change` for each period in CHANGE_PERIODS, plus the chart
+    range its box links to."""
+    return [
+        {**_period_change(moving_average, days), "range": CHANGE_PERIOD_RANGES[days]}
+        for days in CHANGE_PERIODS
+    ]
 
 
 def _bmi(moving_average, height_cm):
