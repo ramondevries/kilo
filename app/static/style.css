@@ -814,13 +814,14 @@ code {
   color: #fff;
 }
 
-/* Phones (portrait): one column in reading order - chart, stats, daily log -
-   and the page scrolls normally instead of being locked to the viewport.
+/* Phones (portrait, or landscape - a short viewport): one column in reading
+   order - chart, stats, daily log - and the page scrolls normally instead of
+   being locked to the viewport.
    The daily log keeps its own scroll area (a fixed height) so infinite
    scroll, click-a-point-to-jump and the scroll-to-latest button work the
    same as on the desktop layout. Must stay last so it overrides the
    orientation rules above. */
-@media (max-width: 720px) {
+@media (max-width: 720px), (orientation: landscape) and (max-height: 500px) {
   :root {
     --fs-ui: 0.8rem;
     --fs-small: 0.68rem;
@@ -895,4 +896,21 @@ code {
   .day-weight { padding: 0.3rem 0.4rem; }
 
   .modal-box { padding: 1.1rem; }
+}
+
+/* Phones held sideways: the viewport is wide but only ~350px tall, so size
+   the panels from the height and use the extra width for five stat columns (two rows) and a
+   centred, narrower daily log. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .chart-wrap { height: max(260px, 85vh); }
+
+  .stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+  .entries {
+    height: 85vh;
+    min-height: 260px;
+    width: 100%;
+    max-width: 640px;
+    align-self: center;
+  }
 }

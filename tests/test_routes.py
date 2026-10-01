@@ -928,3 +928,9 @@ def test_three_month_button_appears_at_90_days(logged_in_client, app):
     assert _range_buttons(client.get("/").data.decode())["3m"]["hidden"] is True
     _add_entry(app, user_id, days_ago=90)
     assert _range_buttons(client.get("/").data.decode())["3m"]["hidden"] is False
+
+
+def test_landscape_phone_layout_rules_are_present(client):
+    css = client.get("/static/style.css").data.decode()
+    # short landscape viewports get the same flowing layout as portrait phones
+    assert "(orientation: landscape) and (max-height: 500px)" in css
