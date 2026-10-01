@@ -125,6 +125,7 @@ After=network.target
 User=kilo
 WorkingDirectory=/srv/kilo
 EnvironmentFile=/etc/kilo.env
+Environment="PATH=/srv/kilo/.venv/bin:/usr/bin"
 ExecStart=/srv/kilo/.venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 run:app
 Restart=on-failure
 
