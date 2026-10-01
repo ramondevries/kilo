@@ -459,6 +459,25 @@
     chart.update();
   });
 
+  // BMI on a given date from the moving-average weight of that date; null
+  // without a height or if the date isn't in the full series. The date ->
+  // index lookup is rebuilt only when the full series is replaced (after a
+  // save), not on every hover.
+  let fullLabelIndex = null;
+  let fullLabelIndexFor = null;
+
+  function movingAvgBmiOn(dateLabel) {
+    if (!heightCm) return null;
+    if (fullLabelIndexFor !== fullLabels) {
+      fullLabelIndex = new Map(fullLabels.map((label, i) => [label, i]));
+      fullLabelIndexFor = fullLabels;
+    }
+    const i = fullLabelIndex.get(dateLabel);
+    if (i === undefined || fullMovingAvg[i] == null) return null;
+    const heightM = heightCm / 100;
+    return fullMovingAvg[i] / (heightM * heightM);
+  }
+
   const chartCtx = document.getElementById('weight-chart');
   const chart = new Chart(chartCtx, {
     type: 'line',
@@ -521,6 +540,14 @@
           // average lines always have a value at every plotted point
           // though, so that filter only applies to the weight series.
           filter: (item) => item.datasetIndex !== 0 || shouldShowTooltip(item.dataIndex),
+          callbacks: {
+            // The BMI at the hovered date, from that date's moving-average
+            // weight (the same smoothed value the stats boxes use).
+            afterBody: (items) => {
+              const bmi = items.length ? movingAvgBmiOn(items[0].label) : null;
+              return bmi === null ? [] : ['BMI (' + movingAvgDays + '-day avg): ' + bmi.toFixed(1)];
+            },
+          },
         },
       },
       scales: {

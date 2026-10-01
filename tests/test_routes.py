@@ -934,3 +934,11 @@ def test_landscape_phone_layout_rules_are_present(client):
     css = client.get("/static/style.css").data.decode()
     # short landscape viewports get the same flowing layout as portrait phones
     assert "(orientation: landscape) and (max-height: 500px)" in css
+
+
+def test_chart_tooltip_shows_bmi_from_the_moving_average(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    assert "afterBody" in html
+    assert "movingAvgBmiOn(items[0].label)" in html
+    assert "-day avg): '" in html
