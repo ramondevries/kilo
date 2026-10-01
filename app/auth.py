@@ -32,6 +32,7 @@ from app.email_utils import send_verification_email
 from app.forms import SignupForm, VerifyCodeForm
 from app.models import User
 from app.utils import SIGNIN_CODE_TTL_MINUTES, hash_email, normalize_email, utcnow
+from app.version import app_version
 
 bp = Blueprint("auth", __name__)
 
@@ -168,4 +169,6 @@ def logout():
 @bp.route("/about")
 def about():
     """The About page: an introduction and how sign-in works."""
-    return render_template("about.html", ttl_minutes=SIGNIN_CODE_TTL_MINUTES)
+    return render_template(
+        "about.html", ttl_minutes=SIGNIN_CODE_TTL_MINUTES, version=app_version()
+    )

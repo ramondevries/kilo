@@ -173,6 +173,13 @@ To update: `git pull`, `.venv/bin/pip install -r requirements.txt`, then
 `sudo systemctl restart kilo`. New database columns are added automatically at
 startup.
 
+The About page shows the running version, read from the git checkout: the tag
+of the checked-out commit if it has one (for example `git tag v1.0.0`),
+otherwise the 7-character commit id, plus the commit date. It is read once, so
+restart the service after updating. If no version is shown, the app couldn't
+run `git` on its folder - for example when the checkout belongs to another
+user (`git config --global --add safe.directory /srv/kilo` fixes that).
+
 ## Test
 
 ```bash

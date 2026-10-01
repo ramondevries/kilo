@@ -24,6 +24,15 @@
       <a href="https://github.com/ramondevries/kilo" target="_blank" rel="noopener">github.com/ramondevries/kilo</a>.</p>
     <p>I hope you like it! You can reach me at
       <a href="mailto:info@11tools.com">info@11tools.com</a>.</p>
+    {% if version %}
+      <p class="version-line">Version
+        {% if version.tag %}
+          <a href="https://github.com/ramondevries/kilo/releases/tag/{{ version.tag|urlencode }}" target="_blank" rel="noopener">{{ version.tag }}</a>
+        {% else %}
+          <a href="https://github.com/ramondevries/kilo/commit/{{ version.commit }}" target="_blank" rel="noopener">{{ version.commit }}</a>
+        {% endif %}
+        {% if version.date %}&middot; committed {{ version.date }}{% endif %}</p>
+    {% endif %}
   </section>
 
   <section class="add-entry">

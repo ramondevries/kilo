@@ -414,6 +414,11 @@ h2 {
   text-align: center;
 }
 
+.version-line {
+  color: var(--muted);
+  font-size: var(--fs-small);
+}
+
 /* Card title row with a round back arrow on the left. */
 .page-head {
   display: flex;
