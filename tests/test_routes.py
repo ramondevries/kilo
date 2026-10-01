@@ -904,3 +904,27 @@ def test_range_cutoff_uses_local_dates_not_utc(logged_in_client):
     # early, so 1W/2W/1M each showed one day too many.
     assert "toISOString().slice(0, 10)" not in html
     assert "cutoff.getFullYear()" in html
+
+
+def test_three_and_six_month_ranges_are_multiples_of_30_days(logged_in_client, app):
+    from app.routes import CHART_RANGES
+
+    days = dict((k, d) for k, _l, d in CHART_RANGES)
+    assert days["3m"] == 90
+    assert days["6m"] == 180
+
+    client, user_id = logged_in_client
+    _add_entry(app, user_id, days_ago=0)
+    _add_entry(app, user_id, days_ago=179)
+    assert _range_buttons(client.get("/").data.decode())["6m"]["hidden"] is True
+    _add_entry(app, user_id, days_ago=180)
+    assert _range_buttons(client.get("/").data.decode())["6m"]["hidden"] is False
+
+
+def test_three_month_button_appears_at_90_days(logged_in_client, app):
+    client, user_id = logged_in_client
+    _add_entry(app, user_id, days_ago=0)
+    _add_entry(app, user_id, days_ago=89)
+    assert _range_buttons(client.get("/").data.decode())["3m"]["hidden"] is True
+    _add_entry(app, user_id, days_ago=90)
+    assert _range_buttons(client.get("/").data.decode())["3m"]["hidden"] is False
