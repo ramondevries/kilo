@@ -431,8 +431,30 @@
   // on the hot path rather than re-parsing dates each time.
   let currentTickTexts = [];
 
+  // Width of the plotted area in px (set on every chart resize), used to
+  // drop axis labels that would otherwise overlap. The ~48px is the y axis.
+  let tickPlotWidth = 0;
+
+  // Keep only every k-th label when the labels computed for this range don't
+  // fit side by side at the current chart width (each needs about minPx).
+  // Counted back from the newest label so the latest one always stays.
+  function thinTicks(texts) {
+    const shown = [];
+    texts.forEach((text, i) => { if (text) shown.push(i); });
+    const granularity = tickGranularity();
+    const minPx = granularity === 'year' ? 34 : granularity === 'month' ? 56 : 22;
+    const width = tickPlotWidth || (document.getElementById('weight-chart').clientWidth - 48);
+    if (width <= 0 || shown.length < 2) return texts;
+    const step = Math.ceil((minPx * shown.length) / width);
+    if (step <= 1) return texts;
+    shown.forEach((i, j) => {
+      if ((shown.length - 1 - j) % step !== 0) texts[i] = '';
+    });
+    return texts;
+  }
+
   function rebuildTickCache() {
-    currentTickTexts = currentLabels.map((_label, i) => computeTickText(i));
+    currentTickTexts = thinTicks(currentLabels.map((_label, i) => computeTickText(i)));
   }
 
   function xTickLabel(_value, index) {
@@ -528,6 +550,11 @@
       // The chart's wrapper is now a flex/grid panel with a dynamic height
       // (not a fixed canvas height), so let the chart fill it exactly.
       maintainAspectRatio: false,
+      // Re-thin the x axis labels for the new width before the redraw.
+      onResize(_chart, size) {
+        tickPlotWidth = size.width - 48;
+        rebuildTickCache();
+      },
       // Data updates (autosave, range switching) happen often; animating a
       // full redraw each time just re-runs the per-point/segment styling
       // across extra frames for no benefit.

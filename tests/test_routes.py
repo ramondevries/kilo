@@ -942,3 +942,12 @@ def test_chart_tooltip_shows_bmi_from_the_moving_average(logged_in_client):
     assert "afterBody" in html
     assert "movingAvgBmiOn(items[0].label)" in html
     assert "-day avg): '" in html
+
+
+def test_responsive_breakpoints_and_axis_thinning_are_present(logged_in_client):
+    client, _ = logged_in_client
+    css = client.get("/static/style.css").data.decode()
+    assert "@media (max-width: 1000px), (max-height: 600px)" in css  # flow layout
+    assert "@media (max-width: 720px)" in css  # small text
+    html = client.get("/").data.decode()
+    assert "function thinTicks" in html and "onResize" in html
