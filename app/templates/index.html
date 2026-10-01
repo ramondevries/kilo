@@ -304,6 +304,15 @@
     return bmi * heightM * heightM;
   }
 
+  function bmiForWeight(weight) {
+    const heightM = heightCm / 100;
+    return weight / (heightM * heightM);
+  }
+
+  // Horizontal room taken by the y axes (weight on the left, plus BMI on the
+  // right once a height is set), for sizing the x axis labels.
+  const yAxesWidth = heightCm ? 100 : 48;
+
   function verticalBmiGradient(context) {
     if (!heightCm) return chartFill;
     const { ctx, chartArea, scales } = context.chart;
@@ -432,7 +441,7 @@
   let currentTickTexts = [];
 
   // Width of the plotted area in px (set on every chart resize), used to
-  // drop axis labels that would otherwise overlap. The ~48px is the y axis.
+  // drop axis labels that would otherwise overlap.
   let tickPlotWidth = 0;
 
   // Keep only every k-th label when the labels computed for this range don't
@@ -443,7 +452,7 @@
     texts.forEach((text, i) => { if (text) shown.push(i); });
     const granularity = tickGranularity();
     const minPx = granularity === 'year' ? 34 : granularity === 'month' ? 56 : 22;
-    const width = tickPlotWidth || (document.getElementById('weight-chart').clientWidth - 48);
+    const width = tickPlotWidth || (document.getElementById('weight-chart').clientWidth - yAxesWidth);
     if (width <= 0 || shown.length < 2) return texts;
     const step = Math.ceil((minPx * shown.length) / width);
     if (step <= 1) return texts;
@@ -552,7 +561,7 @@
       maintainAspectRatio: false,
       // Re-thin the x axis labels for the new width before the redraw.
       onResize(_chart, size) {
-        tickPlotWidth = size.width - 48;
+        tickPlotWidth = size.width - yAxesWidth;
         rebuildTickCache();
       },
       // Data updates (autosave, range switching) happen often; animating a
@@ -583,6 +592,30 @@
           ticks: { autoSkip: false, maxRotation: 0, callback: xTickLabel },
         },
         y: { beginAtZero: false },
+        // BMI scale on the right, at the same ticks as the weight scale:
+        // BMI is just weight / height^2, so this axis spans the same weight
+        // range and only relabels each tick (it has no data of its own).
+        // Only shown once a height is set.
+        yBmi: {
+          display: !!heightCm,
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          afterDataLimits(scale) {
+            const weightScale = scale.chart.scales.y;
+            if (weightScale) {
+              scale.min = weightScale.min;
+              scale.max = weightScale.max;
+            }
+          },
+          afterBuildTicks(scale) {
+            const weightScale = scale.chart.scales.y;
+            if (weightScale) scale.ticks = weightScale.ticks.map((t) => ({ value: t.value }));
+          },
+          ticks: {
+            callback: (weight) => bmiForWeight(weight).toFixed(1),
+          },
+          title: { display: true, text: 'BMI' },
+        },
       },
       onClick(evt, elements, chartInstance) {
         if (!elements.length) return;

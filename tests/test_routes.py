@@ -951,3 +951,12 @@ def test_responsive_breakpoints_and_axis_thinning_are_present(logged_in_client):
     assert "@media (max-width: 720px)" in css  # small text
     html = client.get("/").data.decode()
     assert "function thinTicks" in html and "onResize" in html
+
+
+def test_chart_has_a_right_hand_bmi_axis_tied_to_the_weight_ticks(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    assert "yBmi:" in html
+    assert "position: 'right'" in html
+    assert "bmiForWeight(weight).toFixed(1)" in html
+    assert "display: !!heightCm" in html  # only shown once a height is set
