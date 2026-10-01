@@ -253,6 +253,23 @@ def _grid_page(user, end_date, size=GRID_PAGE_SIZE):
     ]
 
 
+ROBOTS_TXT = """\
+# Everything is behind a login except the front page and the About page, so
+# crawlers are kept to those two. (robots.txt is a request, not access
+# control - the data itself is protected by sign-in.)
+User-agent: *
+Allow: /$
+Allow: /about$
+Disallow: /
+"""
+
+
+@bp.route("/robots.txt", methods=["GET"])
+def robots_txt():
+    """Ask search-engine crawlers to stay out of everything but the public pages."""
+    return Response(ROBOTS_TXT, mimetype="text/plain")
+
+
 @bp.route("/", methods=["GET"])
 def index():
     """The dashboard for signed-in users, the sign-in page otherwise."""

@@ -960,3 +960,19 @@ def test_chart_has_a_right_hand_bmi_axis_tied_to_the_weight_ticks(logged_in_clie
     assert "position: 'right'" in html
     assert "bmiForWeight(weight).toFixed(1)" in html
     assert "display: !!heightCm" in html  # only shown once a height is set
+
+
+def test_robots_txt_blocks_crawlers_except_the_public_pages(client):
+    resp = client.get("/robots.txt")
+    assert resp.status_code == 200
+    assert resp.mimetype == "text/plain"
+    body = resp.data.decode()
+    assert "User-agent: *" in body
+    assert "Disallow: /\n" in body
+    assert "Allow: /$" in body
+    assert "Allow: /about$" in body
+
+
+def test_robots_txt_needs_no_login(logged_in_client):
+    client, _ = logged_in_client
+    assert client.get("/robots.txt").status_code == 200
