@@ -13,12 +13,33 @@
 
 """Shared pytest fixtures: an app on an in-memory database, a client and a signed-in client."""
 
+import os
 import re
 
 import pytest
+from babel.messages.mofile import write_mo
+from babel.messages.pofile import read_po
 
 from app import create_app, db, mail
 from app.models import User
+
+TRANSLATIONS_DIR = os.path.join(os.path.dirname(__file__), "..", "translations")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def compiled_catalogs():
+    """Compile translations/*/LC_MESSAGES/messages.po to .mo (gitignored, built at deploy time)
+    so the language tests also work in a fresh checkout."""
+    for lang in sorted(os.listdir(TRANSLATIONS_DIR)):
+        base = os.path.join(TRANSLATIONS_DIR, lang, "LC_MESSAGES", "messages")
+        if not os.path.exists(base + ".po"):
+            continue
+        if os.path.exists(base + ".mo") and os.path.getmtime(base + ".mo") >= os.path.getmtime(base + ".po"):
+            continue
+        with open(base + ".po", "rb") as po_file:
+            catalog = read_po(po_file, locale=lang)
+        with open(base + ".mo", "wb") as mo_file:
+            write_mo(mo_file, catalog)
 
 
 @pytest.fixture

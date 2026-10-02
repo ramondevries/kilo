@@ -1,47 +1,48 @@
 {% extends "base.html" %}
 {% from "_back_link.html" import back_link %}
 
-{% block title %}Remove my data — Kilo Tracker{% endblock %}
+{% block title %}{{ _("Remove my data") }} — Kilo Tracker{% endblock %}
 
 {% block content %}
   <section class="add-entry">
     <div class="page-head">
-      {{ back_link(url_for('main.settings'), "Back to settings") }}
-      <h2>Remove my data</h2>
+      {{ back_link(url_for('main.settings'), _("Back to settings")) }}
+      <h2>{{ _("Remove my data") }}</h2>
     </div>
-    <p>This permanently deletes your account, all your weigh-ins and notes,
-      and your settings. It can't be undone.</p>
+    <p>{% trans trimmed %}This permanently deletes your account, all your weigh-ins and notes,
+      and your settings. It can't be undone.{% endtrans %}</p>
 
-    <h3>Step 1: Download your data</h3>
+    <h3>{{ _("Step 1: Download your data") }}</h3>
     {% if exported %}
-      <p>Downloaded. You can <a href="{{ url_for('main.export_entries') }}">download it again</a>.</p>
+      {% set again_link %}<a href="{{ url_for('main.export_entries') }}">{{ _("download it again") }}</a>{% endset %}
+      <p>{% trans again_link=again_link %}Downloaded. You can {{ again_link }}.{% endtrans %}</p>
     {% else %}
-      <p>Download a copy of your weigh-ins before they're deleted. This is required.</p>
-      <a class="button-link" href="{{ url_for('main.export_entries') }}">Download my data (CSV)</a>
-      <p><a href="{{ url_for('account.remove_data') }}">I've downloaded it — continue</a></p>
+      <p>{{ _("Download a copy of your weigh-ins before they're deleted. This is required.") }}</p>
+      <a class="button-link" href="{{ url_for('main.export_entries') }}">{{ _("Download my data (CSV)") }}</a>
+      <p><a href="{{ url_for('account.remove_data') }}">{{ _("I've downloaded it — continue") }}</a></p>
     {% endif %}
 
     {% if exported %}
-      <h3>Step 2: Confirm by email</h3>
+      <h3>{{ _("Step 2: Confirm by email") }}</h3>
       {% if code_pending %}
-        <p>We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in {{ ttl_minutes }} minutes.</p>
+        <p>{% trans num=ttl_minutes, email=email %}We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in {{ num }} minute.{% pluralize num %}We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in {{ num }} minutes.{% endtrans %}</p>
         <form method="post" action="{{ url_for('account.confirm_removal') }}" class="entry-form">
           {{ form.hidden_tag() }}
           <div class="field">
             {{ form.code.label }}
             {{ form.code(placeholder="123456", autofocus=true, maxlength=6, inputmode="numeric") }}
           </div>
-          <button type="submit" class="button-danger">Delete everything</button>
+          <button type="submit" class="button-danger">{{ _("Delete everything") }}</button>
         </form>
         <form method="post" action="{{ url_for('account.send_removal_code') }}" class="inline-form">
           {{ form.csrf_token }}
-          <button type="submit" class="link-button">Resend code</button>
+          <button type="submit" class="link-button">{{ _("Resend code") }}</button>
         </form>
       {% else %}
-        <p>We'll email a confirmation code to <strong>{{ email }}</strong>.</p>
+        <p>{% trans email=email %}We'll email a confirmation code to <strong>{{ email }}</strong>.{% endtrans %}</p>
         <form method="post" action="{{ url_for('account.send_removal_code') }}">
           {{ form.csrf_token }}
-          <button type="submit" class="button-danger">Send confirmation code</button>
+          <button type="submit" class="button-danger">{{ _("Send confirmation code") }}</button>
         </form>
       {% endif %}
     {% endif %}

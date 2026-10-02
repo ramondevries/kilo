@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="{{ theme }}">
+<html lang="{{ current_locale }}" data-theme="{{ theme }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,21 +22,21 @@
       <div class="account-menu" id="account-menu">
         <button type="button" class="account-trigger" id="account-trigger" aria-haspopup="true" aria-expanded="false">
           <img class="avatar" src="{{ current_user.gravatar_url(40) }}" alt="" width="20" height="20">
-          <span>{{ current_email or "Signed in" }}</span>
+          <span>{{ current_email or _("Signed in") }}</span>
         </button>
         <div class="account-dropdown" id="account-dropdown">
           <label class="dropdown-item toggle-row">
-            Dark mode
+            {{ _("Dark mode") }}
             <span class="toggle-switch">
               <input type="checkbox" class="dark-mode-toggle" {{ 'checked' if current_user.dark_mode }}>
               <span class="toggle-slider"></span>
             </span>
           </label>
-          <a class="dropdown-item" href="{{ url_for('main.settings') }}">Settings</a>
-          <a class="dropdown-item" href="{{ url_for('auth.about') }}">About</a>
+          <a class="dropdown-item" href="{{ url_for('main.settings') }}">{{ _("Settings") }}</a>
+          <a class="dropdown-item" href="{{ url_for('auth.about') }}">{{ _("About") }}</a>
           <form method="post" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="dropdown-item">Log out</button>
+            <button type="submit" class="dropdown-item">{{ _("Log out") }}</button>
           </form>
         </div>
       </div>
@@ -108,14 +108,55 @@
   </script>
 
   <script>
-    // Weight and height fields take digits and a decimal separator only:
-    // type="number" would otherwise also let through "e", "+" and "-".
-    // Delegated, so it covers the rows the daily log adds while scrolling.
+    // Weight and height fields are type="text" inputmode="decimal" (type="number"
+    // refuses the comma in some browsers) and take digits and one decimal
+    // separator, "." or ",", whatever the language. Delegated, so it covers the
+    // rows the daily log adds while scrolling.
     document.addEventListener('beforeinput', function (e) {
       var el = e.target;
       if (!el || !el.matches || !el.matches('input[data-decimal-only]')) return;
-      if (e.data && /[^0-9.,]/.test(e.data)) e.preventDefault();
+      if (!e.data) return;
+      if (/[^0-9.,]/.test(e.data)) { e.preventDefault(); return; }
+      if (/[.,]/.test(e.data)) {
+        var kept = el.value.slice(0, el.selectionStart) + el.value.slice(el.selectionEnd);
+        if (/[.,]/.test(kept)) e.preventDefault();
+      }
     });
+
+    // Translated strings for scripts: the server renders them as JSON in
+    // <script type="application/json" id="i18n"> (see index.html); t(key) reads
+    // them and falls back to the key. t(key, {name: value}) fills in the
+    // %(name)s placeholders. The element sits after this script, so it is
+    // read on first use.
+    window.LOCALE = document.documentElement.lang || 'en';
+    window.t = (function () {
+      var strings = null;
+      var debug = {{ config.DEBUG|tojson }};
+      return function (key, vars) {
+        if (strings === null) {
+          try {
+            strings = JSON.parse(document.getElementById('i18n').textContent);
+          } catch (e) {
+            strings = {};
+          }
+        }
+        var found = Object.prototype.hasOwnProperty.call(strings, key);
+        var text = found ? strings[key] : key;
+        if (!found && debug) console.warn('i18n: no string for key "' + key + '"');
+        if (!vars) return text;
+        return text.replace(/%\((\w+)\)[sd]/g, function (match, name) {
+          return Object.prototype.hasOwnProperty.call(vars, name) ? vars[name] : match;
+        });
+      };
+    })();
+
+    // "72,5" -> "72.5" for sending to the server. An empty field stays empty
+    // (it clears the entry); anything that isn't a plain decimal is sent as
+    // typed, so the server answers with its error.
+    window.normalizeDecimal = function (raw) {
+      var s = String(raw).trim();
+      return /^(\d+([.,]\d*)?|[.,]\d+)$/.test(s) ? s.replace(',', '.') : s;
+    };
   </script>
 
   {% block scripts %}{% endblock %}

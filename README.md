@@ -19,6 +19,7 @@ it yourself, everything you need is below.
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
+pybabel compile -d translations
 ```
 
 ## Run
@@ -31,6 +32,16 @@ Then open http://127.0.0.1:5000. Data is stored in `instance/weight.db`
 (SQLite, created automatically).
 
 Weights are in kilograms and heights in centimetres or metres.
+
+## Languages
+
+Kilo speaks English, Dutch, French, Spanish, Brazilian Portuguese, German,
+Italian, Indonesian, Polish, Romanian, Hungarian, Danish, Finnish, Swedish and
+Norwegian (Bokmål). The language follows the browser's `Accept-Language` setting (there is
+no switcher); add `?lang=de` to a URL to try another one. The translations are
+machine-generated and welcome improvements: see [TRANSLATING.md](TRANSLATING.md).
+The compiled catalogs (`*.mo`) are not in git: run `pybabel compile -d
+translations` after cloning and after every update, as below.
 
 ## Email sign-up
 
@@ -65,6 +76,7 @@ git clone https://github.com/ramondevries/kilo.git /srv/kilo
 cd /srv/kilo
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt gunicorn
+.venv/bin/pybabel compile -d translations
 ```
 
 Create a system user to run it (for example `kilo`) that owns `/srv/kilo`. The
@@ -161,6 +173,24 @@ server {
 }
 ```
 
+With Apache (`mod_proxy`, `mod_proxy_http` and `mod_headers` enabled):
+
+```apache
+<VirtualHost *:443>
+    ServerName kilo.example.com
+    ProxyPreserveHost On
+    RequestHeader set X-Forwarded-Proto "https"
+    ProxyPass / http://127.0.0.1:8000/
+    ProxyPassReverse / http://127.0.0.1:8000/
+</VirtualHost>
+```
+
+The page language comes from the browser's `Accept-Language` header, which
+both proxies pass on, and every page answers with `Vary: Accept-Language`. If
+you cache responses in front of the app (Apache `mod_cache`, a CDN), let the
+cache honour `Vary`: a cache that ignores it, or a rule that strips it (`Header
+unset Vary`), serves the first visitor's language to everyone.
+
 ### Backups and updates
 
 Back up the database with SQLite's own tool, not a plain file copy (recent
@@ -170,9 +200,10 @@ writes can still be in the `-wal` file):
 sqlite3 /srv/kilo/instance/weight.db ".backup /backups/weight.db"
 ```
 
-To update: `git pull`, `.venv/bin/pip install -r requirements.txt`, then
-`sudo systemctl restart kilo`. New database columns are added automatically at
-startup.
+To update: `git pull`, `.venv/bin/pip install -r requirements.txt`,
+`.venv/bin/pybabel compile -d translations` (the translations are compiled at
+deploy time, not stored in git), then `sudo systemctl restart kilo`. New
+database columns are added automatically at startup.
 
 The About page shows the running version, read from the git checkout: the tag
 of the checked-out commit if it has one (for example `git tag v1.0.0`),
@@ -186,6 +217,10 @@ user (`git config --global --add safe.directory /srv/kilo` fixes that).
 ```bash
 pytest
 ```
+
+The tests also check that the translations are complete and up to date; you can
+run that check on its own with `python scripts/check_i18n.py` (see
+[TRANSLATING.md](TRANSLATING.md)).
 
 ## License
 

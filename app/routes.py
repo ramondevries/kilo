@@ -33,13 +33,14 @@ from flask import (
     session,
     url_for,
 )
+from flask_babel import format_date, format_decimal, gettext as _, lazy_gettext as _l, ngettext
 
 from app import db
 from app.auth import get_current_user, login_required
-from app.csv_io import export_csv, parse_csv
+from app.csv_io import MAX_WEIGHT_KG, MIN_WEIGHT_KG, export_csv, parse_csv
 from app.forms import ImportForm, SettingsForm, SignupForm
 from app.models import WeightEntry
-from app.utils import DECIMAL_RE
+from app.utils import parse_decimal
 
 bp = Blueprint("main", __name__)
 
@@ -47,19 +48,31 @@ GRID_PAGE_SIZE = 30
 
 # (key, label, days spanned — None means "all data"), in display order.
 # 1w and all are always shown; the rest only appear once the user's data
-# actually spans that long.
+# actually spans that long. The labels are lazy: they are translated when a
+# page renders. Use the unit letters people use in each language (nl: 1W 1M 1J).
 CHART_RANGES = [
-    ("all", "All", None),
-    ("20y", "20Y", 20 * 365),
-    ("15y", "15Y", 15 * 365),
-    ("10y", "10Y", 10 * 365),
-    ("5y", "5Y", 5 * 365),
-    ("1y", "1Y", 365),
-    ("6m", "6M", 180),
-    ("3m", "3M", 90),
-    ("1m", "1M", 30),
-    ("2w", "2W", 14),
-    ("1w", "1W", 7),
+    # NOTE: Chart range button: the whole recorded history.
+    ("all", _l("All"), None),
+    # NOTE: Chart range button: 20 years. The letter is the unit, Y for year.
+    ("20y", _l("20Y"), 20 * 365),
+    # NOTE: Chart range button: 15 years. The letter is the unit, Y for year.
+    ("15y", _l("15Y"), 15 * 365),
+    # NOTE: Chart range button: 10 years. The letter is the unit, Y for year.
+    ("10y", _l("10Y"), 10 * 365),
+    # NOTE: Chart range button: 5 years. The letter is the unit, Y for year.
+    ("5y", _l("5Y"), 5 * 365),
+    # NOTE: Chart range button: 1 year. The letter is the unit, Y for year.
+    ("1y", _l("1Y"), 365),
+    # NOTE: Chart range button: 6 months. The letter is the unit, M for month.
+    ("6m", _l("6M"), 180),
+    # NOTE: Chart range button: 3 months. The letter is the unit, M for month.
+    ("3m", _l("3M"), 90),
+    # NOTE: Chart range button: 1 month. The letter is the unit, M for month.
+    ("1m", _l("1M"), 30),
+    # NOTE: Chart range button: 2 weeks. The letter is the unit, W for week.
+    ("2w", _l("2W"), 14),
+    # NOTE: Chart range button: 1 week. The letter is the unit, W for week.
+    ("1w", _l("1W"), 7),
 ]
 CHART_RANGE_KEYS = {key for key, _label, _days in CHART_RANGES}
 ALWAYS_SHOWN_RANGES = {"1w", "all"}
@@ -221,8 +234,14 @@ def _overview(user):
         entries, user.height_cm
     )
     chart_moving_average = _moving_average(chart_values, user.moving_avg_days)
+    stats = _stats(entries, chart_moving_average)
+    if stats:
+        # The page updates this label in place after a save; only the server
+        # can pick the right plural form for the language.
+        total_days = stats["total"]["days"]
+        stats["total_label"] = ngettext("%(num)d-day change", "%(num)d-day change", total_days)
     return {
-        "stats": _stats(entries, chart_moving_average),
+        "stats": stats,
         "chart_labels": chart_labels,
         "chart_values": chart_values,
         "chart_bmis": chart_bmis,
@@ -286,6 +305,8 @@ def index():
         grid_days=grid_days,
         grid_page_size=GRID_PAGE_SIZE,
         chart_ranges=CHART_RANGES,
+        chart_range_days={key: days for key, _label, days in CHART_RANGES},
+        chart_range_labels={key: str(label) for key, label, _days in CHART_RANGES},
         chart_range=chart_range,
         today_date=today.isoformat(),
         today_entry_missing=bool(grid_days) and grid_days[0]["weight"] is None,
@@ -301,7 +322,7 @@ def entries_window():
     try:
         end_date = date.fromisoformat(before_str) - timedelta(days=1)
     except (TypeError, ValueError):
-        return jsonify(error="invalid date"), 400
+        return jsonify(error=_("Invalid date.")), 400
 
     user = get_current_user()
     return jsonify(days=_grid_page(user, end_date))
@@ -335,9 +356,12 @@ def _outlier_warning(user, entry_date, weight):
             continue
         diff_ratio = abs(weight - neighbor.weight) / neighbor.weight
         if diff_ratio > OUTLIER_THRESHOLD:
-            return (
-                f"{weight:g} is {diff_ratio * 100:.0f}% different from your entry "
-                f"of {neighbor.weight:g} on {neighbor.entry_date.isoformat()}."
+            return _(
+                "%(weight)s is %(percent)s%% different from your entry of %(other)s on %(date)s.",
+                weight=format_decimal(weight),
+                percent=format_decimal(round(diff_ratio * 100)),
+                other=format_decimal(neighbor.weight),
+                date=format_date(neighbor.entry_date, format="medium"),
             )
     return None
 
@@ -355,7 +379,7 @@ def save_field():
     try:
         entry_date = date.fromisoformat(data.get("date", ""))
     except ValueError:
-        return jsonify(error="invalid date"), 400
+        return jsonify(error=_("Invalid date.")), 400
 
     user = get_current_user()
     entry = WeightEntry.query.filter_by(user_id=user.id, entry_date=entry_date).first()
@@ -367,15 +391,23 @@ def save_field():
             db.session.commit()
         return jsonify(status="cleared", **_overview(user))
 
-    # Plain decimals only: float() would also take "1e2", "1_0", "nan"...
-    if isinstance(weight_raw, str) and not DECIMAL_RE.match(weight_raw.strip()):
-        return jsonify(error="invalid weight"), 400
-    try:
-        weight = float(weight_raw)
-    except (TypeError, ValueError):
-        return jsonify(error="invalid weight"), 400
-    if not (1 <= weight <= 1000):
-        return jsonify(error="weight out of range"), 400
+    # Plain decimals only, "80.5" or "80,5": float() would also take "1e2", "1_0", "nan"...
+    if isinstance(weight_raw, str):
+        weight = parse_decimal(weight_raw)
+        if weight is None:
+            return jsonify(error=_("Enter a valid weight, like 72.5.")), 400
+    else:
+        try:
+            weight = float(weight_raw)
+        except (TypeError, ValueError):
+            return jsonify(error=_("Enter a valid weight, like 72.5.")), 400
+    if not (MIN_WEIGHT_KG <= weight <= MAX_WEIGHT_KG):
+        message = _(
+            "Weight must be between %(min)s and %(max)s kg.",
+            min=format_decimal(MIN_WEIGHT_KG),
+            max=format_decimal(MAX_WEIGHT_KG),
+        )
+        return jsonify(error=message), 400
 
     if not data.get("confirm"):
         warning = _outlier_warning(user, entry_date, weight)
@@ -413,7 +445,7 @@ def set_chart_range():
     data = request.get_json(silent=True) or {}
     range_key = data.get("range")
     if range_key not in CHART_RANGE_KEYS:
-        return jsonify(error="invalid range"), 400
+        return jsonify(error=_("Invalid range.")), 400
 
     user = get_current_user()
     user.chart_range = range_key
@@ -446,7 +478,7 @@ def settings():
         user.dark_mode = form.dark_mode.data
         user.moving_avg_days = form.moving_avg_days.data
         db.session.commit()
-        flash("Settings updated.", "success")
+        flash(_("Settings updated."), "success")
         return redirect(url_for("main.settings"))
 
     return render_template("settings.html", form=form, import_form=ImportForm(), user=user)
@@ -480,7 +512,7 @@ def import_entries():
     if not form.validate_on_submit():
         for field_errors in form.errors.values():
             for error in field_errors:
-                flash(error, "error")
+                flash(str(error), "error")
         return redirect(url_for("main.settings"))
 
     rows, errors = parse_csv(form.csv_file.data.read())
@@ -497,12 +529,24 @@ def import_entries():
     db.session.commit()
 
     if imported:
-        flash(f"Imported {imported} entr{'y' if imported == 1 else 'ies'}.", "success")
+        flash(
+            ngettext("Imported %(num)d entry.", "Imported %(num)d entries.", imported),
+            "success",
+        )
     if errors:
-        preview = "; ".join(errors[:5])
-        more = f" (+{len(errors) - 5} more)" if len(errors) > 5 else ""
-        flash(f"Skipped {len(errors)} invalid line(s): {preview}{more}", "error")
+        details = "; ".join(errors[:5])
+        if len(errors) > 5:
+            details = _("%(details)s (+%(count)d more)", details=details, count=len(errors) - 5)
+        flash(
+            ngettext(
+                "Skipped %(num)d invalid line: %(details)s",
+                "Skipped %(num)d invalid lines: %(details)s",
+                len(errors),
+                details=details,
+            ),
+            "error",
+        )
     if not imported and not errors:
-        flash("No rows found in the file.", "error")
+        flash(_("No rows found in the file."), "error")
 
     return redirect(url_for("main.settings"))

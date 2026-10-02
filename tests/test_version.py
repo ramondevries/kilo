@@ -76,7 +76,7 @@ def test_about_page_shows_the_version(client, monkeypatch):
     )
     html = client.get("/about").data.decode()
     assert "abc1234" in html
-    assert "committed 2026-10-01" in html
+    assert "committed Oct 1, 2026" in html  # the date is formatted for the locale
     assert "/commit/abc1234" in html
 
 

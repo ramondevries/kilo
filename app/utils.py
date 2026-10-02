@@ -11,15 +11,31 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-"""Small shared helpers: email hashing, decimal validation, code lifetimes and UTC time."""
+"""Small shared helpers: email hashing, decimal parsing, code lifetimes and UTC time."""
 
 import hashlib
 import re
 from datetime import UTC, datetime
 
-# A plain decimal number: digits with an optional decimal point. Stricter than
-# float(), which also accepts "1e2", "1_0", "nan" and "inf".
-DECIMAL_RE = re.compile(r"^(\d+(\.\d*)?|\.\d+)$")
+# A plain decimal number: digits with at most one decimal separator, a point or
+# a comma (most of our languages write 72,5). Stricter than float(), which also
+# accepts "1e2", "1_0", "nan" and "inf". No thousands separators.
+DECIMAL_RE = re.compile(r"^(\d+([.,]\d*)?|[.,]\d+)$")
+
+
+def parse_decimal(raw):
+    """Parse a user-typed number such as "72.5" or "72,5" into a float.
+
+    Surrounding whitespace is ignored. Returns None for anything that is not a
+    plain decimal with at most one separator, so "1,234.5", "1e2" and "nan" are
+    all rejected. A lone "1,234" is read as 1.234, never as a thousand.
+    """
+    if not isinstance(raw, str):
+        return None
+    raw = raw.strip()
+    if not DECIMAL_RE.match(raw):
+        return None
+    return float(raw.replace(",", "."))
 
 # How long an emailed code stays valid. Deleting an account is destructive,
 # so its confirmation code gets a shorter window than the sign-in code.

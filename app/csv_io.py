@@ -21,29 +21,33 @@ import csv
 import io
 from datetime import date
 
+from flask_babel import gettext as _
+
+from app.utils import parse_decimal
+
 MIN_WEIGHT_KG = 1
 MAX_WEIGHT_KG = 1000
 
 
 class CsvRowError(Exception):
-    """A CSV row could not be parsed."""
+    """A CSV row could not be parsed (the caller words the message, with the line number)."""
 
 
 def parse_ddmyy(text):
     """Parse a d-M-yy or d-M-yyyy date, e.g. '23-9-26' or '23-9-2026'."""
     parts = text.strip().split("-")
     if len(parts) != 3:
-        raise CsvRowError(f"invalid date {text!r}")
+        raise CsvRowError()
     try:
         day, month, year = (int(p) for p in parts)
     except ValueError:
-        raise CsvRowError(f"invalid date {text!r}")
+        raise CsvRowError()
     if year < 100:
         year += 2000
     try:
         return date(year, month, day)
     except ValueError:
-        raise CsvRowError(f"invalid date {text!r}")
+        raise CsvRowError()
 
 
 def format_ddmyy(d):
@@ -66,7 +70,8 @@ def parse_csv(file_bytes):
         if not row or all(not cell.strip() for cell in row):
             continue
         if len(row) < 2:
-            errors.append(f"line {lineno}: expected date,weight[,note]")
+            # NOTE: date,weight[,note] names the columns of a CSV line; translate the names (note is optional).
+            errors.append(_("line %(line)d: expected date,weight[,note]", line=lineno))
             continue
 
         date_str, weight_str = row[0].strip(), row[1].strip()
@@ -74,17 +79,16 @@ def parse_csv(file_bytes):
 
         try:
             entry_date = parse_ddmyy(date_str)
-        except CsvRowError as exc:
-            errors.append(f"line {lineno}: {exc}")
+        except CsvRowError:
+            errors.append(_("line %(line)d: invalid date %(value)s", line=lineno, value=repr(date_str)))
             continue
 
-        try:
-            weight_kg = float(weight_str)
-        except ValueError:
-            errors.append(f"line {lineno}: invalid weight {weight_str!r}")
+        weight_kg = parse_decimal(weight_str)
+        if weight_kg is None:
+            errors.append(_("line %(line)d: invalid weight %(value)s", line=lineno, value=repr(weight_str)))
             continue
         if not (MIN_WEIGHT_KG <= weight_kg <= MAX_WEIGHT_KG):
-            errors.append(f"line {lineno}: weight out of range")
+            errors.append(_("line %(line)d: weight out of range", line=lineno))
             continue
 
         rows.append((entry_date, weight_kg, note))

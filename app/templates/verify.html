@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Verify your email{% endblock %}
+{% block title %}{{ _("Verify your email") }}{% endblock %}
 
 {% block content %}
   <section class="add-entry">
-    <h2>Enter your code</h2>
-    <p>We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in {{ ttl_minutes }} minutes.</p>
+    <h2>{{ _("Enter your code") }}</h2>
+    <p>{% trans num=ttl_minutes, email=email %}We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in {{ num }} minute.{% pluralize num %}We sent a 6-digit code to <strong>{{ email }}</strong>. It expires in {{ num }} minutes.{% endtrans %}</p>
     <form method="post" action="{{ url_for('auth.verify') }}" class="entry-form">
       {{ form.hidden_tag() }}
       <div class="field">
@@ -15,11 +15,11 @@
           <p class="flash flash-error">{{ error }}</p>
         {% endfor %}
       </div>
-      <button type="submit">Verify</button>
+      <button type="submit">{{ _("Verify") }}</button>
     </form>
     <form method="post" action="{{ url_for('auth.resend_code') }}" class="inline-form">
       {{ form.csrf_token }}
-      <button type="submit" class="link-button">Resend code</button>
+      <button type="submit" class="link-button">{{ _("Resend code") }}</button>
     </form>
   </section>
 {% endblock %}

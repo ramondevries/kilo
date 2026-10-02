@@ -21,6 +21,7 @@ import dns.exception
 import dns.name
 import dns.resolver
 from flask import current_app
+from flask_babel import gettext as _, ngettext
 from flask_mail import Message
 
 from app import mail
@@ -34,11 +35,15 @@ def send_verification_email(email, code):
     suppressed (development).
     """
     message = Message(
-        subject="Your verification code",
+        subject=_("Your verification code"),
         recipients=[email],
-        body=(
-            f"Your verification code is {code}.\n\n"
-            f"It expires in {SIGNIN_CODE_TTL_MINUTES} minutes. If you didn't request this, ignore this email."
+        body=ngettext(
+            "Your verification code is %(code)s.\n\n"
+            "It expires in %(num)d minute. If you didn't request this, ignore this email.",
+            "Your verification code is %(code)s.\n\n"
+            "It expires in %(num)d minutes. If you didn't request this, ignore this email.",
+            SIGNIN_CODE_TTL_MINUTES,
+            code=code,
         ),
     )
     mail.send(message)
@@ -48,13 +53,19 @@ def send_verification_email(email, code):
 def send_deletion_email(email, code):
     """Email the account-removal confirmation `code` to `email`."""
     message = Message(
-        subject="Confirm removal of your data",
+        subject=_("Confirm removal of your data"),
         recipients=[email],
-        body=(
-            f"Your confirmation code is {code}.\n\n"
+        body=ngettext(
+            "Your confirmation code is %(code)s.\n\n"
             "Entering it will permanently delete your account and all your "
-            f"weight data. It expires in {DELETE_CODE_TTL_MINUTES} minutes. If you didn't request "
-            "this, ignore this email and your data stays untouched."
+            "weight data. It expires in %(num)d minute. If you didn't request "
+            "this, ignore this email and your data stays untouched.",
+            "Your confirmation code is %(code)s.\n\n"
+            "Entering it will permanently delete your account and all your "
+            "weight data. It expires in %(num)d minutes. If you didn't request "
+            "this, ignore this email and your data stays untouched.",
+            DELETE_CODE_TTL_MINUTES,
+            code=code,
         ),
     )
     mail.send(message)
@@ -74,8 +85,8 @@ def check_mx(email):
     """Raise MxCheckError unless the email's domain publishes a usable MX
     record. A "null MX" (a single record pointing at ".", RFC 7505) means
     the domain explicitly accepts no mail, so it counts as missing."""
-    no_mx = "That email domain doesn't accept mail (no MX record)."
-    try_again = "Couldn't check that email domain right now. Try again."
+    no_mx = _("That email domain doesn't accept mail (no MX record).")
+    try_again = _("Couldn't check that email domain right now. Try again.")
     domain = email.rsplit("@", 1)[-1].strip().rstrip(".")
     try:
         answers = dns.resolver.resolve(domain, "MX", lifetime=5)

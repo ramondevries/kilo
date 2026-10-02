@@ -568,7 +568,7 @@ def test_save_field_warning_message_mentions_neighbor(logged_in_client):
     resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 95.0})
     message = resp.get_json()["message"]
     assert "80" in message
-    assert "2026-09-01" in message
+    assert "Sep 1, 2026" in message  # the neighbour's date, formatted for the locale
 
 
 def test_save_field_confirm_overrides_outlier_warning(logged_in_client, app):
@@ -778,7 +778,7 @@ def test_non_numeric_height_is_rejected_without_crashing(logged_in_client):
     assert resp.status_code == 200
 
 
-@pytest.mark.parametrize("weight", ["1e2", "1_0", "nan", "inf", "-80", "+80", "abc", "8,0", "80.5.1"])
+@pytest.mark.parametrize("weight", ["1e2", "1_0", "nan", "inf", "-80", "+80", "abc", "8,0,1", "1,234.5", "80,5.1", "80.5.1", ",", "."])
 def test_weight_must_be_a_plain_decimal(logged_in_client, weight):
     client, _ = logged_in_client
     resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight})
@@ -786,14 +786,30 @@ def test_weight_must_be_a_plain_decimal(logged_in_client, weight):
     assert WeightEntry.query.count() == 0
 
 
-@pytest.mark.parametrize("weight", ["80", "80.5", "80.", "80.25"])
+@pytest.mark.parametrize("weight", ["80", "80.5", "80.", "80.25", "80,5", " 80,5 ", "80,", "80,25"])
 def test_plain_decimal_weights_are_accepted(logged_in_client, weight):
     client, _ = logged_in_client
     resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight, "confirm": True})
     assert resp.status_code == 200
 
 
-@pytest.mark.parametrize("height", ["1e2", "1_8", "nan", "-180", "+180"])
+@pytest.mark.parametrize("weight", ["72,5", "72.5"])
+def test_comma_and_point_save_the_same_weight(logged_in_client, weight):
+    client, _ = logged_in_client
+    resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight, "confirm": True})
+    assert resp.status_code == 200
+    assert WeightEntry.query.one().weight == 72.5
+
+
+@pytest.mark.parametrize("height, unit, cm", [("1,8", "m", 180), ("1.8", "m", 180), ("180,5", "cm", 180.5)])
+def test_height_accepts_comma_and_point(logged_in_client, height, unit, cm):
+    client, user_id = logged_in_client
+    resp = client.post("/settings", data={"height_value": height, "height_unit": unit})
+    assert resp.status_code == 302
+    assert db.session.get(User, user_id).height_cm == pytest.approx(cm)
+
+
+@pytest.mark.parametrize("height", ["1e2", "1_8", "nan", "-180", "+180", "1,234.5"])
 def test_height_must_be_a_plain_decimal(logged_in_client, height):
     client, user_id = logged_in_client
     resp = client.post("/settings", data={"height_value": height, "height_unit": "cm"})
@@ -941,7 +957,9 @@ def test_chart_tooltip_shows_bmi_from_the_moving_average(logged_in_client):
     html = client.get("/").data.decode()
     assert "afterBody" in html
     assert "movingAvgBmiOn(items[0].label)" in html
-    assert "-day avg): '" in html
+    # the label comes from the page's translated strings, with the user's window (10 days by default)
+    assert "t('bmiTooltip'" in html
+    assert "BMI (10-day avg): %(bmi)s" in html
 
 
 def test_responsive_breakpoints_and_axis_thinning_are_present(logged_in_client):
@@ -958,7 +976,7 @@ def test_chart_has_a_right_hand_bmi_axis_tied_to_the_weight_ticks(logged_in_clie
     html = client.get("/").data.decode()
     assert "yBmi:" in html
     assert "position: 'right'" in html
-    assert "bmiForWeight(weight).toFixed(1)" in html
+    assert "oneDecimalFormat.format(bmiForWeight(weight))" in html
     assert "display: !!heightCm" in html  # only shown once a height is set
 
 
