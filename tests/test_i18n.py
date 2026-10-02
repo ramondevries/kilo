@@ -223,3 +223,50 @@ def test_errors_are_in_the_request_language_but_the_status_is_the_same(logged_in
     )
     assert response.status_code == 400
     assert response.get_json()["error"]
+
+
+@pytest.mark.parametrize(
+    "lang, columns, day_pattern",
+    [
+        ("nl", "datum,gewicht,notitie", "d-M-jj"),
+        ("fr", "date,poids,note", "j-M-aa"),
+        ("es", "fecha,peso,nota", "d-M-aa"),
+        ("pt", "data,peso,nota", "d-M-aa"),
+        ("de", "Datum,Gewicht,Notiz", "T-M-JJ"),
+        ("it", "data,peso,nota", "g-M-aa"),
+    ],
+)
+def test_the_csv_legend_on_the_import_page_is_translated(logged_in_client, lang, columns, day_pattern):
+    client, _user_id = logged_in_client
+    html = client.get(f"/settings?lang={lang}").get_data(as_text=True)
+    assert f"<code>{columns}</code>" in html
+    assert f"<code>{day_pattern}</code>" in html
+    assert "<code>date,weight,note</code>" not in html
+    assert "<code>d-M-yy</code>" not in html
+
+
+@pytest.mark.parametrize("lang", ALL_LANGUAGES)
+def test_the_csv_file_is_the_same_in_every_language(logged_in_client, lang):
+    import io
+
+    from app.models import WeightEntry
+
+    client, _user_id = logged_in_client
+    response = client.post(
+        "/settings/import",
+        data={"csv_file": (io.BytesIO(b"23-9-26,79.7,some text\n24-9-2026,80.5,\n"), "weights.csv")},
+        content_type="multipart/form-data",
+        headers={"Accept-Language": lang},
+    )
+    assert response.status_code == 302
+    assert sorted(entry.weight for entry in WeightEntry.query.all()) == [79.7, 80.5]
+    export = client.get("/settings/export", headers={"Accept-Language": lang}).get_data(as_text=True)
+    assert export.splitlines() == ["23-9-26,79.7,some text", "24-9-26,80.5,"]
+
+
+def test_the_line_format_error_names_the_columns_in_the_request_language(app):
+    from app.csv_io import parse_csv
+
+    with app.test_request_context("/?lang=nl"):
+        _rows, errors = parse_csv("only-one-column\n")
+    assert errors == ["regel 1: verwacht datum,gewicht[,notitie]"]

@@ -46,6 +46,7 @@
 
   <section class="add-entry">
     <h2>{{ _("Import data") }}</h2>
+    {# NOTE: The text in <code> only names the three columns of a line such as 23-9-26,79.7,text. Translate the names (date, weight, note): the file itself has no header and is the same in every language. #}
     <p>{% trans trimmed %}Import weigh-ins from a CSV text file. Each line is
       <code>date,weight,note</code> (note is optional), for example:{% endtrans %}</p>
     {# NOTE: Example notes in the CSV sample. The CSV format itself (dates, dot as decimal separator) stays the same in every language. #}
@@ -53,6 +54,7 @@
 24-9-26,79.7,{{ _("optional notes") }}
 25-9-26,80.5,
 26-9-26,80.3,{{ _("some text") }}</pre>
+    {# NOTE: d-M-yy and d-M-yyyy describe the date pattern, as in 23-9-26 or 23-9-2026. Use the first letter of the word for day, month (keep a capital M, so it cannot be mistaken for minutes) and year in your language, e.g. j-M-aa in French. The numbers in the file are always day-month-year. #}
     <p>{% trans trimmed %}Dates are <code>d-M-yy</code> or <code>d-M-yyyy</code>; weight is in
       kilograms. Importing a date that already has an entry overwrites it.{% endtrans %}</p>
     <form method="post" action="{{ url_for('main.import_entries') }}" enctype="multipart/form-data" class="entry-form">

@@ -70,6 +70,7 @@ def parse_csv(file_bytes):
         if not row or all(not cell.strip() for cell in row):
             continue
         if len(row) < 2:
+            # NOTE: date,weight[,note] names the columns of a CSV line; translate the names (note is optional).
             errors.append(_("line %(line)d: expected date,weight[,note]", line=lineno))
             continue
 

@@ -54,9 +54,15 @@ Keep these things exactly as in the English text:
 * placeholders such as `%(email)s`, `%(num)d` and `%(grams)s` (you may move them
   to where the sentence needs them), and `%%`, which is a literal percent sign;
 * the HTML tags `<strong>` and `<code>`, and `&middot;`;
-* the CSV field names in `date,weight,note`: the file format is the same in
-  every language;
 * the name **Kilo** and **Kilo Tracker**.
+
+Translate the text inside `<code>` on the import page: `date,weight,note` names
+the three columns (`datum,gewicht,notitie`) and `d-M-yy` / `d-M-yyyy` describe
+the date pattern with the first letters of day, month and year in your language
+(`j-M-aa` in French, `T-M-JJ` in German). Keep a capital `M` for the month so it
+cannot be mistaken for minutes. These are only descriptions: the file itself has
+no header and is the same in every language, such as `23-9-26,79.7,some text`
+(day-month-year, a point as the decimal separator).
 
 ### Style
 

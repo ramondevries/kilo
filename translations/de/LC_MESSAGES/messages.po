@@ -79,9 +79,11 @@ msgid "Signed out."
 msgstr "Abgemeldet."
 
 # machine-translated
+#. NOTE: date,weight[,note] names the columns of a CSV line; translate the
+#. names (note is optional).
 #, python-format
 msgid "line %(line)d: expected date,weight[,note]"
-msgstr "Zeile %(line)d: erwartet date,weight[,note]"
+msgstr "Zeile %(line)d: erwartet Datum,Gewicht[,Notiz]"
 
 # machine-translated
 #, python-format
@@ -727,12 +729,15 @@ msgid "Import data"
 msgstr "Daten importieren"
 
 # machine-translated
+#. The text in <code> only names the three columns of a line such as
+#. 23-9-26,79.7,text. Translate the names (date, weight, note): the file itself
+#. has no header and is the same in every language.
 msgid ""
 "Import weigh-ins from a CSV text file. Each line is "
 "<code>date,weight,note</code> (note is optional), for example:"
 msgstr ""
 "Importiere Gewichtseinträge aus einer CSV-Textdatei. Jede Zeile lautet "
-"<code>date,weight,note</code> (die Notiz ist optional), zum Beispiel:"
+"<code>Datum,Gewicht,Notiz</code> (die Notiz ist optional), zum Beispiel:"
 
 # machine-translated
 #. Example notes in the CSV sample. The CSV format itself (dates, dot as
@@ -745,12 +750,16 @@ msgid "some text"
 msgstr "etwas Text"
 
 # machine-translated
+#. d-M-yy and d-M-yyyy describe the date pattern, as in 23-9-26 or 23-9-2026.
+#. Use the first letter of the word for day, month (keep a capital M, so it
+#. cannot be mistaken for minutes) and year in your language, e.g. j-M-aa in
+#. French. The numbers in the file are always day-month-year.
 msgid ""
 "Dates are <code>d-M-yy</code> or <code>d-M-yyyy</code>; weight is in "
 "kilograms. Importing a date that already has an entry overwrites it."
 msgstr ""
-"Datumsangaben haben das Format <code>d-M-yy</code> oder "
-"<code>d-M-yyyy</code>; das Gewicht wird in Kilogramm angegeben. Wird ein "
+"Datumsangaben haben das Format <code>T-M-JJ</code> oder "
+"<code>T-M-JJJJ</code>; das Gewicht wird in Kilogramm angegeben. Wird ein "
 "Datum importiert, das schon einen Eintrag hat, wird dieser überschrieben."
 
 # machine-translated

@@ -79,9 +79,11 @@ msgid "Signed out."
 msgstr "Sesión cerrada."
 
 # machine-translated
+#. NOTE: date,weight[,note] names the columns of a CSV line; translate the
+#. names (note is optional).
 #, python-format
 msgid "line %(line)d: expected date,weight[,note]"
-msgstr "línea %(line)d: se esperaba date,weight[,note]"
+msgstr "línea %(line)d: se esperaba fecha,peso[,nota]"
 
 # machine-translated
 #, python-format
@@ -719,12 +721,15 @@ msgid "Import data"
 msgstr "Importar datos"
 
 # machine-translated
+#. The text in <code> only names the three columns of a line such as
+#. 23-9-26,79.7,text. Translate the names (date, weight, note): the file itself
+#. has no header and is the same in every language.
 msgid ""
 "Import weigh-ins from a CSV text file. Each line is "
 "<code>date,weight,note</code> (note is optional), for example:"
 msgstr ""
 "Importa pesajes desde un archivo de texto CSV. Cada línea es "
-"<code>date,weight,note</code> (la nota es opcional), por ejemplo:"
+"<code>fecha,peso,nota</code> (la nota es opcional), por ejemplo:"
 
 # machine-translated
 #. Example notes in the CSV sample. The CSV format itself (dates, dot as
@@ -737,11 +742,15 @@ msgid "some text"
 msgstr "algo de texto"
 
 # machine-translated
+#. d-M-yy and d-M-yyyy describe the date pattern, as in 23-9-26 or 23-9-2026.
+#. Use the first letter of the word for day, month (keep a capital M, so it
+#. cannot be mistaken for minutes) and year in your language, e.g. j-M-aa in
+#. French. The numbers in the file are always day-month-year.
 msgid ""
 "Dates are <code>d-M-yy</code> or <code>d-M-yyyy</code>; weight is in "
 "kilograms. Importing a date that already has an entry overwrites it."
 msgstr ""
-"Las fechas son <code>d-M-yy</code> o <code>d-M-yyyy</code>; el peso va en "
+"Las fechas son <code>d-M-aa</code> o <code>d-M-aaaa</code>; el peso va en "
 "kilogramos. Importar una fecha que ya tiene un registro lo sobrescribe."
 
 # machine-translated
