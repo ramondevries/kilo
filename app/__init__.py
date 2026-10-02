@@ -29,6 +29,8 @@ from flask_wtf import CSRFProtect
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
+from . import i18n
+
 db = SQLAlchemy()
 csrf = CSRFProtect()
 mail = Mail()
@@ -75,6 +77,10 @@ def create_app(test_config=None):
         MAIL_SUPPRESS_SEND=os.environ.get("MAIL_SUPPRESS_SEND", "1") == "1",
         CHECK_EMAIL_MX=os.environ.get("CHECK_EMAIL_MX", "1") == "1",
         MAX_CONTENT_LENGTH=1 * 1024 * 1024,
+        SUPPORTED_LANGUAGES=i18n.SUPPORTED_LANGUAGES,
+        BABEL_DEFAULT_LOCALE=i18n.DEFAULT_LANGUAGE,
+        BABEL_TRANSLATION_DIRECTORIES=os.path.join(app.root_path, "..", "translations"),
+        WTF_I18N_ENABLED=True,
     )
 
     if test_config:
@@ -87,6 +93,7 @@ def create_app(test_config=None):
     mail.init_app(app)
 
     from . import account, auth, routes
+    i18n.init_app(app)
     app.register_blueprint(routes.bp)
     app.register_blueprint(account.bp)
     app.register_blueprint(auth.bp)

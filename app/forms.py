@@ -14,6 +14,7 @@
 """WTForms forms: signup, code verification, settings and CSV import."""
 
 from flask import current_app
+from flask_babel import format_decimal, gettext as _, lazy_gettext as _l
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileRequired
 from wtforms import BooleanField, FloatField, IntegerField, SelectField, StringField
@@ -29,7 +30,7 @@ from app.utils import parse_decimal
 class SignupForm(FlaskForm):
     """Email address entry for signing in or up."""
     email = StringField(
-        "Email", validators=[DataRequired(), Email(), Length(max=255)]
+        _l("Email"), validators=[DataRequired(), Email(), Length(max=255)]
     )
 
     def validate_email(self, field):
@@ -48,8 +49,8 @@ class SignupForm(FlaskForm):
 class VerifyCodeForm(FlaskForm):
     """The 6-digit code from the email."""
     code = StringField(
-        "Verification code",
-        validators=[DataRequired(), Regexp(r"^\d{6}$", message="Enter the 6-digit code.")],
+        _l("Verification code"),
+        validators=[DataRequired(), Regexp(r"^\d{6}$", message=_l("Enter the 6-digit code."))],
     )
 
 
@@ -65,8 +66,17 @@ class DecimalFloatField(FloatField):
             return  # empty: left to the "required" validator
         value = parse_decimal(valuelist[0])
         if value is None:
-            raise ValueError("Enter the height as a plain number, e.g. 180 or 1.8.")
+            raise ValueError(_("Enter the height as a plain number, e.g. 180 or 1.8."))
         self.data = value
+
+    def _value(self):
+        # Re-show what the user typed; otherwise the stored number with the
+        # language's decimal separator (186,0 rather than 186.0).
+        if self.raw_data:
+            return self.raw_data[0]
+        if self.data is not None:
+            return format_decimal(self.data, format="0.0#")
+        return ""
 
 
 class SettingsForm(FlaskForm):
@@ -76,14 +86,16 @@ class SettingsForm(FlaskForm):
 
     # InputRequired, not DataRequired: a typo then gets the "plain number"
     # message from the field instead of also "This field is required".
-    height_value = DecimalFloatField("Height", validators=[InputRequired()])
+    # NOTE: Label of the body height field in the settings.
+    height_value = DecimalFloatField(_l("Height"), validators=[InputRequired()])
+    # NOTE: Label of the cm/m dropdown next to the height field.
     height_unit = SelectField(
-        "Unit", choices=[(u, u) for u in User.HEIGHT_UNITS], validators=[DataRequired()]
+        _l("Unit"), choices=[(u, u) for u in User.HEIGHT_UNITS], validators=[DataRequired()]
     )
-    dark_mode = BooleanField("Dark mode")
+    dark_mode = BooleanField(_l("Dark mode"))
 
     moving_avg_days = IntegerField(
-        "Moving average (days)", default=10, validators=[NumberRange(min=1, max=3650)]
+        _l("Moving average (days)"), default=10, validators=[NumberRange(min=1, max=3650)]
     )
 
     def validate_height_value(self, field):
@@ -95,14 +107,19 @@ class SettingsForm(FlaskForm):
         height_cm = field.data * 100 if self.height_unit.data == "m" else field.data
         if not self.MIN_HEIGHT_CM <= height_cm <= self.MAX_HEIGHT_CM:
             raise ValidationError(
-                f"Height must be between {self.MIN_HEIGHT_CM} and {self.MAX_HEIGHT_CM} cm "
-                f"({self.MIN_HEIGHT_CM / 100:g} and {self.MAX_HEIGHT_CM / 100:g} m)."
+                _(
+                    "Height must be between %(min_cm)s and %(max_cm)s cm (%(min_m)s and %(max_m)s m).",
+                    min_cm=format_decimal(self.MIN_HEIGHT_CM),
+                    max_cm=format_decimal(self.MAX_HEIGHT_CM),
+                    min_m=format_decimal(self.MIN_HEIGHT_CM / 100),
+                    max_m=format_decimal(self.MAX_HEIGHT_CM / 100),
+                )
             )
 
 
 class ImportForm(FlaskForm):
     """Upload of a CSV file to import."""
     csv_file = FileField(
-        "CSV file",
-        validators=[FileRequired(), FileAllowed(["csv", "txt"], "CSV or text files only.")],
+        _l("CSV file"),
+        validators=[FileRequired(), FileAllowed(["csv", "txt"], _l("CSV or text files only."))],
     )

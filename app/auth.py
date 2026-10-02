@@ -25,6 +25,7 @@ from datetime import timedelta
 from functools import wraps
 
 from flask import Blueprint, flash, redirect, render_template, session, url_for
+from flask_babel import get_locale, gettext as _
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
@@ -51,7 +52,7 @@ def login_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         if get_current_user() is None:
-            flash("Enter your email to sign in.", "error")
+            flash(_("Enter your email to sign in."), "error")
             return redirect(url_for("main.index"))
         return view(*args, **kwargs)
 
@@ -60,9 +61,10 @@ def login_required(view):
 
 @bp.app_context_processor
 def inject_current_user():
-    """Template context for every page: the user, their email and the theme."""
+    """Template context for every page: the user, their email, the theme and the language."""
     user = get_current_user()
     return {
+        "current_locale": str(get_locale()),
         "current_user": user,
         "current_email": session.get("email"),
         "theme": "dark" if user and user.dark_mode else "light",
@@ -94,7 +96,7 @@ def signup():
 
         _issue_code(user, email)
         session["pending_email"] = email
-        flash(f"We sent a verification code to {email}.", "success")
+        flash(_("We sent a verification code to %(email)s.", email=email), "success")
         return redirect(url_for("auth.verify"))
 
     return render_template("signup.html", form=form)
@@ -105,7 +107,7 @@ def verify():
     """Check the emailed code and sign the user in. Codes expire and allow a limited number of attempts."""
     email = session.get("pending_email")
     if not email:
-        flash("Enter your email to get a verification code.", "error")
+        flash(_("Enter your email to get a verification code."), "error")
         return redirect(url_for("auth.signup"))
 
     user = User.query.filter_by(email_hash=hash_email(email)).first()
@@ -116,13 +118,13 @@ def verify():
     form = VerifyCodeForm()
     if form.validate_on_submit():
         if not user.code_hash or not user.code_expires_at or user.code_expires_at < utcnow():
-            flash("That code has expired. Request a new one.", "error")
+            flash(_("That code has expired. Request a new one."), "error")
         elif user.code_attempts >= User.MAX_CODE_ATTEMPTS:
-            flash("Too many attempts. Request a new code.", "error")
+            flash(_("Too many attempts. Request a new code."), "error")
         elif not check_password_hash(user.code_hash, form.code.data):
             user.code_attempts += 1
             db.session.commit()
-            flash("Incorrect code.", "error")
+            flash(_("Incorrect code."), "error")
         else:
             user.verified_at = user.verified_at or utcnow()
             user.code_hash = None
@@ -132,7 +134,7 @@ def verify():
             session.pop("pending_email", None)
             session["user_id"] = user.id
             session["email"] = email
-            flash("Email verified — you're signed in.", "success")
+            flash(_("Email verified — you're signed in."), "success")
             return redirect(url_for("main.index"))
 
     return render_template(
@@ -153,7 +155,7 @@ def resend_code():
         return redirect(url_for("auth.signup"))
 
     _issue_code(user, email)
-    flash(f"We sent a new code to {email}.", "success")
+    flash(_("We sent a new code to %(email)s.", email=email), "success")
     return redirect(url_for("auth.verify"))
 
 
@@ -162,7 +164,7 @@ def logout():
     """Sign out by clearing the user from the session."""
     session.pop("user_id", None)
     session.pop("email", None)
-    flash("Signed out.", "success")
+    flash(_("Signed out."), "success")
     return redirect(url_for("main.index"))
 
 

@@ -1,49 +1,56 @@
 {% extends "base.html" %}
 {% from "_back_link.html" import back_link %}
 
-{% block title %}About — Kilo Tracker{% endblock %}
+{% block title %}{{ _("About") }} — Kilo Tracker{% endblock %}
 
 {% block content %}
   <section class="add-entry">
     <div class="page-head">
-      {{ back_link(url_for('main.index'), "Back to the dashboard") }}
-      <h2>About Kilo Tracker</h2>
+      {{ back_link(url_for('main.index'), _("Back to the dashboard")) }}
+      <h2>{{ _("About Kilo Tracker") }}</h2>
     </div>
-    <p>For many years I tracked my weight with
-      <a href="https://www.fourmilab.ch/hackdiet/online/hdo.html" target="_blank" rel="noopener">The Hacker's Diet Online</a>,
-      created by
-      <a href="https://en.wikipedia.org/wiki/John_Walker_(programmer)" target="_blank" rel="noopener">John Walker</a>.
+    {% set hdo_link %}<a href="https://www.fourmilab.ch/hackdiet/online/hdo.html" target="_blank" rel="noopener">The Hacker's Diet Online</a>{% endset %}
+    {% set walker_link %}<a href="https://en.wikipedia.org/wiki/John_Walker_(programmer)" target="_blank" rel="noopener">John Walker</a>{% endset %}
+    <p>{% trans trimmed hdo_link=hdo_link, walker_link=walker_link %}For many years I tracked my weight with
+      {{ hdo_link }}, created by {{ walker_link }}.
       It kept working for a good while after his death, but in March 2026 it
-      finally stopped.</p>
-    <p>I tried
-      <a href="https://yadt.iotide.com/" target="_blank" rel="noopener">Yet Another Diet Tool</a>
+      finally stopped.{% endtrans %}</p>
+    {% set yadt_link %}<a href="https://yadt.iotide.com/" target="_blank" rel="noopener">Yet Another Diet Tool</a>{% endset %}
+    <p>{% trans trimmed yadt_link=yadt_link %}I tried {{ yadt_link }}
       as a replacement, but its interface wasn't for me. So I vibe-coded my own
-      version, and Kilo Tracker is the result. It's free for anyone to use.</p>
-    <p>Kilo Tracker is open source software. You can download the source code
-      and run your own copy from
-      <a href="https://github.com/ramondevries/kilo" target="_blank" rel="noopener">github.com/ramondevries/kilo</a>.</p>
-    <p>I hope you like it! You can reach me at
-      <a href="mailto:info@11tools.com">info@11tools.com</a>.</p>
+      version, and Kilo Tracker is the result. It's free for anyone to use.{% endtrans %}</p>
+    {% set github_link %}<a href="https://github.com/ramondevries/kilo" target="_blank" rel="noopener">github.com/ramondevries/kilo</a>{% endset %}
+    <p>{% trans trimmed github_link=github_link %}Kilo Tracker is open source software. You can download the source code
+      and run your own copy from {{ github_link }}.{% endtrans %}</p>
+    {% set mail_link %}<a href="mailto:info@11tools.com">info@11tools.com</a>{% endset %}
+    <p>{% trans trimmed mail_link=mail_link %}I hope you like it! You can reach me at {{ mail_link }}.{% endtrans %}</p>
     {% if version %}
-      <p class="version-line">Version
-        {% if version.tag %}
-          <a href="https://github.com/ramondevries/kilo/releases/tag/{{ version.tag|urlencode }}" target="_blank" rel="noopener">{{ version.tag }}</a>
+      {% if version.tag %}
+        {% set version_link %}<a href="https://github.com/ramondevries/kilo/releases/tag/{{ version.tag|urlencode }}" target="_blank" rel="noopener">{{ version.tag }}</a>{% endset %}
+      {% else %}
+        {% set version_link %}<a href="https://github.com/ramondevries/kilo/commit/{{ version.commit }}" target="_blank" rel="noopener">{{ version.commit }}</a>{% endset %}
+      {% endif %}
+      <p class="version-line">
+        {% if version.date %}
+          {# NOTE: Version of the app, with the date of its last change. %(version)s is a link such as v1.2 or a commit id. #}
+          {% trans version=version_link, date=version.date|localdate %}Version {{ version }} &middot; committed {{ date }}{% endtrans %}
         {% else %}
-          <a href="https://github.com/ramondevries/kilo/commit/{{ version.commit }}" target="_blank" rel="noopener">{{ version.commit }}</a>
+          {% trans version=version_link %}Version {{ version }}{% endtrans %}
         {% endif %}
-        {% if version.date %}&middot; committed {{ version.date }}{% endif %}</p>
+      </p>
     {% endif %}
   </section>
 
   <section class="add-entry">
-    <h2>How signing in works</h2>
-    <p>There are no passwords. Enter your email and we send a 6-digit code
-      that's valid for {{ ttl_minutes }} minutes — enter it and you're signed in.</p>
-    <p>We never store your email address itself in our database. Instead we keep a one-way
-      SHA-256 hash of it (the same scheme
-      <a href="https://docs.gravatar.com/rest/hash/" target="_blank" rel="noopener">Gravatar uses</a>).
-    <p>That hash also doubles as your Gravatar id — if you have an avatar set
-      up at <a href="https://gravatar.com" target="_blank" rel="noopener">gravatar.com</a>,
-      it shows up automatically once you're signed in.</p>
+    <h2>{{ _("How signing in works") }}</h2>
+    <p>{% trans trimmed num=ttl_minutes %}There are no passwords. Enter your email and we send a 6-digit code
+      that's valid for {{ num }} minute — enter it and you're signed in.{% pluralize num %}There are no passwords. Enter your email and we send a 6-digit code
+      that's valid for {{ num }} minutes — enter it and you're signed in.{% endtrans %}</p>
+    {% set gravatar_hash_link %}<a href="https://docs.gravatar.com/rest/hash/" target="_blank" rel="noopener">{{ _("Gravatar uses") }}</a>{% endset %}
+    <p>{% trans trimmed gravatar_hash_link=gravatar_hash_link %}We never store your email address itself in our database. Instead we keep a one-way
+      SHA-256 hash of it (the same scheme {{ gravatar_hash_link }}).{% endtrans %}</p>
+    {% set gravatar_link %}<a href="https://gravatar.com" target="_blank" rel="noopener">gravatar.com</a>{% endset %}
+    <p>{% trans trimmed gravatar_link=gravatar_link %}That hash also doubles as your Gravatar id — if you have an avatar set
+      up at {{ gravatar_link }}, it shows up automatically once you're signed in.{% endtrans %}</p>
   </section>
 {% endblock %}

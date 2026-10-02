@@ -568,7 +568,7 @@ def test_save_field_warning_message_mentions_neighbor(logged_in_client):
     resp = client.post("/entries/field", json={"date": "2026-09-05", "weight": 95.0})
     message = resp.get_json()["message"]
     assert "80" in message
-    assert "2026-09-01" in message
+    assert "Sep 1, 2026" in message  # the neighbour's date, formatted for the locale
 
 
 def test_save_field_confirm_overrides_outlier_warning(logged_in_client, app):
@@ -957,7 +957,9 @@ def test_chart_tooltip_shows_bmi_from_the_moving_average(logged_in_client):
     html = client.get("/").data.decode()
     assert "afterBody" in html
     assert "movingAvgBmiOn(items[0].label)" in html
-    assert "-day avg): '" in html
+    # the label comes from the page's translated strings, with the user's window (10 days by default)
+    assert "t('bmiTooltip'" in html
+    assert "BMI (10-day avg): %(bmi)s" in html
 
 
 def test_responsive_breakpoints_and_axis_thinning_are_present(logged_in_client):
@@ -974,7 +976,7 @@ def test_chart_has_a_right_hand_bmi_axis_tied_to_the_weight_ticks(logged_in_clie
     html = client.get("/").data.decode()
     assert "yBmi:" in html
     assert "position: 'right'" in html
-    assert "bmiForWeight(weight).toFixed(1)" in html
+    assert "oneDecimalFormat.format(bmiForWeight(weight))" in html
     assert "display: !!heightCm" in html  # only shown once a height is set
 
 

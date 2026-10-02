@@ -1,26 +1,26 @@
 {% extends "base.html" %}
 {% from "_back_link.html" import back_link %}
 
-{% block title %}Settings — Kilo Tracker{% endblock %}
+{% block title %}{{ _("Settings") }} — Kilo Tracker{% endblock %}
 
 {% block content %}
   <section class="add-entry">
     <div class="page-head">
-      {{ back_link(url_for('main.index'), "Back to the dashboard") }}
-      <h2>Settings</h2>
+      {{ back_link(url_for('main.index'), _("Back to the dashboard")) }}
+      <h2>{{ _("Settings") }}</h2>
     </div>
     <form method="post" class="entry-form">
       {{ form.hidden_tag() }}
       <div class="field field-wide">
         <label class="toggle-row">
-          Dark mode
+          {{ _("Dark mode") }}
           <span class="toggle-switch">
             {{ form.dark_mode(class_="dark-mode-toggle") }}
             <span class="toggle-slider"></span>
           </span>
         </label>
       </div>
-      <p class="field-wide">Your height is used to calculate your BMI.</p>
+      <p class="field-wide">{{ _("Your height is used to calculate your BMI.") }}</p>
       <div class="field">
         {{ form.height_value.label }}
         {{ form.height_value(inputmode="decimal", autocomplete="off", **{"data-decimal-only": ""}) }}
@@ -39,20 +39,22 @@
           <p class="flash flash-error">{{ error }}</p>
         {% endfor %}
       </div>
-      <button type="submit">Save</button>
+      {# NOTE: Button that saves the settings (verb). #}
+      <button type="submit">{{ _("Save") }}</button>
     </form>
   </section>
 
   <section class="add-entry">
-    <h2>Import data</h2>
-    <p>Import weigh-ins from a CSV text file. Each line is
-      <code>date,weight,note</code> (note is optional), for example:</p>
-    <pre class="csv-example">23-9-26,79.7,optional notes
-24-9-26,79.7,optional notes
+    <h2>{{ _("Import data") }}</h2>
+    <p>{% trans trimmed %}Import weigh-ins from a CSV text file. Each line is
+      <code>date,weight,note</code> (note is optional), for example:{% endtrans %}</p>
+    {# NOTE: Example notes in the CSV sample. The CSV format itself (dates, dot as decimal separator) stays the same in every language. #}
+    <pre class="csv-example">23-9-26,79.7,{{ _("optional notes") }}
+24-9-26,79.7,{{ _("optional notes") }}
 25-9-26,80.5,
-26-9-26,80.3,some text</pre>
-    <p>Dates are <code>d-M-yy</code> or <code>d-M-yyyy</code>; weight is in
-      kilograms. Importing a date that already has an entry overwrites it.</p>
+26-9-26,80.3,{{ _("some text") }}</pre>
+    <p>{% trans trimmed %}Dates are <code>d-M-yy</code> or <code>d-M-yyyy</code>; weight is in
+      kilograms. Importing a date that already has an entry overwrites it.{% endtrans %}</p>
     <form method="post" action="{{ url_for('main.import_entries') }}" enctype="multipart/form-data" class="entry-form">
       {{ import_form.hidden_tag() }}
       <div class="field field-wide">
@@ -62,20 +64,20 @@
           <p class="flash flash-error">{{ error }}</p>
         {% endfor %}
       </div>
-      <button type="submit">Import</button>
+      <button type="submit">{{ _("Import") }}</button>
     </form>
   </section>
 
   <section class="add-entry">
-    <h2>Export data</h2>
-    <p>Download all your weigh-ins as a CSV file (date, weight in kilograms, note).</p>
-    <a class="button-link" href="{{ url_for('main.export_entries') }}">Export CSV</a>
+    <h2>{{ _("Export data") }}</h2>
+    <p>{{ _("Download all your weigh-ins as a CSV file (date, weight in kilograms, note).") }}</p>
+    <a class="button-link" href="{{ url_for('main.export_entries') }}">{{ _("Export CSV") }}</a>
   </section>
 
   <section class="add-entry">
-    <h2>Remove my data</h2>
-    <p>Permanently delete your account and all your weigh-ins. You'll be asked
-      to download your data and confirm with a code sent by email first.</p>
-    <a class="button-link button-danger" href="{{ url_for('account.remove_data') }}">Remove my data…</a>
+    <h2>{{ _("Remove my data") }}</h2>
+    <p>{% trans trimmed %}Permanently delete your account and all your weigh-ins. You'll be asked
+      to download your data and confirm with a code sent by email first.{% endtrans %}</p>
+    <a class="button-link button-danger" href="{{ url_for('account.remove_data') }}">{{ _("Remove my data…") }}</a>
   </section>
 {% endblock %}

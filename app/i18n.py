@@ -1,0 +1,100 @@
+# Kilo Tracker - a small weight-tracking web app.
+# Copyright (C) 2026 Ramón de Vries <ramon@11tools.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version. See the LICENSE file for the full text.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+"""Language selection for Kilo Tracker.
+
+The UI language follows the browser's Accept-Language header, matched on the
+primary subtag (`nl-BE` -> `nl`, `pt-PT` -> `pt`). A hidden `?lang=xx` query
+parameter overrides it for testing; it is never stored. English is the
+fallback. The supported languages are listed once, in `SUPPORTED_LANGUAGES`
+in the app config.
+
+Also holds the Jinja filters that show numbers, weights and dates the way the
+active language writes them (`72,5 kg` in Dutch, `72.5 kg` in English).
+"""
+
+from datetime import date
+
+from babel.units import format_unit
+from flask import current_app, has_request_context, request
+from flask_babel import Babel, format_date, format_decimal, get_locale, gettext as _, refresh
+
+# The languages the app is translated into: the only place they are listed.
+# To add one, list it here and run `pybabel init` (see TRANSLATING.md). "en" is
+# the source language and the fallback.
+SUPPORTED_LANGUAGES = ("en", "nl", "fr", "es", "pt", "de", "it")
+DEFAULT_LANGUAGE = "en"
+
+babel = Babel()
+
+
+def select_locale():
+    """Pick the locale for the current request (see the module docstring)."""
+    supported = current_app.config["SUPPORTED_LANGUAGES"]
+    if not has_request_context():
+        return current_app.config["BABEL_DEFAULT_LOCALE"]
+
+    override = request.args.get("lang", "").strip().lower()
+    if override in supported:
+        return override
+
+    for tag, _quality in request.accept_languages:
+        primary = tag.replace("_", "-").split("-")[0].lower()
+        if primary in supported:
+            return primary
+
+    return current_app.config["BABEL_DEFAULT_LOCALE"]
+
+
+def kg(value, signed=False):
+    """A weight in kilograms with one decimal and the unit: `72,5 kg`. `signed` adds a + or -."""
+    return format_unit(
+        value, "kilogram", length="short", format="+0.0;-0.0" if signed else "0.0", locale=get_locale()
+    )
+
+
+def grams_per_day(value):
+    """A signed rate in grams per day, e.g. `-35 g/day`."""
+    # NOTE: Rate of weight change. %(grams)s is a signed whole number; g is gram.
+    return _("%(grams)s g/day", grams=format_decimal(value, format="+0;-0"))
+
+
+def decimal1(value):
+    """A number with exactly one decimal, e.g. a BMI of `22,5`."""
+    return format_decimal(value, format="0.0")
+
+
+def decimal_input(value):
+    """A weight for a text input: the locale's decimal separator, no grouping, 1-2 decimals."""
+    return format_decimal(value, format="0.0#")
+
+
+def localdate(value):
+    """A date (or ISO date string) in the locale's medium format, e.g. `1 sep 2026`."""
+    if isinstance(value, str):
+        value = date.fromisoformat(value)
+    return format_date(value, format="medium")
+
+
+def init_app(app):
+    """Register Flask-Babel with `select_locale` as the locale selector, and the template filters."""
+    babel.init_app(app, locale_selector=select_locale)
+    for func in (kg, grams_per_day, decimal1, decimal_input, localdate):
+        app.add_template_filter(func)
+
+    @app.before_request
+    def _reset_locale():
+        # Flask-Babel caches the locale on the app context. That is one context
+        # per request in production, but a long-lived outer one (the test
+        # fixtures) would carry one request's language over to the next.
+        refresh()
