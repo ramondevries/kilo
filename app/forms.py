@@ -17,11 +17,13 @@ from flask import current_app
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileRequired
 from wtforms import BooleanField, FloatField, IntegerField, SelectField, StringField
-from wtforms.validators import DataRequired, Email, Length, NumberRange, Regexp, ValidationError
+from wtforms.validators import (
+    DataRequired, Email, InputRequired, Length, NumberRange, Regexp, ValidationError,
+)
 
 from app.email_utils import MxCheckError, check_mx
 from app.models import User
-from app.utils import DECIMAL_RE
+from app.utils import parse_decimal
 
 
 class SignupForm(FlaskForm):
@@ -51,12 +53,30 @@ class VerifyCodeForm(FlaskForm):
     )
 
 
+class DecimalFloatField(FloatField):
+    """A FloatField that takes "1.8" and "1,8" alike and nothing else.
+
+    Plain FloatField uses float(), which rejects the comma but accepts "1e2",
+    "1_8" and "nan"; this one goes through `parse_decimal`.
+    """
+
+    def process_formdata(self, valuelist):
+        if not valuelist or not valuelist[0].strip():
+            return  # empty: left to the "required" validator
+        value = parse_decimal(valuelist[0])
+        if value is None:
+            raise ValueError("Enter the height as a plain number, e.g. 180 or 1.8.")
+        self.data = value
+
+
 class SettingsForm(FlaskForm):
     """User settings: height (cm or m, 50-275 cm), dark mode and the moving-average window in days."""
     MIN_HEIGHT_CM = 50
     MAX_HEIGHT_CM = 275
 
-    height_value = FloatField("Height", validators=[DataRequired()])
+    # InputRequired, not DataRequired: a typo then gets the "plain number"
+    # message from the field instead of also "This field is required".
+    height_value = DecimalFloatField("Height", validators=[InputRequired()])
     height_unit = SelectField(
         "Unit", choices=[(u, u) for u in User.HEIGHT_UNITS], validators=[DataRequired()]
     )
@@ -70,10 +90,6 @@ class SettingsForm(FlaskForm):
         """Require a plain decimal number that is within MIN_HEIGHT_CM..MAX_HEIGHT_CM once converted to cm."""
         # The range is in centimetres, so convert first — the entered number
         # means 180 in "cm" but 1.8 in "m".
-        raw = (field.raw_data or [""])[0].strip()
-        if not DECIMAL_RE.match(raw):
-            # FloatField would also take "1e2", "1_8" or "nan".
-            raise ValidationError("Enter the height as a plain number, e.g. 180 or 1.8.")
         if field.data is None or self.height_unit.data not in User.HEIGHT_UNITS:
             return  # the field/unit report their own errors
         height_cm = field.data * 100 if self.height_unit.data == "m" else field.data

@@ -108,14 +108,28 @@
   </script>
 
   <script>
-    // Weight and height fields take digits and a decimal separator only:
-    // type="number" would otherwise also let through "e", "+" and "-".
-    // Delegated, so it covers the rows the daily log adds while scrolling.
+    // Weight and height fields are type="text" inputmode="decimal" (type="number"
+    // refuses the comma in some browsers) and take digits and one decimal
+    // separator, "." or ",", whatever the language. Delegated, so it covers the
+    // rows the daily log adds while scrolling.
     document.addEventListener('beforeinput', function (e) {
       var el = e.target;
       if (!el || !el.matches || !el.matches('input[data-decimal-only]')) return;
-      if (e.data && /[^0-9.,]/.test(e.data)) e.preventDefault();
+      if (!e.data) return;
+      if (/[^0-9.,]/.test(e.data)) { e.preventDefault(); return; }
+      if (/[.,]/.test(e.data)) {
+        var kept = el.value.slice(0, el.selectionStart) + el.value.slice(el.selectionEnd);
+        if (/[.,]/.test(kept)) e.preventDefault();
+      }
     });
+
+    // "72,5" -> "72.5" for sending to the server. An empty field stays empty
+    // (it clears the entry); anything that isn't a plain decimal is sent as
+    // typed, so the server answers with its error.
+    window.normalizeDecimal = function (raw) {
+      var s = String(raw).trim();
+      return /^(\d+([.,]\d*)?|[.,]\d+)$/.test(s) ? s.replace(',', '.') : s;
+    };
   </script>
 
   {% block scripts %}{% endblock %}

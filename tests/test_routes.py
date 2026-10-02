@@ -778,7 +778,7 @@ def test_non_numeric_height_is_rejected_without_crashing(logged_in_client):
     assert resp.status_code == 200
 
 
-@pytest.mark.parametrize("weight", ["1e2", "1_0", "nan", "inf", "-80", "+80", "abc", "8,0", "80.5.1"])
+@pytest.mark.parametrize("weight", ["1e2", "1_0", "nan", "inf", "-80", "+80", "abc", "8,0,1", "1,234.5", "80,5.1", "80.5.1", ",", "."])
 def test_weight_must_be_a_plain_decimal(logged_in_client, weight):
     client, _ = logged_in_client
     resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight})
@@ -786,14 +786,30 @@ def test_weight_must_be_a_plain_decimal(logged_in_client, weight):
     assert WeightEntry.query.count() == 0
 
 
-@pytest.mark.parametrize("weight", ["80", "80.5", "80.", "80.25"])
+@pytest.mark.parametrize("weight", ["80", "80.5", "80.", "80.25", "80,5", " 80,5 ", "80,", "80,25"])
 def test_plain_decimal_weights_are_accepted(logged_in_client, weight):
     client, _ = logged_in_client
     resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight, "confirm": True})
     assert resp.status_code == 200
 
 
-@pytest.mark.parametrize("height", ["1e2", "1_8", "nan", "-180", "+180"])
+@pytest.mark.parametrize("weight", ["72,5", "72.5"])
+def test_comma_and_point_save_the_same_weight(logged_in_client, weight):
+    client, _ = logged_in_client
+    resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight, "confirm": True})
+    assert resp.status_code == 200
+    assert WeightEntry.query.one().weight == 72.5
+
+
+@pytest.mark.parametrize("height, unit, cm", [("1,8", "m", 180), ("1.8", "m", 180), ("180,5", "cm", 180.5)])
+def test_height_accepts_comma_and_point(logged_in_client, height, unit, cm):
+    client, user_id = logged_in_client
+    resp = client.post("/settings", data={"height_value": height, "height_unit": unit})
+    assert resp.status_code == 302
+    assert db.session.get(User, user_id).height_cm == pytest.approx(cm)
+
+
+@pytest.mark.parametrize("height", ["1e2", "1_8", "nan", "-180", "+180", "1,234.5"])
 def test_height_must_be_a_plain_decimal(logged_in_client, height):
     client, user_id = logged_in_client
     resp = client.post("/settings", data={"height_value": height, "height_unit": "cm"})

@@ -21,6 +21,8 @@ import csv
 import io
 from datetime import date
 
+from app.utils import parse_decimal
+
 MIN_WEIGHT_KG = 1
 MAX_WEIGHT_KG = 1000
 
@@ -78,9 +80,8 @@ def parse_csv(file_bytes):
             errors.append(f"line {lineno}: {exc}")
             continue
 
-        try:
-            weight_kg = float(weight_str)
-        except ValueError:
+        weight_kg = parse_decimal(weight_str)
+        if weight_kg is None:
             errors.append(f"line {lineno}: invalid weight {weight_str!r}")
             continue
         if not (MIN_WEIGHT_KG <= weight_kg <= MAX_WEIGHT_KG):

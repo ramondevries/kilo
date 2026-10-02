@@ -39,7 +39,7 @@ from app.auth import get_current_user, login_required
 from app.csv_io import export_csv, parse_csv
 from app.forms import ImportForm, SettingsForm, SignupForm
 from app.models import WeightEntry
-from app.utils import DECIMAL_RE
+from app.utils import parse_decimal
 
 bp = Blueprint("main", __name__)
 
@@ -367,13 +367,16 @@ def save_field():
             db.session.commit()
         return jsonify(status="cleared", **_overview(user))
 
-    # Plain decimals only: float() would also take "1e2", "1_0", "nan"...
-    if isinstance(weight_raw, str) and not DECIMAL_RE.match(weight_raw.strip()):
-        return jsonify(error="invalid weight"), 400
-    try:
-        weight = float(weight_raw)
-    except (TypeError, ValueError):
-        return jsonify(error="invalid weight"), 400
+    # Plain decimals only, "80.5" or "80,5": float() would also take "1e2", "1_0", "nan"...
+    if isinstance(weight_raw, str):
+        weight = parse_decimal(weight_raw)
+        if weight is None:
+            return jsonify(error="invalid weight"), 400
+    else:
+        try:
+            weight = float(weight_raw)
+        except (TypeError, ValueError):
+            return jsonify(error="invalid weight"), 400
     if not (1 <= weight <= 1000):
         return jsonify(error="weight out of range"), 400
 
