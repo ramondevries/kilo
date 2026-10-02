@@ -1,15 +1,19 @@
 # Translating Kilo Tracker
 
 Kilo is translated into Dutch (`nl`), French (`fr`), Spanish (`es`), Brazilian
-Portuguese (`pt`), German (`de`) and Italian (`it`). English (`en`) is the source
-language and the fallback. All six translations were **machine-generated** and
-need review by people who speak the language; that is the most useful
-contribution you can make.
+Portuguese (`pt`), German (`de`), Italian (`it`), Indonesian (`id`), Polish
+(`pl`), Romanian (`ro`), Hungarian (`hu`), Danish (`da`), Finnish (`fi`), Swedish
+(`sv`) and Norwegian Bokmål (`nb`). English (`en`) is the source language and the
+fallback. All fourteen translations were **machine-generated** and need review
+by people who speak the language; that is the most useful contribution you can
+make.
 
 There is no language switcher. The page language follows the browser's
 `Accept-Language` header, matched on the first part of the tag (`nl-BE` and
-`nl-NL` both give Dutch, `pt-PT` gives Brazilian Portuguese). For testing,
-`?lang=de` on any URL overrides it for that request (nothing is stored).
+`nl-NL` both give Dutch, `pt-PT` gives Brazilian Portuguese). Browsers send
+`no` or `nn` for Norwegian; both give Bokmål (`LANGUAGE_ALIASES` in
+`app/i18n.py`). For testing, `?lang=de` on any URL overrides it for that request
+(nothing is stored).
 
 ## Where things are
 
@@ -69,11 +73,15 @@ no header and is the same in every language, such as `23-9-26,79.7,some text`
 * Short, friendly and neutral. Avoid judgmental wording about gaining or losing
   weight.
 * Address the user informally where that is normal for apps: *je* (nl), *du*
-  (de), *tú* (es), *você* (pt, as is usual in Brazilian apps), *tu* (it). French
-  uses *vous*, which is still the norm in French apps.
+  (de, da, sv, nb), *tú* (es), *você* (pt, as is usual in Brazilian apps), *tu*
+  (it, ro), *kamu* (id), *te* (hu), *sinä* (fi) and the informal imperative in
+  Polish. French uses *vous*, which is still the norm in French apps. Where the
+  source speaks as the author ("I tried ..."), avoid wording that reveals
+  gender (Polish, for example, uses an impersonal form).
 * Use the unit letters people use in your language for the chart ranges (`1J`
   for one year in Dutch and German, `1A` in French, Spanish, Portuguese and
-  Italian; `1S` for one week in the latter four).
+  Italian, `1v` in Finnish; `1S` for one week in the Romance languages, `1T` in
+  Polish, `1vk` in Finnish).
 * Be consistent: the same word for "entry", "weigh-in", "moving average", "BMI"
   everywhere.
 
@@ -116,8 +124,12 @@ English; the check script fails on them.
 5. Run `pybabel compile -d translations`, then check the layout in the browser
    at desktop width and on a phone (390 px wide): long words and long dates must
    not overflow. The date column of the daily log has its own width variable
-   (`--day-date-col` in `static/style.css`) for languages that write long dates.
-6. Run `python scripts/check_i18n.py` and `pytest`.
+   (`--day-date-col` in `static/style.css`) for languages whose dates are long
+   (Brazilian Portuguese and Hungarian have one; a language that wraps its
+   dates in the log needs one too).
+6. If the language's browser code differs from the one you used (like `no` for
+   `nb`), add it to `LANGUAGE_ALIASES` in `app/i18n.py`.
+7. Run `python scripts/check_i18n.py` and `pytest`.
 
 Only left-to-right languages are supported for now.
 

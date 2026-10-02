@@ -35,8 +35,9 @@ Weights are in kilograms and heights in centimetres or metres.
 
 ## Languages
 
-Kilo speaks English, Dutch, French, Spanish, Brazilian Portuguese, German and
-Italian. The language follows the browser's `Accept-Language` setting (there is
+Kilo speaks English, Dutch, French, Spanish, Brazilian Portuguese, German,
+Italian, Indonesian, Polish, Romanian, Hungarian, Danish, Finnish, Swedish and
+Norwegian (Bokmål). The language follows the browser's `Accept-Language` setting (there is
 no switcher); add `?lang=de` to a URL to try another one. The translations are
 machine-generated and welcome improvements: see [TRANSLATING.md](TRANSLATING.md).
 The compiled catalogs (`*.mo`) are not in git: run `pybabel compile -d

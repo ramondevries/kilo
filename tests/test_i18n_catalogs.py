@@ -21,7 +21,7 @@ import pytest
 from babel.messages.pofile import read_po, write_po
 
 ROOT = Path(__file__).resolve().parent.parent
-LANGUAGES = ["nl", "fr", "es", "pt", "de", "it"]
+LANGUAGES = ["nl", "fr", "es", "pt", "de", "it", "id", "pl", "ro", "hu", "da", "fi", "sv", "nb"]
 
 spec = importlib.util.spec_from_file_location("check_i18n", ROOT / "scripts" / "check_i18n.py")
 check_i18n = importlib.util.module_from_spec(spec)

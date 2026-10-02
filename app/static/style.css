@@ -18,13 +18,15 @@
   --fs-small: 0.78rem;
   --fs-ui: 0.9rem;
   --fs-heading: 1.05rem;
-  /* Width of the date column in the daily log. Brazilian Portuguese writes
-     dates long ("30 de set. de 2026"), so it gets a wider column. */
+  /* Width of the date column in the daily log. Brazilian Portuguese and
+     Hungarian write dates long ("30 de set. de 2026", "2026. szept. 30."), so
+     they get a wider column. */
   --day-date-col: 100px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 html:lang(pt) { --day-date-col: 136px; }
+html:lang(hu) { --day-date-col: 124px; }
 
 html[data-theme="dark"] {
   --bg: #14181a;
@@ -889,6 +891,7 @@ code {
   .add-entry, .entries { --panel-pad: 0.85rem; }
   :root { --day-date-col: 86px; }
   html:lang(pt) { --day-date-col: 122px; }
+  html:lang(hu) { --day-date-col: 110px; }
 
   .site-header { padding: 0.55rem 0.75rem; }
   .brand-logo { height: 24px; }

@@ -32,10 +32,23 @@ from flask_babel import Babel, format_date, format_decimal, get_locale, gettext 
 # The languages the app is translated into: the only place they are listed.
 # To add one, list it here and run `pybabel init` (see TRANSLATING.md). "en" is
 # the source language and the fallback.
-SUPPORTED_LANGUAGES = ("en", "nl", "fr", "es", "pt", "de", "it")
+SUPPORTED_LANGUAGES = (
+    "en", "nl", "fr", "es", "pt", "de", "it", "id", "pl", "ro", "hu", "da", "fi", "sv", "nb",
+)
 DEFAULT_LANGUAGE = "en"
 
+# Browser language codes that map to a language above. Norwegian is written in
+# Bokmål ("nb") by most people, but browsers also send "no" and "nn" (Nynorsk).
+LANGUAGE_ALIASES = {"no": "nb", "nn": "nb"}
+
 babel = Babel()
+
+
+def _supported_language(tag, supported):
+    """The supported language a tag like "nl-BE" or "no" stands for, or None."""
+    primary = tag.strip().replace("_", "-").split("-")[0].lower()
+    primary = LANGUAGE_ALIASES.get(primary, primary)
+    return primary if primary in supported else None
 
 
 def select_locale():
@@ -44,14 +57,14 @@ def select_locale():
     if not has_request_context():
         return current_app.config["BABEL_DEFAULT_LOCALE"]
 
-    override = request.args.get("lang", "").strip().lower()
-    if override in supported:
+    override = _supported_language(request.args.get("lang", ""), supported)
+    if override:
         return override
 
     for tag, _quality in request.accept_languages:
-        primary = tag.replace("_", "-").split("-")[0].lower()
-        if primary in supported:
-            return primary
+        language = _supported_language(tag, supported)
+        if language:
+            return language
 
     return current_app.config["BABEL_DEFAULT_LOCALE"]
 

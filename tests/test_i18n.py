@@ -181,7 +181,7 @@ def test_flash_messages_are_translated(client):
     assert "Nous avons envoyé un code de vérification à someone@example.com." in html
 
 
-ALL_LANGUAGES = ["en", "nl", "fr", "es", "pt", "de", "it"]
+ALL_LANGUAGES = ["en", "nl", "fr", "es", "pt", "de", "it", "id", "pl", "ro", "hu", "da", "fi", "sv", "nb"]
 
 
 @pytest.mark.parametrize("lang", ALL_LANGUAGES)
@@ -234,6 +234,14 @@ def test_errors_are_in_the_request_language_but_the_status_is_the_same(logged_in
         ("pt", "data,peso,nota", "d-M-aa"),
         ("de", "Datum,Gewicht,Notiz", "T-M-JJ"),
         ("it", "data,peso,nota", "g-M-aa"),
+        ("id", "tanggal,berat,catatan", "h-B-tt"),
+        ("pl", "data,waga,notatka", "d-M-rr"),
+        ("ro", "data,greutate,notă", "z-L-aa"),
+        ("hu", "dátum,súly,jegyzet", "n-H-éé"),
+        ("da", "dato,vægt,note", "d-M-åå"),
+        ("fi", "päivämäärä,paino,muistiinpano", "p-K-vv"),
+        ("sv", "datum,vikt,anteckning", "d-M-åå"),
+        ("nb", "dato,vekt,notat", "d-M-åå"),
     ],
 )
 def test_the_csv_legend_on_the_import_page_is_translated(logged_in_client, lang, columns, day_pattern):
@@ -270,3 +278,82 @@ def test_the_line_format_error_names_the_columns_in_the_request_language(app):
     with app.test_request_context("/?lang=nl"):
         _rows, errors = parse_csv("only-one-column\n")
     assert errors == ["regel 1: verwacht datum,gewicht[,notitie]"]
+
+
+@pytest.mark.parametrize(
+    "header, expected",
+    [
+        ("nb", "nb"),
+        ("nb-NO,nb;q=0.9", "nb"),
+        ("no", "nb"),  # browsers also send "no" and "nn" for Norwegian
+        ("nn-NO", "nb"),
+        ("id-ID", "id"),
+        ("pl-PL,pl;q=0.9,en;q=0.5", "pl"),
+        ("ro-RO", "ro"),
+        ("hu", "hu"),
+        ("da-DK", "da"),
+        ("fi-FI", "fi"),
+        ("sv-SE,sv;q=0.9", "sv"),
+        ("ja,no;q=0.8", "nb"),
+    ],
+)
+def test_the_new_languages_are_matched_on_the_primary_subtag(client, header, expected):
+    assert html_lang(client.get("/", headers={"Accept-Language": header})) == expected
+
+
+@pytest.mark.parametrize("override, expected", [("no", "nb"), ("nn", "nb"), ("nb", "nb"), ("pl-PL", "pl"), ("sv", "sv")])
+def test_lang_query_accepts_aliases_and_full_tags(client, override, expected):
+    assert html_lang(client.get(f"/?lang={override}")) == expected
+
+
+@pytest.mark.parametrize(
+    "lang, count, expected",
+    [
+        # Polish has three forms: 1, 2-4 (not 12-14), everything else
+        ("pl", 1, "Zmiana (1 dzień)"),
+        ("pl", 2, "Zmiana (2 dni)"),
+        ("pl", 5, "Zmiana (5 dni)"),
+        ("pl", 12, "Zmiana (12 dni)"),
+        ("pl", 22, "Zmiana (22 dni)"),
+        ("pl", 0, "Zmiana (0 dni)"),
+        # so does Romanian: 1, 0 and 2-19, 20 and up ("de zile")
+        ("ro", 1, "Schimbare în 1 zi"),
+        ("ro", 0, "Schimbare în 0 zile"),
+        ("ro", 2, "Schimbare în 2 zile"),
+        ("ro", 19, "Schimbare în 19 zile"),
+        ("ro", 20, "Schimbare în 20 de zile"),
+        ("ro", 101, "Schimbare în 101 zile"),
+        ("ro", 120, "Schimbare în 120 de zile"),
+        # Indonesian has no plural forms
+        ("id", 0, "Perubahan 0 hari"),
+        ("id", 1, "Perubahan 1 hari"),
+        ("id", 7, "Perubahan 7 hari"),
+        # the two-form languages
+        ("da", 1, "Ændring på 1 dag"),
+        ("da", 7, "Ændring på 7 dage"),
+        ("sv", 1, "Förändring på 1 dag"),
+        ("sv", 7, "Förändring på 7 dagar"),
+        ("nb", 1, "Endring på 1 dag"),
+        ("nb", 7, "Endring på 7 dager"),
+        ("fi", 1, "1 päivän muutos"),
+        ("fi", 7, "7 päivän muutos"),
+        ("hu", 1, "1 napos változás"),
+        ("hu", 7, "7 napos változás"),
+    ],
+)
+def test_plural_forms_of_the_new_languages(app, lang, count, expected):
+    from flask_babel import ngettext
+
+    with app.test_request_context(f"/?lang={lang}"):
+        assert ngettext("%(num)d-day change", "%(num)d-day change", count) == expected
+
+
+def test_the_new_languages_format_numbers_and_dates_their_own_way(logged_in_client):
+    from datetime import date
+
+    client, _user_id = logged_in_client
+    client.post("/entries/field", json={"date": date.today().isoformat(), "weight": "72,5", "confirm": True})
+    for lang in ("id", "pl", "ro", "hu", "da", "fi", "sv", "nb"):
+        html = client.get(f"/?lang={lang}").get_data(as_text=True)
+        assert 'value="72,5"' in html, lang  # all of them write a decimal comma
+        assert "72,5 kg" in html or "72,5 kg" in html, lang
