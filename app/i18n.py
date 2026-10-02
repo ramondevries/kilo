@@ -111,3 +111,12 @@ def init_app(app):
         # per request in production, but a long-lived outer one (the test
         # fixtures) would carry one request's language over to the next.
         refresh()
+
+    @app.after_request
+    def _vary_on_language(response):
+        # Pages, flashes and JSON errors all depend on Accept-Language. Without
+        # this, a cache in front of the app (Apache mod_cache, a CDN, the
+        # browser) serves the first visitor's language to everyone.
+        if request.endpoint != "static":
+            response.vary.add("Accept-Language")
+        return response

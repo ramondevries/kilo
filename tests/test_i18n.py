@@ -357,3 +357,30 @@ def test_the_new_languages_format_numbers_and_dates_their_own_way(logged_in_clie
         html = client.get(f"/?lang={lang}").get_data(as_text=True)
         assert 'value="72,5"' in html, lang  # all of them write a decimal comma
         assert "72,5 kg" in html or "72,5 kg" in html, lang
+
+
+@pytest.mark.parametrize("path", ["/", "/about", "/signup", "/robots.txt"])
+def test_pages_tell_caches_that_they_depend_on_accept_language(client, path):
+    response = client.get(path, headers={"Accept-Language": "nl"})
+    assert "Accept-Language" in response.vary
+
+
+def test_json_and_redirect_responses_vary_on_language_too(logged_in_client):
+    client, _user_id = logged_in_client
+    saved = client.post("/entries/field", json={"date": "2026-01-01", "weight": "abc"})
+    assert saved.status_code == 400
+    assert "Accept-Language" in saved.vary
+    assert "Accept-Language" in client.post("/logout").vary
+
+
+def test_static_files_do_not_vary_on_language(client):
+    response = client.get("/static/style.css", headers={"Accept-Language": "nl"})
+    assert "Accept-Language" not in response.vary
+
+
+def test_a_shared_cache_would_keep_the_languages_apart(client):
+    """What a cache keys on: the Vary header must name every request header the page depends on."""
+    first = client.get("/about", headers={"Accept-Language": "nl"})
+    second = client.get("/about", headers={"Accept-Language": "de"})
+    assert first.get_data() != second.get_data()  # the pages really differ
+    assert "accept-language" in {name.strip().lower() for name in first.headers["Vary"].split(",")}
