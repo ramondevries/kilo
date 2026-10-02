@@ -1,0 +1,829 @@
+# Polish translations for Kilo Tracker.
+# Copyright (C) 2026 Ramón de Vries
+# This file is distributed under the same license as the Kilo Tracker
+# project.
+# Source strings of Kilo Tracker (English).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Kilo Tracker\n"
+"Report-Msgid-Bugs-To: info@11tools.com\n"
+"POT-Creation-Date: 2026-10-02 19:57+0200\n"
+"PO-Revision-Date: 2026-10-02 20:46+0200\n"
+"Last-Translator: Claude (machine translation)\n"
+"Language: pl\n"
+"Language-Team: Polish\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10"
+" || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+# machine-translated
+msgid "Download your data first."
+msgstr "Najpierw pobierz swoje dane."
+
+# machine-translated
+msgid "Sign in again to confirm this request."
+msgstr "Zaloguj się ponownie, aby potwierdzić to żądanie."
+
+# machine-translated
+#, python-format
+msgid "We sent a confirmation code to %(email)s."
+msgstr "Wysłaliśmy kod potwierdzający na adres %(email)s."
+
+# machine-translated
+msgid "Enter the 6-digit code."
+msgstr "Wpisz 6-cyfrowy kod."
+
+# machine-translated
+msgid "That code has expired. Request a new one."
+msgstr "Ten kod wygasł. Poproś o nowy."
+
+# machine-translated
+msgid "Too many attempts. Request a new code."
+msgstr "Zbyt wiele prób. Poproś o nowy kod."
+
+# machine-translated
+msgid "Incorrect code."
+msgstr "Nieprawidłowy kod."
+
+# machine-translated
+msgid "Your account and all your data have been removed."
+msgstr "Twoje konto i wszystkie dane zostały usunięte."
+
+# machine-translated
+msgid "Enter your email to sign in."
+msgstr "Wpisz swój adres e-mail, aby się zalogować."
+
+# machine-translated
+#, python-format
+msgid "We sent a verification code to %(email)s."
+msgstr "Wysłaliśmy kod weryfikacyjny na adres %(email)s."
+
+# machine-translated
+msgid "Enter your email to get a verification code."
+msgstr "Wpisz swój adres e-mail, aby otrzymać kod weryfikacyjny."
+
+# machine-translated
+msgid "Email verified — you're signed in."
+msgstr "Adres e-mail zweryfikowany – logowanie udane."
+
+# machine-translated
+#, python-format
+msgid "We sent a new code to %(email)s."
+msgstr "Wysłaliśmy nowy kod na adres %(email)s."
+
+# machine-translated
+msgid "Signed out."
+msgstr "Wylogowano."
+
+# machine-translated
+#. NOTE: date,weight[,note] names the columns of a CSV line; translate the
+#. names (note is optional).
+#, python-format
+msgid "line %(line)d: expected date,weight[,note]"
+msgstr "wiersz %(line)d: oczekiwano data,waga[,notatka]"
+
+# machine-translated
+#, python-format
+msgid "line %(line)d: invalid date %(value)s"
+msgstr "wiersz %(line)d: nieprawidłowa data %(value)s"
+
+# machine-translated
+#, python-format
+msgid "line %(line)d: invalid weight %(value)s"
+msgstr "wiersz %(line)d: nieprawidłowa waga %(value)s"
+
+# machine-translated
+#, python-format
+msgid "line %(line)d: weight out of range"
+msgstr "wiersz %(line)d: waga poza zakresem"
+
+# machine-translated
+msgid "Your verification code"
+msgstr "Twój kod weryfikacyjny"
+
+# machine-translated
+#, python-format
+msgid ""
+"Your verification code is %(code)s.\n"
+"\n"
+"It expires in %(num)d minute. If you didn't request this, ignore this email."
+msgid_plural ""
+"Your verification code is %(code)s.\n"
+"\n"
+"It expires in %(num)d minutes. If you didn't request this, ignore this email."
+msgstr[0] ""
+"Twój kod weryfikacyjny to %(code)s.\n"
+"\n"
+"Wygasa za %(num)d minutę. Jeśli nie zażądano tego kodu, zignoruj tę "
+"wiadomość."
+msgstr[1] ""
+"Twój kod weryfikacyjny to %(code)s.\n"
+"\n"
+"Wygasa za %(num)d minuty. Jeśli nie zażądano tego kodu, zignoruj tę "
+"wiadomość."
+msgstr[2] ""
+"Twój kod weryfikacyjny to %(code)s.\n"
+"\n"
+"Wygasa za %(num)d minut. Jeśli nie zażądano tego kodu, zignoruj tę wiadomość."
+
+# machine-translated
+msgid "Confirm removal of your data"
+msgstr "Potwierdź usunięcie swoich danych"
+
+# machine-translated
+#, python-format
+msgid ""
+"Your confirmation code is %(code)s.\n"
+"\n"
+"Entering it will permanently delete your account and all your weight data. "
+"It expires in %(num)d minute. If you didn't request this, ignore this email "
+"and your data stays untouched."
+msgid_plural ""
+"Your confirmation code is %(code)s.\n"
+"\n"
+"Entering it will permanently delete your account and all your weight data. "
+"It expires in %(num)d minutes. If you didn't request this, ignore this email"
+" and your data stays untouched."
+msgstr[0] ""
+"Twój kod potwierdzający to %(code)s.\n"
+"\n"
+"Po jego wpisaniu Twoje konto i wszystkie dane o wadze zostaną trwale "
+"usunięte. Kod wygasa za %(num)d minutę. Jeśli nie zażądano tego kodu, "
+"zignoruj tę wiadomość – Twoje dane pozostaną nietknięte."
+msgstr[1] ""
+"Twój kod potwierdzający to %(code)s.\n"
+"\n"
+"Po jego wpisaniu Twoje konto i wszystkie dane o wadze zostaną trwale "
+"usunięte. Kod wygasa za %(num)d minuty. Jeśli nie zażądano tego kodu, "
+"zignoruj tę wiadomość – Twoje dane pozostaną nietknięte."
+msgstr[2] ""
+"Twój kod potwierdzający to %(code)s.\n"
+"\n"
+"Po jego wpisaniu Twoje konto i wszystkie dane o wadze zostaną trwale "
+"usunięte. Kod wygasa za %(num)d minut. Jeśli nie zażądano tego kodu, "
+"zignoruj tę wiadomość – Twoje dane pozostaną nietknięte."
+
+# machine-translated
+msgid "That email domain doesn't accept mail (no MX record)."
+msgstr "Ta domena e-mail nie przyjmuje poczty (brak rekordu MX)."
+
+# machine-translated
+msgid "Couldn't check that email domain right now. Try again."
+msgstr "Nie udało się teraz sprawdzić tej domeny e-mail. Spróbuj ponownie."
+
+# machine-translated
+msgid "Email"
+msgstr "Adres e-mail"
+
+# machine-translated
+msgid "Verification code"
+msgstr "Kod weryfikacyjny"
+
+# machine-translated
+msgid "Enter the height as a plain number, e.g. 180 or 1.8."
+msgstr "Wpisz wzrost jako zwykłą liczbę, np. 180 lub 1,8."
+
+# machine-translated
+#. NOTE: Label of the body height field in the settings.
+msgid "Height"
+msgstr "Wzrost"
+
+# machine-translated
+msgid "Unit"
+msgstr "Jednostka"
+
+# machine-translated
+msgid "Dark mode"
+msgstr "Tryb ciemny"
+
+# machine-translated
+msgid "Moving average (days)"
+msgstr "Średnia krocząca (dni)"
+
+# machine-translated
+#, python-format
+msgid ""
+"Height must be between %(min_cm)s and %(max_cm)s cm (%(min_m)s and %(max_m)s"
+" m)."
+msgstr ""
+"Wzrost musi mieścić się w zakresie od %(min_cm)s do %(max_cm)s cm (od "
+"%(min_m)s do %(max_m)s m)."
+
+# machine-translated
+msgid "CSV file"
+msgstr "Plik CSV"
+
+# machine-translated
+msgid "CSV or text files only."
+msgstr "Tylko pliki CSV lub tekstowe."
+
+# machine-translated
+#. NOTE: Rate of weight change. %(grams)s is a signed whole number; g is gram.
+#, python-format
+msgid "%(grams)s g/day"
+msgstr "%(grams)s g/dzień"
+
+# machine-translated
+#. NOTE: Chart range button: the whole recorded history.
+msgid "All"
+msgstr "Wszystko"
+
+# machine-translated
+#. NOTE: Chart range button: 20 years. The letter is the unit, Y for year.
+msgid "20Y"
+msgstr "20R"
+
+# machine-translated
+#. NOTE: Chart range button: 15 years. The letter is the unit, Y for year.
+msgid "15Y"
+msgstr "15R"
+
+# machine-translated
+#. NOTE: Chart range button: 10 years. The letter is the unit, Y for year.
+msgid "10Y"
+msgstr "10R"
+
+# machine-translated
+#. NOTE: Chart range button: 5 years. The letter is the unit, Y for year.
+msgid "5Y"
+msgstr "5R"
+
+# machine-translated
+#. NOTE: Chart range button: 1 year. The letter is the unit, Y for year.
+msgid "1Y"
+msgstr "1R"
+
+# machine-translated
+#. NOTE: Chart range button: 6 months. The letter is the unit, M for month.
+msgid "6M"
+msgstr "6M"
+
+# machine-translated
+#. NOTE: Chart range button: 3 months. The letter is the unit, M for month.
+msgid "3M"
+msgstr "3M"
+
+# machine-translated
+#. NOTE: Chart range button: 1 month. The letter is the unit, M for month.
+msgid "1M"
+msgstr "1M"
+
+# machine-translated
+#. NOTE: Chart range button: 2 weeks. The letter is the unit, W for week.
+msgid "2W"
+msgstr "2T"
+
+# machine-translated
+#. NOTE: Chart range button: 1 week. The letter is the unit, W for week.
+msgid "1W"
+msgstr "1T"
+
+# machine-translated
+#, python-format
+msgid "%(num)d-day change"
+msgid_plural "%(num)d-day change"
+msgstr[0] "Zmiana (%(num)d dzień)"
+msgstr[1] "Zmiana (%(num)d dni)"
+msgstr[2] "Zmiana (%(num)d dni)"
+
+# machine-translated
+msgid "Invalid date."
+msgstr "Nieprawidłowa data."
+
+# machine-translated
+#, python-format
+msgid ""
+"%(weight)s is %(percent)s%% different from your entry of %(other)s on "
+"%(date)s."
+msgstr ""
+"%(weight)s różni się o %(percent)s%% od Twojego wpisu %(other)s z dnia "
+"%(date)s."
+
+# machine-translated
+msgid "Enter a valid weight, like 72.5."
+msgstr "Wpisz prawidłową wagę, np. 72,5."
+
+# machine-translated
+#, python-format
+msgid "Weight must be between %(min)s and %(max)s kg."
+msgstr "Waga musi mieścić się w zakresie od %(min)s do %(max)s kg."
+
+# machine-translated
+msgid "Invalid range."
+msgstr "Nieprawidłowy zakres."
+
+# machine-translated
+msgid "Settings updated."
+msgstr "Ustawienia zaktualizowane."
+
+# machine-translated
+#, python-format
+msgid "Imported %(num)d entry."
+msgid_plural "Imported %(num)d entries."
+msgstr[0] "Zaimportowano %(num)d wpis."
+msgstr[1] "Zaimportowano %(num)d wpisy."
+msgstr[2] "Zaimportowano %(num)d wpisów."
+
+# machine-translated
+#, python-format
+msgid "%(details)s (+%(count)d more)"
+msgstr "%(details)s (+%(count)d więcej)"
+
+# machine-translated
+#, python-format
+msgid "Skipped %(num)d invalid line: %(details)s"
+msgid_plural "Skipped %(num)d invalid lines: %(details)s"
+msgstr[0] "Pominięto %(num)d nieprawidłowy wiersz: %(details)s"
+msgstr[1] "Pominięto %(num)d nieprawidłowe wiersze: %(details)s"
+msgstr[2] "Pominięto %(num)d nieprawidłowych wierszy: %(details)s"
+
+# machine-translated
+msgid "No rows found in the file."
+msgstr "Nie znaleziono wierszy w pliku."
+
+# machine-translated
+msgid "Back"
+msgstr "Wstecz"
+
+# machine-translated
+msgid "About"
+msgstr "O aplikacji"
+
+# machine-translated
+msgid "Back to the dashboard"
+msgstr "Wróć do pulpitu"
+
+# machine-translated
+msgid "About Kilo Tracker"
+msgstr "O Kilo Tracker"
+
+# machine-translated
+#, python-format
+msgid ""
+"For many years I tracked my weight with %(hdo_link)s, created by "
+"%(walker_link)s. It kept working for a good while after his death, but in "
+"March 2026 it finally stopped."
+msgstr ""
+"Przez wiele lat do śledzenia wagi służył mi %(hdo_link)s, stworzony przez "
+"%(walker_link)s. Działał jeszcze długo po jego śmierci, ale w marcu 2026 "
+"roku w końcu przestał."
+
+# machine-translated
+#, python-format
+msgid ""
+"I tried %(yadt_link)s as a replacement, but its interface wasn't for me. So "
+"I vibe-coded my own version, and Kilo Tracker is the result. It's free for "
+"anyone to use."
+msgstr ""
+"Jako zamiennik wypróbowano %(yadt_link)s, ale jego interfejs mi nie "
+"odpowiadał. Dlatego powstała moja własna wersja, stworzona w stylu vibe "
+"coding – tak powstał Kilo Tracker. Jest darmowy dla każdego."
+
+# machine-translated
+#, python-format
+msgid ""
+"Kilo Tracker is open source software. You can download the source code and "
+"run your own copy from %(github_link)s."
+msgstr ""
+"Kilo Tracker to oprogramowanie open source. Możesz pobrać kod źródłowy i "
+"uruchomić własną kopię z %(github_link)s."
+
+# machine-translated
+#, python-format
+msgid "I hope you like it! You can reach me at %(mail_link)s."
+msgstr ""
+"Mam nadzieję, że Ci się spodoba! Możesz się ze mną skontaktować pod adresem "
+"%(mail_link)s."
+
+# machine-translated
+#. Version of the app, with the date of its last change. %(version)s is a link
+#. such as v1.2 or a commit id.
+#, python-format
+msgid "Version %(version)s &middot; committed %(date)s"
+msgstr "Wersja %(version)s &middot; commit z %(date)s"
+
+# machine-translated
+#, python-format
+msgid "Version %(version)s"
+msgstr "Wersja %(version)s"
+
+# machine-translated
+msgid "How signing in works"
+msgstr "Jak działa logowanie"
+
+# machine-translated
+#, python-format
+msgid ""
+"There are no passwords. Enter your email and we send a 6-digit code that's "
+"valid for %(num)s minute — enter it and you're signed in."
+msgid_plural ""
+"There are no passwords. Enter your email and we send a 6-digit code that's "
+"valid for %(num)s minutes — enter it and you're signed in."
+msgstr[0] ""
+"Nie ma haseł. Wpisz swój adres e-mail, a wyślemy Ci 6-cyfrowy kod ważny "
+"przez %(num)s minutę – wpisz go i gotowe."
+msgstr[1] ""
+"Nie ma haseł. Wpisz swój adres e-mail, a wyślemy Ci 6-cyfrowy kod ważny "
+"przez %(num)s minuty – wpisz go i gotowe."
+msgstr[2] ""
+"Nie ma haseł. Wpisz swój adres e-mail, a wyślemy Ci 6-cyfrowy kod ważny "
+"przez %(num)s minut – wpisz go i gotowe."
+
+# machine-translated
+msgid "Gravatar uses"
+msgstr "Gravatar"
+
+# machine-translated
+#, python-format
+msgid ""
+"We never store your email address itself in our database. Instead we keep a "
+"one-way SHA-256 hash of it (the same scheme %(gravatar_hash_link)s)."
+msgstr ""
+"Nigdy nie przechowujemy samego adresu e-mail w naszej bazie danych. Zamiast "
+"tego zapisujemy jego jednokierunkowy skrót SHA-256 (ten sam schemat, którego"
+" używa %(gravatar_hash_link)s)."
+
+# machine-translated
+#, python-format
+msgid ""
+"That hash also doubles as your Gravatar id — if you have an avatar set up at"
+" %(gravatar_link)s, it shows up automatically once you're signed in."
+msgstr ""
+"Ten skrót służy też jako Twój identyfikator Gravatar – jeśli masz ustawiony "
+"awatar w %(gravatar_link)s, pojawi się automatycznie po zalogowaniu."
+
+# machine-translated
+msgid "Signed in"
+msgstr "Zalogowano"
+
+# machine-translated
+msgid "Settings"
+msgstr "Ustawienia"
+
+# machine-translated
+msgid "Log out"
+msgstr "Wyloguj się"
+
+# machine-translated
+msgid "View or edit note"
+msgstr "Wyświetl lub edytuj notatkę"
+
+# machine-translated
+msgid "No note"
+msgstr "Brak notatki"
+
+# machine-translated
+msgid "Add a note…"
+msgstr "Dodaj notatkę…"
+
+# machine-translated
+msgid "Cancel"
+msgstr "Anuluj"
+
+# machine-translated
+#. Button that saves a note (verb).
+#. Button that saves the settings (verb).
+msgid "Save"
+msgstr "Zapisz"
+
+# machine-translated
+#. Label above the latest moving-average weight.
+msgid "Current"
+msgstr "Obecna"
+
+# machine-translated
+msgid "No entries yet — add your weight below."
+msgstr "Brak wpisów – dodaj swoją wagę poniżej."
+
+# machine-translated
+#. BMI is Body Mass Index; keep the abbreviation people know in your language.
+msgid "BMI"
+msgstr "BMI"
+
+# machine-translated
+msgid "Set your height"
+msgstr "Ustaw swój wzrost"
+
+# machine-translated
+#, python-format
+msgid "Show the %(range)s chart"
+msgstr "Pokaż wykres %(range)s"
+
+# machine-translated
+msgid "Show the whole history in the chart"
+msgstr "Pokaż całą historię na wykresie"
+
+# machine-translated
+#. Heading of the box about the logged weigh-ins: first date, last date and how
+#. many.
+msgid "Entries"
+msgstr "Wpisy"
+
+# machine-translated
+#. The date of the first entry.
+msgid "First"
+msgstr "Pierwszy"
+
+# machine-translated
+#. The date of the last (most recent) entry.
+msgid "Last"
+msgstr "Ostatni"
+
+# machine-translated
+#. The total number of entries.
+msgid "Total"
+msgstr "Razem"
+
+# machine-translated
+msgid "Daily log"
+msgstr "Dziennik"
+
+# machine-translated
+msgid "Scroll to the most recent entry"
+msgstr "Przewiń do najnowszego wpisu"
+
+# machine-translated
+msgid "Most recent entry"
+msgstr "Najnowszy wpis"
+
+# machine-translated
+#. Column headers of the daily log: the day, the weight in kilograms, and a
+#. free-text note.
+msgid "Date"
+msgstr "Data"
+
+# machine-translated
+msgid "Weight (kg)"
+msgstr "Waga (kg)"
+
+# machine-translated
+msgid "Note"
+msgstr "Notatka"
+
+# machine-translated
+msgid "Loading more days…"
+msgstr "Wczytywanie kolejnych dni…"
+
+# machine-translated
+msgid "Log today's weight?"
+msgstr "Zapisać dzisiejszą wagę?"
+
+# machine-translated
+msgid "You haven't recorded a weight for today yet."
+msgstr "Nie zapisano jeszcze wagi na dziś."
+
+# machine-translated
+msgid "e.g. 82.4"
+msgstr "np. 82,4"
+
+# machine-translated
+msgid "Skip"
+msgstr "Pomiń"
+
+# machine-translated
+msgid "OK"
+msgstr "OK"
+
+# machine-translated
+msgid "Unusual value"
+msgstr "Nietypowa wartość"
+
+# machine-translated
+msgid "Correct it"
+msgstr "Popraw"
+
+# machine-translated
+msgid "Save anyway"
+msgstr "Zapisz mimo to"
+
+# machine-translated
+#, python-format
+msgid "%(num)d-day average"
+msgid_plural "%(num)d-day average"
+msgstr[0] "Średnia (%(num)d dzień)"
+msgstr[1] "Średnia (%(num)d dni)"
+msgstr[2] "Średnia (%(num)d dni)"
+
+# machine-translated
+msgid "Overall average"
+msgstr "Średnia ogólna"
+
+# machine-translated
+#, python-format
+msgid "BMI (%(num)d-day avg): %(bmi)s"
+msgid_plural "BMI (%(num)d-day avg): %(bmi)s"
+msgstr[0] "BMI (średnia: %(num)d dzień): %(bmi)s"
+msgstr[1] "BMI (średnia: %(num)d dni): %(bmi)s"
+msgstr[2] "BMI (średnia: %(num)d dni): %(bmi)s"
+
+# machine-translated
+msgid "Saving…"
+msgstr "Zapisywanie…"
+
+# machine-translated
+msgid "Saved"
+msgstr "Zapisano"
+
+# machine-translated
+msgid "Could not save"
+msgstr "Nie udało się zapisać"
+
+# machine-translated
+msgid "Could not save."
+msgstr "Nie udało się zapisać."
+
+# machine-translated
+msgid "Error saving"
+msgstr "Błąd zapisu"
+
+# machine-translated
+msgid "Sign in"
+msgstr "Zaloguj się"
+
+# machine-translated
+msgid "Enter your email and we'll send you a 6-digit code — no password needed."
+msgstr "Wpisz swój adres e-mail, a wyślemy Ci 6-cyfrowy kod – bez hasła."
+
+# machine-translated
+msgid "Send code"
+msgstr "Wyślij kod"
+
+# machine-translated
+msgid "How does this work?"
+msgstr "Jak to działa?"
+
+# machine-translated
+msgid "Remove my data"
+msgstr "Usuń moje dane"
+
+# machine-translated
+msgid "Back to settings"
+msgstr "Wróć do ustawień"
+
+# machine-translated
+msgid ""
+"This permanently deletes your account, all your weigh-ins and notes, and "
+"your settings. It can't be undone."
+msgstr ""
+"Spowoduje to trwałe usunięcie Twojego konta, wszystkich pomiarów i notatek "
+"oraz ustawień. Tej operacji nie można cofnąć."
+
+# machine-translated
+msgid "Step 1: Download your data"
+msgstr "Krok 1: Pobierz swoje dane"
+
+# machine-translated
+msgid "download it again"
+msgstr "pobrać je ponownie"
+
+# machine-translated
+#, python-format
+msgid "Downloaded. You can %(again_link)s."
+msgstr "Pobrano. Możesz %(again_link)s."
+
+# machine-translated
+msgid "Download a copy of your weigh-ins before they're deleted. This is required."
+msgstr "Pobierz kopię swoich pomiarów, zanim zostaną usunięte. Jest to wymagane."
+
+# machine-translated
+msgid "Download my data (CSV)"
+msgstr "Pobierz moje dane (CSV)"
+
+# machine-translated
+msgid "I've downloaded it — continue"
+msgstr "Pobrano – kontynuuj"
+
+# machine-translated
+msgid "Step 2: Confirm by email"
+msgstr "Krok 2: Potwierdź e-mailem"
+
+# machine-translated
+#, python-format
+msgid ""
+"We sent a 6-digit code to <strong>%(email)s</strong>. It expires in %(num)s "
+"minute."
+msgid_plural ""
+"We sent a 6-digit code to <strong>%(email)s</strong>. It expires in %(num)s "
+"minutes."
+msgstr[0] ""
+"Wysłaliśmy 6-cyfrowy kod na adres <strong>%(email)s</strong>. Wygasa za "
+"%(num)s minutę."
+msgstr[1] ""
+"Wysłaliśmy 6-cyfrowy kod na adres <strong>%(email)s</strong>. Wygasa za "
+"%(num)s minuty."
+msgstr[2] ""
+"Wysłaliśmy 6-cyfrowy kod na adres <strong>%(email)s</strong>. Wygasa za "
+"%(num)s minut."
+
+# machine-translated
+msgid "Delete everything"
+msgstr "Usuń wszystko"
+
+# machine-translated
+msgid "Resend code"
+msgstr "Wyślij kod ponownie"
+
+# machine-translated
+#, python-format
+msgid "We'll email a confirmation code to <strong>%(email)s</strong>."
+msgstr "Wyślemy kod potwierdzający na adres <strong>%(email)s</strong>."
+
+# machine-translated
+msgid "Send confirmation code"
+msgstr "Wyślij kod potwierdzający"
+
+# machine-translated
+msgid "Your height is used to calculate your BMI."
+msgstr "Wzrost służy do obliczania BMI."
+
+# machine-translated
+msgid "Import data"
+msgstr "Importuj dane"
+
+# machine-translated
+#. The text in <code> only names the three columns of a line such as
+#. 23-9-26,79.7,text. Translate the names (date, weight, note): the file itself
+#. has no header and is the same in every language.
+msgid ""
+"Import weigh-ins from a CSV text file. Each line is "
+"<code>date,weight,note</code> (note is optional), for example:"
+msgstr ""
+"Zaimportuj pomiary z pliku tekstowego CSV. Każdy wiersz ma postać "
+"<code>data,waga,notatka</code> (notatka jest opcjonalna), na przykład:"
+
+# machine-translated
+#. Example notes in the CSV sample. The CSV format itself (dates, dot as
+#. decimal separator) stays the same in every language.
+msgid "optional notes"
+msgstr "opcjonalne notatki"
+
+# machine-translated
+msgid "some text"
+msgstr "jakiś tekst"
+
+# machine-translated
+#. d-M-yy and d-M-yyyy describe the date pattern, as in 23-9-26 or 23-9-2026.
+#. Use the first letter of the word for day, month (keep a capital M, so it
+#. cannot be mistaken for minutes) and year in your language, e.g. j-M-aa in
+#. French. The numbers in the file are always day-month-year.
+msgid ""
+"Dates are <code>d-M-yy</code> or <code>d-M-yyyy</code>; weight is in "
+"kilograms. Importing a date that already has an entry overwrites it."
+msgstr ""
+"Daty mają postać <code>d-M-rr</code> lub <code>d-M-rrrr</code>; waga jest w "
+"kilogramach. Zaimportowanie daty, która ma już wpis, nadpisuje go."
+
+# machine-translated
+msgid "Import"
+msgstr "Importuj"
+
+# machine-translated
+msgid "Export data"
+msgstr "Eksportuj dane"
+
+# machine-translated
+msgid "Download all your weigh-ins as a CSV file (date, weight in kilograms, note)."
+msgstr ""
+"Pobierz wszystkie swoje pomiary jako plik CSV (data, waga w kilogramach, "
+"notatka)."
+
+# machine-translated
+msgid "Export CSV"
+msgstr "Eksportuj CSV"
+
+# machine-translated
+msgid ""
+"Permanently delete your account and all your weigh-ins. You'll be asked to "
+"download your data and confirm with a code sent by email first."
+msgstr ""
+"Trwale usuń swoje konto i wszystkie pomiary. Najpierw trzeba będzie pobrać "
+"dane i potwierdzić operację kodem wysłanym e-mailem."
+
+# machine-translated
+msgid "Remove my data…"
+msgstr "Usuń moje dane…"
+
+# machine-translated
+msgid "Sign up"
+msgstr "Zarejestruj się"
+
+# machine-translated
+msgid "Enter your email and we'll send you a 6-digit verification code."
+msgstr "Wpisz swój adres e-mail, a wyślemy Ci 6-cyfrowy kod weryfikacyjny."
+
+# machine-translated
+msgid "Verify your email"
+msgstr "Zweryfikuj swój adres e-mail"
+
+# machine-translated
+msgid "Enter your code"
+msgstr "Wpisz swój kod"
+
+# machine-translated
+msgid "Verify"
+msgstr "Zweryfikuj"
+
