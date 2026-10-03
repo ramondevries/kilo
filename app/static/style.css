@@ -143,6 +143,18 @@ html[data-theme="dark"] .brand-logo-dark { display: block; }
   background: var(--bg);
 }
 
+/* The "hamburger" after the email address: this button opens the account menu. */
+.menu-icon {
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.account-trigger:hover .menu-icon,
+.account-trigger:focus-visible .menu-icon,
+.account-trigger[aria-expanded="true"] .menu-icon {
+  color: var(--text);
+}
+
 .avatar {
   border-radius: 50%;
   vertical-align: middle;

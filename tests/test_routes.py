@@ -1019,3 +1019,17 @@ def test_csv_import_uses_the_same_weight_limit(logged_in_client):
     data = {"csv_file": (io.BytesIO(b"1-1-26,500\n2-1-26,500.1\n3-1-26,750\n"), "w.csv")}
     client.post("/settings/import", data=data, content_type="multipart/form-data")
     assert [e.weight for e in WeightEntry.query.all()] == [500.0]
+
+
+def test_the_account_button_has_a_menu_icon_after_the_email_address(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").get_data(as_text=True)
+    button = html[html.index('id="account-trigger"'):html.index('id="account-dropdown"')]
+    assert "user@example.com" in button and 'class="menu-icon"' in button
+    assert button.index("user@example.com") < button.index('class="menu-icon"')  # after the address
+    assert 'aria-hidden="true"' in button[button.index('class="menu-icon"'):]  # decorative
+
+
+def test_signed_out_visitors_have_no_account_button(client):
+    html = client.get("/").get_data(as_text=True)
+    assert 'id="account-trigger"' not in html and 'class="menu-icon"' not in html
