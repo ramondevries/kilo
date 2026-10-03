@@ -732,7 +732,7 @@ def test_export_filename_contains_todays_date(logged_in_client):
     client, _ = logged_in_client
     resp = client.get("/settings/export")
     assert (
-        f"filename=weight-export-{date.today().isoformat()}.csv"
+        f"filename=kilo-tracker-export-{date.today().isoformat()}.csv"
         in resp.headers["Content-Disposition"]
     )
 

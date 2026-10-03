@@ -499,7 +499,7 @@ def export_entries():
         csv_text,
         mimetype="text/csv",
         headers={
-            "Content-Disposition": f"attachment; filename=weight-export-{date.today().isoformat()}.csv"
+            "Content-Disposition": f"attachment; filename=kilo-tracker-export-{date.today().isoformat()}.csv"
         },
     )
 
