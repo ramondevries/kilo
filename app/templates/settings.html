@@ -57,8 +57,8 @@
     {# NOTE: d-M-yy and d-M-yyyy describe the date pattern, as in 23-9-26 or 23-9-2026. Use the first letter of the word for day, month (keep a capital M, so it cannot be mistaken for minutes) and year in your language, e.g. j-M-aa in French. The numbers in the file are always day-month-year. #}
     <p>{% trans trimmed %}Dates are <code>d-M-yy</code> or <code>d-M-yyyy</code>; weight is in
       kilograms. Importing a date that already has an entry overwrites it.{% endtrans %}</p>
-    {# NOTE: "The Hacker's Diet Online" is the name of a web service that no longer exists; do not translate it. #}
-    <p>{{ _("You can also import the CSV or XML export of The Hacker's Diet Online. Weights, notes and, from the XML file, your height are imported; everything else is ignored.") }}</p>
+    {# NOTE: "The Hacker's Diet Online" and "Yet Another Diet Tool" are names of web services; do not translate them. #}
+    <p>{{ _("You can also import the CSV or XML export of The Hacker's Diet Online, or the CSV export of Yet Another Diet Tool. Weights, notes and, from the XML file, your height are imported; everything else is ignored.") }}</p>
     <form method="post" action="{{ url_for('main.import_entries') }}" enctype="multipart/form-data" class="entry-form">
       {{ import_form.hidden_tag() }}
       <div class="field field-wide">

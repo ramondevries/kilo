@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-03 20:32+0200\n"
+"POT-Creation-Date: 2026-10-03 20:17+0200\n"
 "PO-Revision-Date: 2026-10-02 16:37+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: it\n"
@@ -823,16 +823,17 @@ msgstr ""
 "sovrascrive."
 
 # machine-translated
-#. "The Hacker's Diet Online" is the name of a web service that no longer
-#. exists; do not translate it.
+#. "The Hacker's Diet Online" and "Yet Another Diet Tool" are names of web
+#. services; do not translate them.
 msgid ""
-"You can also import the CSV or XML export of The Hacker's Diet Online. "
-"Weights, notes and, from the XML file, your height are imported; everything "
-"else is ignored."
+"You can also import the CSV or XML export of The Hacker's Diet Online, or "
+"the CSV export of Yet Another Diet Tool. Weights, notes and, from the XML "
+"file, your height are imported; everything else is ignored."
 msgstr ""
-"Puoi anche importare l'esportazione CSV o XML di The Hacker's Diet Online. "
-"Vengono importati i pesi, le note e, dal file XML, la tua altezza; tutto il "
-"resto viene ignorato."
+"Puoi anche importare l'esportazione CSV o XML di The Hacker's Diet Online, "
+"oppure l'esportazione CSV di Yet Another Diet Tool. Vengono importati i "
+"pesi, le note e, dal file XML, la tua altezza; tutto il resto viene "
+"ignorato."
 
 # machine-translated
 msgid "Import"

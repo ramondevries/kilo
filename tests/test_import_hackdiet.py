@@ -438,3 +438,88 @@ def test_a_single_cell_line_that_is_a_date_is_still_reported_on_the_first_line()
     rows, errors = parse_csv("23-9-26\n24-9-26,80\n")
     assert len(rows) == 1 and len(errors) == 1 and "line 1" in errors[0]
 
+
+# ---- Yet Another Diet Tool ----------------------------------------------------
+#
+# Its export is `Date,Weight,Notes` (the header line is optional) with d-M-yy dates
+# without leading zeros, two-decimal weights and every note in quotes. That is the
+# plain CSV format, so it needs no importer of its own - these tests pin that.
+
+YADT_ROWS = [
+    ("1-8-07", "94.00", ""),
+    ("12-8-07", "93.00", ""),
+    ("31-8-07", "94.00", ""),
+    ("1-9-07", "93.50", 'felt "light", for once'),  # a comma and quotes inside a quoted note
+    ("14-10-26", "92.04", ""),
+    ("3-10-26", "93.80", "señor"),
+]
+YADT_EXPECTED = [
+    (date(2007, 8, 1), 94.0, None),
+    (date(2007, 8, 12), 93.0, None),
+    (date(2007, 8, 31), 94.0, None),
+    (date(2007, 9, 1), 93.5, 'felt "light", for once'),
+    (date(2026, 10, 14), 92.04, None),
+    (date(2026, 10, 3), 93.8, "señor"),
+]
+
+
+def yadt_csv(rows=YADT_ROWS, header=True, newline="\n", encoding="utf-8"):
+    """A file like the tool writes: only the notes are quoted (doubling any quote inside)."""
+    lines = ["Date,Weight,Notes" + newline] if header else []
+    for day, weight, note in rows:
+        quoted = '"' + note.replace('"', '""') + '"'
+        lines.append(f"{day},{weight},{quoted}{newline}")
+    return "".join(lines).encode(encoding)
+
+
+@pytest.mark.parametrize("header", [True, False])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_a_yadt_export_imports_with_or_without_its_header_line(header, newline):
+    result = parse_import(yadt_csv(header=header, newline=newline))
+    assert result.errors == []
+    assert result.rows == YADT_EXPECTED
+    assert result.height_cm is None and result.notes_skipped == 0
+
+
+def test_the_two_yadt_variants_give_the_same_entries():
+    assert parse_import(yadt_csv(header=True)).rows == parse_import(yadt_csv(header=False)).rows
+
+
+def test_a_yadt_export_saved_as_windows_1252_keeps_its_accents():
+    rows = parse_import(yadt_csv(encoding="cp1252")).rows
+    assert rows[-1][2] == "señor"
+
+
+def test_a_yadt_export_of_other_dates_with_a_header_has_no_warning_even_for_a_lone_header():
+    assert parse_csv("Date,Weight,Notes\n") == ([], [])
+
+
+def test_uploading_a_yadt_export_through_the_page_gives_only_the_success_message(logged_in_client):
+    client, user_id = logged_in_client
+    for header in (True, False):
+        WeightEntry.query.filter_by(user_id=user_id).delete()
+        db.session.commit()
+        messages = flashes(upload(client, yadt_csv(header=header), "my-diet-data.csv"))
+        assert messages == ["Imported 6 entries."], (header, messages)
+        saved = {e.entry_date: (e.weight, e.note) for e in WeightEntry.query.filter_by(user_id=user_id)}
+        assert len(saved) == 6
+        assert saved[date(2007, 8, 1)] == (94.0, None)
+        assert saved[date(2026, 10, 3)] == (93.8, "señor")
+
+
+def test_importing_a_yadt_export_after_a_hacker_s_diet_one_overwrites_the_same_days(logged_in_client):
+    client, user_id = logged_in_client
+    upload(client, hd_csv({(2007, 8): [(1, "94", "from hd"), (2, "93", "")]}), "hackdiet_db.csv")
+    upload(client, yadt_csv([("1-8-07", "94.00", "from yadt"), ("3-8-07", "92.00", "")]), "my-diet-data.csv")
+    entries = {e.entry_date: (e.weight, e.note) for e in WeightEntry.query.filter_by(user_id=user_id)}
+    assert entries == {
+        date(2007, 8, 1): (94.0, "from yadt"),  # same day: the later import wins
+        date(2007, 8, 2): (93.0, None),  # only in the first file: kept
+        date(2007, 8, 3): (92.0, None),
+    }
+
+
+def test_the_import_page_names_both_tools(logged_in_client):
+    client, _user_id = logged_in_client
+    html = client.get("/settings").get_data(as_text=True)
+    assert "The Hacker's Diet Online" in html and "Yet Another Diet Tool" in html
