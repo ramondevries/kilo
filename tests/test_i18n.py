@@ -403,3 +403,68 @@ def test_the_first_stat_box_is_labelled_as_an_average(logged_in_client, lang, la
     client.post("/entries/field", json={"date": date.today().isoformat(), "weight": "80", "confirm": True})
     html = client.get(f"/?lang={lang}").get_data(as_text=True)
     assert f'<span class="stat-label">{label}</span>' in html
+
+
+def _set_height(client, value, unit="cm"):
+    client.post("/settings", data={"height_value": value, "height_unit": unit})
+
+
+@pytest.mark.parametrize(
+    "lang, line",
+    [
+        ("en", "Height: 1.86 m"), ("nl", "Lengte: 1,86 m"), ("fr", "Taille : 1,86 m"),
+        ("es", "Altura: 1,86 m"), ("pt", "Altura: 1,86 m"), ("de", "Körpergröße: 1,86 m"),
+        ("it", "Altezza: 1,86 m"), ("id", "Tinggi badan: 1,86 m"), ("pl", "Wzrost: 1,86 m"),
+        ("ro", "Înălțime: 1,86 m"), ("hu", "Magasság: 1,86 m"), ("da", "Højde: 1,86 m"),
+        ("fi", "Pituus: 1,86 m"), ("sv", "Längd: 1,86 m"), ("nb", "Høyde: 1,86 m"),
+    ],
+)
+def test_the_bmi_box_shows_the_height_in_metres_on_its_third_line(logged_in_client, lang, line):
+    client, _user_id = logged_in_client
+    _set_height(client, "186")
+    _log_weight(client)
+    html = client.get(f"/?lang={lang}").get_data(as_text=True).replace(" ", " ")
+    # same classes as the "g/day" line of the change boxes, so the same font and size
+    assert f'<span class="stat-sub" id="stat-height">{line}</span>' in html.replace(" ", " ")
+    bmi_box = html[html.index('id="stat-bmi"'):html.index('id="stat-height"')]
+    assert "stat-label" not in bmi_box  # it follows the BMI value directly
+
+
+@pytest.mark.parametrize("value, unit", [("186", "cm"), ("1.86", "m"), ("1,86", "m"), ("186,0", "cm")])
+def test_the_height_is_shown_in_metres_whatever_unit_it_was_entered_in(logged_in_client, value, unit):
+    client, _user_id = logged_in_client
+    _set_height(client, value, unit)
+    html = client.get("/").get_data(as_text=True)
+    assert "Height: 1.86 m" in html
+
+
+def test_the_height_is_rounded_to_centimetres(logged_in_client):
+    client, _user_id = logged_in_client
+    _set_height(client, "174.0")
+    assert "Height: 1.74 m" in client.get("/").get_data(as_text=True)
+
+
+def test_without_a_height_the_box_asks_for_one(logged_in_client):
+    client, _user_id = logged_in_client
+    _log_weight(client)
+    html = client.get("/").get_data(as_text=True)
+    assert 'id="stat-height"' not in html
+    assert "Set your height" in html
+
+
+def test_a_saved_height_without_entries_is_shown_and_not_asked_for_again(logged_in_client):
+    client, _user_id = logged_in_client
+    _set_height(client, "186")
+    html = client.get("/").get_data(as_text=True)
+    assert "Height: 1.86 m" in html
+    assert "Set your height" not in html
+
+
+@pytest.mark.parametrize("lang", ALL_LANGUAGES)
+def test_the_metres_filter_always_ends_in_the_m_symbol(app, lang):
+    """CLDR spells the unit out in Danish and Romanian ("meter", "metri"); we want "m" everywhere."""
+    from app.i18n import meters
+
+    with app.test_request_context(f"/?lang={lang}"):
+        text = meters(1.86).replace(" ", " ").replace(" ", " ")
+    assert text in ("1.86 m", "1,86 m"), (lang, text)

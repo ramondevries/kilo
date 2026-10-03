@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-03 17:31+0200\n"
+"POT-Creation-Date: 2026-10-03 17:59+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -371,6 +371,12 @@ msgstr ""
 
 #. BMI is Body Mass Index; keep the abbreviation people know in your language.
 msgid "BMI"
+msgstr ""
+
+#. Third line of the BMI box: the body height in metres, for example "Height:
+#. 1.86 m". %(height)s already includes the unit.
+#, python-format
+msgid "Height: %(height)s"
 msgstr ""
 
 msgid "Set your height"

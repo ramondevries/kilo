@@ -23,6 +23,7 @@ Also holds the Jinja filters that show numbers, weights and dates the way the
 active language writes them (`72,5 kg` in Dutch, `72.5 kg` in English).
 """
 
+import re
 from datetime import date
 
 from babel.units import format_unit
@@ -82,6 +83,16 @@ def grams_per_day(value):
     return _("%(grams)s g/day", grams=format_decimal(value, format="+0;-0"))
 
 
+def meters(value):
+    """A length in metres with two decimals and the unit: `1,86 m`."""
+    text = format_unit(value, "meter", length="short", format="0.00", locale=get_locale())
+    if not re.search(r"[\s\u202f]m$", text):
+        # CLDR spells the unit out in a few languages (Danish "meter", Romanian
+        # "metri"); "m" is the SI symbol everywhere, so keep it consistent.
+        text = format_decimal(value, format="0.00") + "\u00a0m"
+    return text
+
+
 def decimal1(value):
     """A number with exactly one decimal, e.g. a BMI of `22,5`."""
     return format_decimal(value, format="0.0")
@@ -102,7 +113,7 @@ def localdate(value):
 def init_app(app):
     """Register Flask-Babel with `select_locale` as the locale selector, and the template filters."""
     babel.init_app(app, locale_selector=select_locale)
-    for func in (kg, grams_per_day, decimal1, decimal_input, localdate):
+    for func in (kg, meters, grams_per_day, decimal1, decimal_input, localdate):
         app.add_template_filter(func)
 
     @app.before_request

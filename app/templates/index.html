@@ -61,7 +61,10 @@
         <span class="stat-value" id="stat-bmi">
           {% if bmi %}{{ bmi|decimal1 }}{% else %}—{% endif %}
         </span>
-        {% if not bmi %}
+        {% if current_user.height_cm %}
+          {# NOTE: Third line of the BMI box: the body height in metres, for example "Height: 1.86 m". %(height)s already includes the unit. #}
+          <span class="stat-sub" id="stat-height">{{ _("Height: %(height)s", height=(current_user.height_cm / 100)|meters) }}</span>
+        {% else %}
           <a class="stat-hint" href="{{ url_for('main.settings') }}">{{ _("Set your height") }}</a>
         {% endif %}
       </div>
