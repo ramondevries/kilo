@@ -26,7 +26,7 @@ from flask_babel import gettext as _
 from app.utils import parse_decimal
 
 MIN_WEIGHT_KG = 1
-MAX_WEIGHT_KG = 1000
+MAX_WEIGHT_KG = 500
 
 
 class CsvRowError(Exception):

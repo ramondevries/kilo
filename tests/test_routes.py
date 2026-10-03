@@ -994,3 +994,28 @@ def test_robots_txt_blocks_crawlers_except_the_public_pages(client):
 def test_robots_txt_needs_no_login(logged_in_client):
     client, _ = logged_in_client
     assert client.get("/robots.txt").status_code == 200
+
+
+@pytest.mark.parametrize("weight, ok", [("1", True), ("0.9", False), ("500", True), ("500,0", True), ("500.1", False), ("501", False), ("1000", False)])
+def test_weight_must_be_between_1_and_500_kg(logged_in_client, weight, ok):
+    client, _ = logged_in_client
+    resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight, "confirm": True})
+    assert resp.status_code == (200 if ok else 400)
+    assert WeightEntry.query.count() == (1 if ok else 0)
+    if not ok:
+        assert resp.get_json()["error"] == "Weight must be between 1 and 500 kg."
+
+
+def test_the_weight_limit_message_is_translated_with_the_limit(logged_in_client):
+    client, _ = logged_in_client
+    resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": "501"}, headers={"Accept-Language": "nl"})
+    assert resp.get_json()["error"] == "Het gewicht moet tussen 1 en 500 kg liggen."
+
+
+def test_csv_import_uses_the_same_weight_limit(logged_in_client):
+    import io
+
+    client, _ = logged_in_client
+    data = {"csv_file": (io.BytesIO(b"1-1-26,500\n2-1-26,500.1\n3-1-26,750\n"), "w.csv")}
+    client.post("/settings/import", data=data, content_type="multipart/form-data")
+    assert [e.weight for e in WeightEntry.query.all()] == [500.0]
