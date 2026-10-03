@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-03 09:51+0200\n"
+"POT-Creation-Date: 2026-10-03 17:31+0200\n"
 "PO-Revision-Date: 2026-10-02 20:46+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: sv\n"
@@ -485,8 +485,8 @@ msgstr "Spara"
 
 # machine-translated
 #. Label above the latest moving-average weight.
-msgid "Current"
-msgstr "Aktuell"
+msgid "Current average"
+msgstr "Aktuellt medelvärde"
 
 # machine-translated
 msgid "No entries yet — add your weight below."

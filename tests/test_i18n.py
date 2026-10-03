@@ -384,3 +384,22 @@ def test_a_shared_cache_would_keep_the_languages_apart(client):
     second = client.get("/about", headers={"Accept-Language": "de"})
     assert first.get_data() != second.get_data()  # the pages really differ
     assert "accept-language" in {name.strip().lower() for name in first.headers["Vary"].split(",")}
+
+
+@pytest.mark.parametrize(
+    "lang, label",
+    [
+        ("en", "Current average"), ("nl", "Huidig gemiddelde"), ("fr", "Moyenne actuelle"),
+        ("es", "Media actual"), ("pt", "Média atual"), ("de", "Aktueller Durchschnitt"),
+        ("it", "Media attuale"), ("id", "Rata-rata saat ini"), ("pl", "Obecna średnia"),
+        ("ro", "Media curentă"), ("hu", "Jelenlegi átlag"), ("da", "Aktuelt gennemsnit"),
+        ("fi", "Nykyinen keskiarvo"), ("sv", "Aktuellt medelvärde"), ("nb", "Nåværende gjennomsnitt"),
+    ],
+)
+def test_the_first_stat_box_is_labelled_as_an_average(logged_in_client, lang, label):
+    from datetime import date
+
+    client, _user_id = logged_in_client
+    client.post("/entries/field", json={"date": date.today().isoformat(), "weight": "80", "confirm": True})
+    html = client.get(f"/?lang={lang}").get_data(as_text=True)
+    assert f'<span class="stat-label">{label}</span>' in html
