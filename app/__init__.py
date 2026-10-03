@@ -22,7 +22,7 @@ ones.
 import os
 import sqlite3
 
-from flask import Flask
+from flask import Flask, request
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
@@ -77,6 +77,8 @@ def create_app(test_config=None):
         MAIL_SUPPRESS_SEND=os.environ.get("MAIL_SUPPRESS_SEND", "1") == "1",
         CHECK_EMAIL_MX=os.environ.get("CHECK_EMAIL_MX", "1") == "1",
         MAX_CONTENT_LENGTH=1 * 1024 * 1024,
+        # An import may be bigger: a Hacker's Diet XML export lists every day (about 75 KB a year).
+        IMPORT_MAX_CONTENT_LENGTH=8 * 1024 * 1024,
         SUPPORTED_LANGUAGES=i18n.SUPPORTED_LANGUAGES,
         BABEL_DEFAULT_LOCALE=i18n.DEFAULT_LANGUAGE,
         BABEL_TRANSLATION_DIRECTORIES=os.path.join(app.root_path, "..", "translations"),
@@ -89,6 +91,14 @@ def create_app(test_config=None):
     os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)
+
+    @app.before_request
+    def _allow_large_imports():
+        # Registered before CSRF protection, whose check reads the form and so
+        # already enforces the limit.
+        if request.endpoint == "main.import_entries":
+            request.max_content_length = app.config["IMPORT_MAX_CONTENT_LENGTH"]
+
     # Before CSRF protection: its before_request check can fail the request, and
     # the error answer must already be in the visitor's language.
     i18n.init_app(app)

@@ -14,11 +14,15 @@
 """CSV import and export of weight entries.
 
 The format is one `date,weight[,note]` line per entry, with dates as d-M-yy or
-d-M-yyyy and weights in kilograms.
+d-M-yyyy (or ISO, 2026-09-23) and weights in kilograms. A first line that looks
+like a header (neither a date nor a weight) is skipped without a warning.
+This module also holds what every importer shares: the result type, the
+"this file cannot be imported at all" error and the text decoding.
 """
 
 import csv
 import io
+from dataclasses import dataclass, field
 from datetime import date
 
 from flask_babel import gettext as _
@@ -33,15 +37,49 @@ class CsvRowError(Exception):
     """A CSV row could not be parsed (the caller words the message, with the line number)."""
 
 
+class ImportFileError(Exception):
+    """The whole file cannot be imported; the (translated) message says why."""
+
+
+@dataclass
+class ImportResult:
+    """What an importer found: entries to save, per-row problems, and optional extras."""
+
+    rows: list = field(default_factory=list)  # (entry_date, weight_kg, note)
+    errors: list = field(default_factory=list)  # translated one-line descriptions of skipped rows
+    height_cm: float | None = None  # a height found in the file, if it has one
+    notes_skipped: int = 0  # days that have a note but no weight (an entry needs a weight)
+
+
+def decode_text(data):
+    """Text from file bytes: UTF-8 (with or without BOM), else Windows-1252.
+
+    Spreadsheets and older programs write Windows-1252 ("ñ" as one byte), which
+    is not valid UTF-8; Latin-1 is the last resort because it accepts any byte.
+    """
+    if isinstance(data, str):
+        return data
+    for encoding in ("utf-8-sig", "cp1252"):
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            pass
+    return data.decode("latin-1")
+
+
 def parse_ddmyy(text):
-    """Parse a d-M-yy or d-M-yyyy date, e.g. '23-9-26' or '23-9-2026'."""
+    """Parse a d-M-yy or d-M-yyyy date ('23-9-26', '23-9-2026') or an ISO date ('2026-09-23')."""
     parts = text.strip().split("-")
     if len(parts) != 3:
         raise CsvRowError()
     try:
-        day, month, year = (int(p) for p in parts)
+        numbers = [int(p) for p in parts]
     except ValueError:
         raise CsvRowError()
+    if len(parts[0]) == 4:
+        year, month, day = numbers  # ISO, year first
+    else:
+        day, month, year = numbers
     if year < 100:
         year += 2000
     try:
@@ -55,23 +93,33 @@ def format_ddmyy(d):
     return f"{d.day}-{d.month}-{d.strftime('%y')}"
 
 
-def parse_csv(file_bytes):
-    """Parse CSV bytes of `date,weight,note` lines (weight always in kg).
+def _looks_like_header(row):
+    """True if a row is not data at all: its first cell is no date and its second no weight."""
+    try:
+        parse_ddmyy(row[0])
+        return False
+    except CsvRowError:
+        pass
+    return parse_decimal(row[1].strip() if len(row) > 1 else "") is None
 
-    Returns (rows, errors) where rows is a list of
-    (entry_date, weight_kg, note) tuples and errors is a list of
-    one-line descriptions of skipped rows.
+
+def parse_generic_csv(text):
+    """Parse the text of a `date,weight[,note]` CSV into an `ImportResult` (weight always in kg).
+
+    If the first line is not data but looks like a header ("date,weight,note"), it
+    is skipped silently. Any later line that is not data is reported.
     """
-    text = file_bytes.decode("utf-8-sig", errors="replace") if isinstance(file_bytes, bytes) else file_bytes
-
-    rows = []
-    errors = []
+    result = ImportResult()
+    first_line = True
     for lineno, row in enumerate(csv.reader(io.StringIO(text)), start=1):
         if not row or all(not cell.strip() for cell in row):
             continue
+        was_first, first_line = first_line, False
+        if was_first and _looks_like_header(row):
+            continue
         if len(row) < 2:
             # NOTE: date,weight[,note] names the columns of a CSV line; translate the names (note is optional).
-            errors.append(_("line %(line)d: expected date,weight[,note]", line=lineno))
+            result.errors.append(_("line %(line)d: expected date,weight[,note]", line=lineno))
             continue
 
         date_str, weight_str = row[0].strip(), row[1].strip()
@@ -80,20 +128,31 @@ def parse_csv(file_bytes):
         try:
             entry_date = parse_ddmyy(date_str)
         except CsvRowError:
-            errors.append(_("line %(line)d: invalid date %(value)s", line=lineno, value=repr(date_str)))
+            result.errors.append(_("line %(line)d: invalid date %(value)s", line=lineno, value=repr(date_str)))
             continue
 
         weight_kg = parse_decimal(weight_str)
         if weight_kg is None:
-            errors.append(_("line %(line)d: invalid weight %(value)s", line=lineno, value=repr(weight_str)))
+            result.errors.append(_("line %(line)d: invalid weight %(value)s", line=lineno, value=repr(weight_str)))
             continue
         if not (MIN_WEIGHT_KG <= weight_kg <= MAX_WEIGHT_KG):
-            errors.append(_("line %(line)d: weight out of range", line=lineno))
+            result.errors.append(_("line %(line)d: weight out of range", line=lineno))
             continue
 
-        rows.append((entry_date, weight_kg, note))
+        result.rows.append((entry_date, weight_kg, note))
 
-    return rows, errors
+    return result
+
+
+def parse_csv(file_bytes):
+    """Parse CSV bytes of `date,weight,note` lines (weight always in kg).
+
+    Returns (rows, errors) where rows is a list of
+    (entry_date, weight_kg, note) tuples and errors is a list of
+    one-line descriptions of skipped rows.
+    """
+    result = parse_generic_csv(decode_text(file_bytes))
+    return result.rows, result.errors
 
 
 def export_csv(entries):

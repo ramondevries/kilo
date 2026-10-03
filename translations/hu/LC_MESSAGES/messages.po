@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-03 17:59+0200\n"
+"POT-Creation-Date: 2026-10-03 20:32+0200\n"
 "PO-Revision-Date: 2026-10-02 20:46+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: hu\n"
@@ -215,12 +215,36 @@ msgstr ""
 "%(max_m)s m)."
 
 # machine-translated
-msgid "CSV file"
-msgstr "CSV-fájl"
+msgid "CSV or XML file"
+msgstr "CSV- vagy XML-fájl"
 
 # machine-translated
-msgid "CSV or text files only."
-msgstr "Csak CSV- vagy szövegfájlok."
+msgid "CSV, XML or text files only."
+msgstr "Csak CSV-, XML- vagy szövegfájlok."
+
+# machine-translated
+#, python-format
+msgid "That file stores weights in %(unit)s, which can't be imported."
+msgstr "Ez a fájl a súlyt %(unit)s mértékegységben tárolja, amely nem importálható."
+
+# machine-translated
+msgid "That file isn't a valid Hacker's Diet XML export."
+msgstr "Ez a fájl nem érvényes Hacker's Diet XML-export."
+
+# machine-translated
+#, python-format
+msgid "%(date)s: invalid date"
+msgstr "%(date)s: érvénytelen dátum"
+
+# machine-translated
+#, python-format
+msgid "%(date)s: invalid weight %(value)s"
+msgstr "%(date)s: érvénytelen súly: %(value)s"
+
+# machine-translated
+#, python-format
+msgid "%(date)s: weight out of range"
+msgstr "%(date)s: a súly a megengedett tartományon kívül van"
 
 # machine-translated
 #. NOTE: Rate of weight change. %(grams)s is a signed whole number; g is gram.
@@ -324,6 +348,18 @@ msgid "Imported %(num)d entry."
 msgid_plural "Imported %(num)d entries."
 msgstr[0] "%(num)d bejegyzés importálva."
 msgstr[1] "%(num)d bejegyzés importálva."
+
+# machine-translated
+#, python-format
+msgid "Your height was set to %(height)s."
+msgstr "A magasságod beállítva: %(height)s."
+
+# machine-translated
+#, python-format
+msgid "%(num)d note without a weight was skipped."
+msgid_plural "%(num)d notes without a weight were skipped."
+msgstr[0] "%(num)d súly nélküli jegyzet kihagyva."
+msgstr[1] "%(num)d súly nélküli jegyzet kihagyva."
 
 # machine-translated
 #, python-format
@@ -781,6 +817,18 @@ msgstr ""
 "A dátumok alakja <code>n-H-éé</code> vagy <code>n-H-éééé</code>; a súly "
 "kilogrammban értendő. Ha olyan dátumot importálsz, amelyhez már van "
 "bejegyzés, azt felülírja."
+
+# machine-translated
+#. "The Hacker's Diet Online" is the name of a web service that no longer
+#. exists; do not translate it.
+msgid ""
+"You can also import the CSV or XML export of The Hacker's Diet Online. "
+"Weights, notes and, from the XML file, your height are imported; everything "
+"else is ignored."
+msgstr ""
+"A The Hacker's Diet Online CSV- vagy XML-exportját is importálhatod. A "
+"súlyok, a jegyzetek és az XML-fájlból a magasságod kerülnek importálásra; "
+"minden más figyelmen kívül marad."
 
 # machine-translated
 msgid "Import"

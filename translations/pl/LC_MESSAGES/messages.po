@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-03 17:59+0200\n"
+"POT-Creation-Date: 2026-10-03 20:32+0200\n"
 "PO-Revision-Date: 2026-10-02 20:46+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: pl\n"
@@ -226,12 +226,36 @@ msgstr ""
 "%(min_m)s do %(max_m)s m)."
 
 # machine-translated
-msgid "CSV file"
-msgstr "Plik CSV"
+msgid "CSV or XML file"
+msgstr "Plik CSV lub XML"
 
 # machine-translated
-msgid "CSV or text files only."
-msgstr "Tylko pliki CSV lub tekstowe."
+msgid "CSV, XML or text files only."
+msgstr "Tylko pliki CSV, XML lub tekstowe."
+
+# machine-translated
+#, python-format
+msgid "That file stores weights in %(unit)s, which can't be imported."
+msgstr "Ten plik zapisuje wagę w jednostce %(unit)s, której nie można zaimportować."
+
+# machine-translated
+msgid "That file isn't a valid Hacker's Diet XML export."
+msgstr "Ten plik nie jest prawidłowym eksportem XML z Hacker's Diet."
+
+# machine-translated
+#, python-format
+msgid "%(date)s: invalid date"
+msgstr "%(date)s: nieprawidłowa data"
+
+# machine-translated
+#, python-format
+msgid "%(date)s: invalid weight %(value)s"
+msgstr "%(date)s: nieprawidłowa waga %(value)s"
+
+# machine-translated
+#, python-format
+msgid "%(date)s: weight out of range"
+msgstr "%(date)s: waga poza zakresem"
 
 # machine-translated
 #. NOTE: Rate of weight change. %(grams)s is a signed whole number; g is gram.
@@ -339,6 +363,19 @@ msgid_plural "Imported %(num)d entries."
 msgstr[0] "Zaimportowano %(num)d wpis."
 msgstr[1] "Zaimportowano %(num)d wpisy."
 msgstr[2] "Zaimportowano %(num)d wpisów."
+
+# machine-translated
+#, python-format
+msgid "Your height was set to %(height)s."
+msgstr "Twój wzrost ustawiono na %(height)s."
+
+# machine-translated
+#, python-format
+msgid "%(num)d note without a weight was skipped."
+msgid_plural "%(num)d notes without a weight were skipped."
+msgstr[0] "Pominięto %(num)d notatkę bez wagi."
+msgstr[1] "Pominięto %(num)d notatki bez wagi."
+msgstr[2] "Pominięto %(num)d notatek bez wagi."
 
 # machine-translated
 #, python-format
@@ -806,6 +843,18 @@ msgid ""
 msgstr ""
 "Daty mają postać <code>d-M-rr</code> lub <code>d-M-rrrr</code>; waga jest w "
 "kilogramach. Zaimportowanie daty, która ma już wpis, nadpisuje go."
+
+# machine-translated
+#. "The Hacker's Diet Online" is the name of a web service that no longer
+#. exists; do not translate it.
+msgid ""
+"You can also import the CSV or XML export of The Hacker's Diet Online. "
+"Weights, notes and, from the XML file, your height are imported; everything "
+"else is ignored."
+msgstr ""
+"Możesz też zaimportować eksport CSV lub XML z The Hacker's Diet Online. "
+"Importowane są wagi, notatki oraz, z pliku XML, wzrost; wszystko inne jest "
+"ignorowane."
 
 # machine-translated
 msgid "Import"

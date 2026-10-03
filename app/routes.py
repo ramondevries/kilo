@@ -37,8 +37,10 @@ from flask_babel import format_date, format_decimal, gettext as _, lazy_gettext 
 
 from app import db
 from app.auth import get_current_user, login_required
-from app.csv_io import MAX_WEIGHT_KG, MIN_WEIGHT_KG, export_csv, parse_csv
+from app.csv_io import MAX_WEIGHT_KG, MIN_WEIGHT_KG, ImportFileError, export_csv
 from app.forms import ImportForm, SettingsForm, SignupForm
+from app.i18n import meters
+from app.importing import parse_import
 from app.models import WeightEntry
 from app.utils import parse_decimal
 
@@ -505,7 +507,10 @@ def export_entries():
 @bp.route("/settings/import", methods=["POST"])
 @login_required
 def import_entries():
-    """Import entries from an uploaded CSV file, overwriting entries on the same dates."""
+    """Import entries from an uploaded file (CSV, or a Hacker's Diet CSV/XML export), overwriting entries on the same dates.
+
+    A height in the file is used only if the user has not set one yet.
+    """
     user = get_current_user()
     form = ImportForm()
 
@@ -515,10 +520,15 @@ def import_entries():
                 flash(str(error), "error")
         return redirect(url_for("main.settings"))
 
-    rows, errors = parse_csv(form.csv_file.data.read())
+    try:
+        result = parse_import(form.csv_file.data.read())
+    except ImportFileError as exc:
+        flash(str(exc), "error")
+        return redirect(url_for("main.settings"))
+    errors = result.errors
 
     imported = 0
-    for entry_date, weight, note in rows:
+    for entry_date, weight, note in result.rows:
         entry = WeightEntry.query.filter_by(user_id=user.id, entry_date=entry_date).first()
         if entry is not None:
             entry.weight = weight
@@ -526,12 +536,26 @@ def import_entries():
         else:
             db.session.add(WeightEntry(user_id=user.id, entry_date=entry_date, weight=weight, note=note))
         imported += 1
+    height_set = result.height_cm is not None and user.height_cm is None
+    if height_set:
+        user.height_cm = result.height_cm
     db.session.commit()
 
     if imported:
         flash(
             ngettext("Imported %(num)d entry.", "Imported %(num)d entries.", imported),
             "success",
+        )
+    if height_set:
+        flash(_("Your height was set to %(height)s.", height=meters(result.height_cm / 100)), "success")
+    if result.notes_skipped:
+        flash(
+            ngettext(
+                "%(num)d note without a weight was skipped.",
+                "%(num)d notes without a weight were skipped.",
+                result.notes_skipped,
+            ),
+            "error",
         )
     if errors:
         details = "; ".join(errors[:5])
@@ -546,7 +570,7 @@ def import_entries():
             ),
             "error",
         )
-    if not imported and not errors:
+    if not imported and not errors and not result.notes_skipped:
         flash(_("No rows found in the file."), "error")
 
     return redirect(url_for("main.settings"))

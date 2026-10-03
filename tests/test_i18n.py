@@ -276,8 +276,9 @@ def test_the_line_format_error_names_the_columns_in_the_request_language(app):
     from app.csv_io import parse_csv
 
     with app.test_request_context("/?lang=nl"):
-        _rows, errors = parse_csv("only-one-column\n")
-    assert errors == ["regel 1: verwacht datum,gewicht[,notitie]"]
+        # a first line without a date or weight would be taken for a header, so the bad line comes second
+        _rows, errors = parse_csv("23-9-26,80\nonly-one-column\n")
+    assert errors == ["regel 2: verwacht datum,gewicht[,notitie]"]
 
 
 @pytest.mark.parametrize(

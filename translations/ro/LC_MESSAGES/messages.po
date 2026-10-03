@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-03 17:59+0200\n"
+"POT-Creation-Date: 2026-10-03 20:32+0200\n"
 "PO-Revision-Date: 2026-10-02 20:46+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: ro\n"
@@ -224,12 +224,36 @@ msgstr ""
 "%(max_m)s m)."
 
 # machine-translated
-msgid "CSV file"
-msgstr "Fișier CSV"
+msgid "CSV or XML file"
+msgstr "Fișier CSV sau XML"
 
 # machine-translated
-msgid "CSV or text files only."
-msgstr "Doar fișiere CSV sau text."
+msgid "CSV, XML or text files only."
+msgstr "Doar fișiere CSV, XML sau text."
+
+# machine-translated
+#, python-format
+msgid "That file stores weights in %(unit)s, which can't be imported."
+msgstr "Acel fișier stochează greutățile în %(unit)s, care nu poate fi importat."
+
+# machine-translated
+msgid "That file isn't a valid Hacker's Diet XML export."
+msgstr "Acel fișier nu este un export XML valid din Hacker's Diet."
+
+# machine-translated
+#, python-format
+msgid "%(date)s: invalid date"
+msgstr "%(date)s: dată nevalidă"
+
+# machine-translated
+#, python-format
+msgid "%(date)s: invalid weight %(value)s"
+msgstr "%(date)s: greutate nevalidă %(value)s"
+
+# machine-translated
+#, python-format
+msgid "%(date)s: weight out of range"
+msgstr "%(date)s: greutate în afara intervalului"
 
 # machine-translated
 #. NOTE: Rate of weight change. %(grams)s is a signed whole number; g is gram.
@@ -337,6 +361,19 @@ msgid_plural "Imported %(num)d entries."
 msgstr[0] "%(num)d înregistrare importată."
 msgstr[1] "%(num)d înregistrări importate."
 msgstr[2] "%(num)d de înregistrări importate."
+
+# machine-translated
+#, python-format
+msgid "Your height was set to %(height)s."
+msgstr "Înălțimea ta a fost setată la %(height)s."
+
+# machine-translated
+#, python-format
+msgid "%(num)d note without a weight was skipped."
+msgid_plural "%(num)d notes without a weight were skipped."
+msgstr[0] "A fost omisă %(num)d notă fără greutate."
+msgstr[1] "Au fost omise %(num)d note fără greutate."
+msgstr[2] "Au fost omise %(num)d de note fără greutate."
 
 # machine-translated
 #, python-format
@@ -807,6 +844,18 @@ msgstr ""
 "Datele au forma <code>z-L-aa</code> sau <code>z-L-aaaa</code>; greutatea "
 "este în kilograme. Importarea unei date care are deja o înregistrare o "
 "suprascrie."
+
+# machine-translated
+#. "The Hacker's Diet Online" is the name of a web service that no longer
+#. exists; do not translate it.
+msgid ""
+"You can also import the CSV or XML export of The Hacker's Diet Online. "
+"Weights, notes and, from the XML file, your height are imported; everything "
+"else is ignored."
+msgstr ""
+"Poți importa și exportul CSV sau XML din The Hacker's Diet Online. Se "
+"importă greutățile, notele și, din fișierul XML, înălțimea ta; restul este "
+"ignorat."
 
 # machine-translated
 msgid "Import"

@@ -315,7 +315,7 @@ def test_import_rejects_wrong_file_type(logged_in_client, app):
         content_type="multipart/form-data",
         follow_redirects=True,
     )
-    assert b"CSV or text files only" in resp.data
+    assert b"CSV, XML or text files only" in resp.data
     with app.app_context():
         assert WeightEntry.query.filter_by(user_id=user_id).count() == 0
 

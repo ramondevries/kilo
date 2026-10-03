@@ -10,7 +10,7 @@ at [kilo.11tools.com](https://kilo.11tools.com)** - no install, no password and
 nothing to pay. Sign in with just your email address, log your weight in
 seconds, and watch the trend line cut through the daily ups and downs. It works
 great on your phone, shows your BMI at a glance, and you can import or export
-all your data as CSV whenever you like. Give it a spin, and if you'd rather host
+all your data as CSV whenever you like (the CSV and XML exports of The Hacker's Diet Online can be imported too). Give it a spin, and if you'd rather host
 it yourself, everything you need is below.
 
 ## Setup
@@ -163,7 +163,7 @@ Get a certificate (for example with `certbot --nginx`) and proxy to gunicorn:
 ```nginx
 server {
     server_name kilo.example.com;
-    client_max_body_size 1m;   # the app rejects uploads over 1 MB anyway
+    client_max_body_size 8m;   # the app limits uploads itself: 8 MB for imports, 1 MB elsewhere
 
     location / {
         proxy_pass http://127.0.0.1:8000;

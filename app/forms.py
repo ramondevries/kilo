@@ -118,8 +118,8 @@ class SettingsForm(FlaskForm):
 
 
 class ImportForm(FlaskForm):
-    """Upload of a CSV file to import."""
+    """Upload of a file to import: a CSV, or a Hacker's Diet CSV/XML export."""
     csv_file = FileField(
-        _l("CSV file"),
-        validators=[FileRequired(), FileAllowed(["csv", "txt"], _l("CSV or text files only."))],
+        _l("CSV or XML file"),
+        validators=[FileRequired(), FileAllowed(["csv", "txt", "xml"], _l("CSV, XML or text files only."))],
     )

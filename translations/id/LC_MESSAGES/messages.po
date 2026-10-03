@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-03 17:59+0200\n"
+"POT-Creation-Date: 2026-10-03 20:32+0200\n"
 "PO-Revision-Date: 2026-10-02 20:46+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: id\n"
@@ -204,12 +204,36 @@ msgstr ""
 "%(max_m)s m)."
 
 # machine-translated
-msgid "CSV file"
-msgstr "File CSV"
+msgid "CSV or XML file"
+msgstr "File CSV atau XML"
 
 # machine-translated
-msgid "CSV or text files only."
-msgstr "Hanya file CSV atau teks."
+msgid "CSV, XML or text files only."
+msgstr "Hanya file CSV, XML, atau teks."
+
+# machine-translated
+#, python-format
+msgid "That file stores weights in %(unit)s, which can't be imported."
+msgstr "File itu menyimpan berat dalam %(unit)s, yang tidak dapat diimpor."
+
+# machine-translated
+msgid "That file isn't a valid Hacker's Diet XML export."
+msgstr "File itu bukan ekspor XML Hacker's Diet yang valid."
+
+# machine-translated
+#, python-format
+msgid "%(date)s: invalid date"
+msgstr "%(date)s: tanggal tidak valid"
+
+# machine-translated
+#, python-format
+msgid "%(date)s: invalid weight %(value)s"
+msgstr "%(date)s: berat tidak valid %(value)s"
+
+# machine-translated
+#, python-format
+msgid "%(date)s: weight out of range"
+msgstr "%(date)s: berat di luar rentang"
 
 # machine-translated
 #. NOTE: Rate of weight change. %(grams)s is a signed whole number; g is gram.
@@ -313,6 +337,17 @@ msgstr "Pengaturan diperbarui."
 msgid "Imported %(num)d entry."
 msgid_plural "Imported %(num)d entries."
 msgstr[0] "%(num)d entri diimpor."
+
+# machine-translated
+#, python-format
+msgid "Your height was set to %(height)s."
+msgstr "Tinggi badanmu diatur menjadi %(height)s."
+
+# machine-translated
+#, python-format
+msgid "%(num)d note without a weight was skipped."
+msgid_plural "%(num)d notes without a weight were skipped."
+msgstr[0] "%(num)d catatan tanpa berat dilewati."
 
 # machine-translated
 #, python-format
@@ -761,6 +796,18 @@ msgid ""
 msgstr ""
 "Tanggal berbentuk <code>h-B-tt</code> atau <code>h-B-tttt</code>; berat "
 "dalam kilogram. Mengimpor tanggal yang sudah memiliki entri akan menimpanya."
+
+# machine-translated
+#. "The Hacker's Diet Online" is the name of a web service that no longer
+#. exists; do not translate it.
+msgid ""
+"You can also import the CSV or XML export of The Hacker's Diet Online. "
+"Weights, notes and, from the XML file, your height are imported; everything "
+"else is ignored."
+msgstr ""
+"Kamu juga dapat mengimpor ekspor CSV atau XML dari The Hacker's Diet Online."
+" Berat, catatan, dan, dari file XML, tinggi badanmu akan diimpor; yang "
+"lainnya diabaikan."
 
 # machine-translated
 msgid "Import"

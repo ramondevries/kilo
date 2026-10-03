@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-03 17:59+0200\n"
+"POT-Creation-Date: 2026-10-03 20:32+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -160,10 +160,29 @@ msgid ""
 "%(max_m)s m)."
 msgstr ""
 
-msgid "CSV file"
+msgid "CSV or XML file"
 msgstr ""
 
-msgid "CSV or text files only."
+msgid "CSV, XML or text files only."
+msgstr ""
+
+#, python-format
+msgid "That file stores weights in %(unit)s, which can't be imported."
+msgstr ""
+
+msgid "That file isn't a valid Hacker's Diet XML export."
+msgstr ""
+
+#, python-format
+msgid "%(date)s: invalid date"
+msgstr ""
+
+#, python-format
+msgid "%(date)s: invalid weight %(value)s"
+msgstr ""
+
+#, python-format
+msgid "%(date)s: weight out of range"
 msgstr ""
 
 #. NOTE: Rate of weight change. %(grams)s is a signed whole number; g is gram.
@@ -246,6 +265,16 @@ msgstr ""
 #, python-format
 msgid "Imported %(num)d entry."
 msgid_plural "Imported %(num)d entries."
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "Your height was set to %(height)s."
+msgstr ""
+
+#, python-format
+msgid "%(num)d note without a weight was skipped."
+msgid_plural "%(num)d notes without a weight were skipped."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -591,6 +620,14 @@ msgstr ""
 msgid ""
 "Dates are <code>d-M-yy</code> or <code>d-M-yyyy</code>; weight is in "
 "kilograms. Importing a date that already has an entry overwrites it."
+msgstr ""
+
+#. "The Hacker's Diet Online" is the name of a web service that no longer
+#. exists; do not translate it.
+msgid ""
+"You can also import the CSV or XML export of The Hacker's Diet Online. "
+"Weights, notes and, from the XML file, your height are imported; "
+"everything else is ignored."
 msgstr ""
 
 msgid "Import"
