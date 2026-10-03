@@ -89,11 +89,14 @@ def create_app(test_config=None):
     os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)
+    # Before CSRF protection: its before_request check can fail the request, and
+    # the error answer must already be in the visitor's language.
+    i18n.init_app(app)
     csrf.init_app(app)
     mail.init_app(app)
 
-    from . import account, auth, routes
-    i18n.init_app(app)
+    from . import account, auth, errors, routes
+    errors.init_app(app)
     app.register_blueprint(routes.bp)
     app.register_blueprint(account.bp)
     app.register_blueprint(auth.bp)

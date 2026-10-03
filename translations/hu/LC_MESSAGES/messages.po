@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-02 19:57+0200\n"
+"POT-Creation-Date: 2026-10-03 09:51+0200\n"
 "PO-Revision-Date: 2026-10-02 20:46+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: hu\n"
@@ -163,6 +163,18 @@ msgstr "Ez az e-mail-domain nem fogad leveleket (nincs MX-rekord)."
 # machine-translated
 msgid "Couldn't check that email domain right now. Try again."
 msgstr "Most nem sikerült ellenőrizni az e-mail-domaint. Próbáld újra."
+
+# machine-translated
+msgid "Your session has expired. Reload the page and try again."
+msgstr "A munkamenet lejárt. Töltsd újra az oldalt, és próbáld újra."
+
+# machine-translated
+msgid "Your session has expired and nothing was changed. Please try again."
+msgstr "A munkamenet lejárt, és semmi sem változott. Próbáld újra."
+
+# machine-translated
+msgid "That page isn't available, so you were taken to the start page."
+msgstr "Ez az oldal nem érhető el, ezért a kezdőoldalra irányítottunk."
 
 # machine-translated
 msgid "Email"
@@ -578,6 +590,17 @@ msgstr "Javítás"
 # machine-translated
 msgid "Save anyway"
 msgstr "Mentés így is"
+
+# machine-translated
+#. Title of a dialog: the login session has timed out; the page must be
+#. reloaded.
+msgid "Session expired"
+msgstr "A munkamenet lejárt"
+
+# machine-translated
+#. Button that reloads the web page.
+msgid "Reload page"
+msgstr "Oldal újratöltése"
 
 # machine-translated
 #, python-format
