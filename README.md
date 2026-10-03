@@ -169,6 +169,7 @@ server {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 }
 ```
@@ -180,6 +181,7 @@ With Apache (`mod_proxy`, `mod_proxy_http` and `mod_headers` enabled):
     ServerName kilo.example.com
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Real-IP "expr=%{REMOTE_ADDR}"
     ProxyPass / http://127.0.0.1:8000/
     ProxyPassReverse / http://127.0.0.1:8000/
 </VirtualHost>
@@ -190,6 +192,29 @@ both proxies pass on, and every page answers with `Vary: Accept-Language`. If
 you cache responses in front of the app (Apache `mod_cache`, a CDN), let the
 cache honour `Vary`: a cache that ignores it, or a rule that strips it (`Header
 unset Vary`), serves the first visitor's language to everyone.
+
+#### Logging the visitor's IP address
+
+Behind a proxy, gunicorn's access log shows `127.0.0.1` for everyone, because it
+logs the address of whoever connected to it. The proxy examples above therefore
+set `X-Real-IP`; tell gunicorn to log that header instead, in a
+`gunicorn.conf.py` (start gunicorn with `--config gunicorn.conf.py`):
+
+```python
+accesslog = "-"   # or a file; "-" goes to the journal
+access_log_format = '%({x-real-ip}i)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
+```
+
+(Passing it as `--access-logformat` on the `ExecStart` line of a systemd unit
+needs every `%` doubled to `%%`, because systemd reads `%` as a specifier; the
+config file avoids that.)
+
+`set` replaces whatever the client sent, so the header cannot be forged, as long
+as gunicorn only listens on `127.0.0.1` (the examples bind it there). Restart
+gunicorn afterwards. The app itself never needs the address; if you add something
+that does (rate limiting), wrap it in Werkzeug's `ProxyFix(x_for=1)`. If another
+proxy or a CDN sits in front of this one, the address you see is that proxy's;
+with Apache add `mod_remoteip` (`RemoteIPHeader X-Forwarded-For`).
 
 ### Backups and updates
 
