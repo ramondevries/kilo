@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-02 19:57+0200\n"
+"POT-Creation-Date: 2026-10-03 09:51+0200\n"
 "PO-Revision-Date: 2026-10-02 20:46+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: fi\n"
@@ -163,6 +163,18 @@ msgstr "Tämä sähköpostialue ei vastaanota viestejä (ei MX-tietuetta)."
 # machine-translated
 msgid "Couldn't check that email domain right now. Try again."
 msgstr "Sähköpostialuetta ei voitu tarkistaa juuri nyt. Yritä uudelleen."
+
+# machine-translated
+msgid "Your session has expired. Reload the page and try again."
+msgstr "Istuntosi on vanhentunut. Lataa sivu uudelleen ja yritä uudelleen."
+
+# machine-translated
+msgid "Your session has expired and nothing was changed. Please try again."
+msgstr "Istuntosi on vanhentunut, eikä mitään muutettu. Yritä uudelleen."
+
+# machine-translated
+msgid "That page isn't available, so you were taken to the start page."
+msgstr "Sivu ei ole saatavilla, joten ohjasimme sinut aloitussivulle."
 
 # machine-translated
 msgid "Email"
@@ -579,6 +591,17 @@ msgstr "Korjaa"
 # machine-translated
 msgid "Save anyway"
 msgstr "Tallenna silti"
+
+# machine-translated
+#. Title of a dialog: the login session has timed out; the page must be
+#. reloaded.
+msgid "Session expired"
+msgstr "Istunto vanhentunut"
+
+# machine-translated
+#. Button that reloads the web page.
+msgid "Reload page"
+msgstr "Lataa sivu uudelleen"
 
 # machine-translated
 #, python-format

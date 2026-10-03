@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-02 19:57+0200\n"
+"POT-Creation-Date: 2026-10-03 09:51+0200\n"
 "PO-Revision-Date: 2026-10-02 20:46+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: ro\n"
@@ -172,6 +172,18 @@ msgstr "Acest domeniu de email nu primește mesaje (fără înregistrare MX)."
 # machine-translated
 msgid "Couldn't check that email domain right now. Try again."
 msgstr "Domeniul de email nu a putut fi verificat acum. Încearcă din nou."
+
+# machine-translated
+msgid "Your session has expired. Reload the page and try again."
+msgstr "Sesiunea ta a expirat. Reîncarcă pagina și încearcă din nou."
+
+# machine-translated
+msgid "Your session has expired and nothing was changed. Please try again."
+msgstr "Sesiunea ta a expirat și nu s-a modificat nimic. Încearcă din nou."
+
+# machine-translated
+msgid "That page isn't available, so you were taken to the start page."
+msgstr "Pagina nu este disponibilă, așa că te-am redirecționat la pagina de start."
 
 # machine-translated
 msgid "Email"
@@ -595,6 +607,17 @@ msgstr "Corectează"
 # machine-translated
 msgid "Save anyway"
 msgstr "Salvează oricum"
+
+# machine-translated
+#. Title of a dialog: the login session has timed out; the page must be
+#. reloaded.
+msgid "Session expired"
+msgstr "Sesiune expirată"
+
+# machine-translated
+#. Button that reloads the web page.
+msgid "Reload page"
+msgstr "Reîncarcă pagina"
 
 # machine-translated
 #, python-format

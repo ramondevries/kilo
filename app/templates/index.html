@@ -150,6 +150,19 @@
       </div>
     </div>
   </div>
+
+  {# Shown when a background save is refused because the session or its CSRF token has expired. #}
+  <div class="modal-overlay" id="session-expired-prompt" hidden>
+    <div class="modal-box" role="alertdialog" aria-labelledby="session-expired-title" aria-describedby="session-expired-message">
+      {# NOTE: Title of a dialog: the login session has timed out; the page must be reloaded. #}
+      <h3 id="session-expired-title">{{ _("Session expired") }}</h3>
+      <p id="session-expired-message">{{ _("Your session has expired. Reload the page and try again.") }}</p>
+      <div class="modal-actions">
+        {# NOTE: Button that reloads the web page. #}
+        <button type="button" id="session-expired-reload">{{ _("Reload page") }}</button>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -979,6 +992,15 @@
     };
   }
 
+  // The session (its CSRF token) expired while the page was open: nothing was
+  // saved, and only reloading the page gets a fresh token.
+  const sessionExpiredPrompt = document.getElementById('session-expired-prompt');
+  function showSessionExpired() {
+    sessionExpiredPrompt.hidden = false;
+    document.getElementById('session-expired-reload').focus();
+  }
+  document.getElementById('session-expired-reload').addEventListener('click', () => location.reload());
+
   outlierConfirmBtn.addEventListener('click', () => {
     const confirmFn = pendingOutlierConfirm;
     hideOutlierPrompt();
@@ -1019,6 +1041,11 @@
         });
         const data = await resp.json();
         if (!resp.ok) {
+          if (data.code === 'csrf_expired') {
+            statusEl.textContent = '';
+            showSessionExpired();
+            return;
+          }
           statusEl.textContent = data.error || t('errorSaving');
           return;
         }
@@ -1214,6 +1241,10 @@
       });
       const data = await resp.json();
       if (!resp.ok) {
+        if (data.code === 'csrf_expired') {
+          showSessionExpired();
+          return;
+        }
         todayPromptError.textContent = data.error || t('couldNotSavePrompt');
         todayPromptError.hidden = false;
         return;
