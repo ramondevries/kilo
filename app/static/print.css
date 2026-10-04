@@ -70,12 +70,30 @@ main.dashboard-main {
   overflow: visible;
 }
 
-/* A fixed height — the screen layout sizes the chart from the viewport,
-   which is meaningless on paper. */
+/* A fixed size — the screen layout sizes the chart from the window, which is
+   meaningless on paper and made the printout depend on the window width.
+   The canvas is taken out of the flow so that its on-screen pixel size can
+   never push the container around; Chart.js re-measures the container when
+   printing starts (see resizeChart in index.html). */
 .chart-wrap {
-  height: 105mm;
-  margin-bottom: 5mm;
+  display: block;
+  width: auto;
+  height: 98mm;
+  padding: 3mm;
+  margin-bottom: 4mm;
   break-inside: avoid;
+}
+
+.chart-canvas-wrap {
+  position: relative;
+  height: 86mm;
+}
+
+.chart-canvas-wrap canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .chart-header {
