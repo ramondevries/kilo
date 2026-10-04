@@ -693,7 +693,16 @@
           },
           afterBuildTicks(scale) {
             const weightScale = scale.chart.scales.y;
-            if (weightScale) scale.ticks = weightScale.ticks.map((t) => ({ value: t.value }));
+            if (!weightScale) return;
+            scale.ticks = weightScale.ticks.map((t) => ({ value: t.value }));
+            // The range must be copied again here: this axis is a linear scale with the
+            // default bounds: 'ticks', so Chart.js has just snapped its min/max to the ends
+            // of the ticks it generated itself - after afterDataLimits copied them. On a
+            // narrow range such as 1W those own ticks end elsewhere (95 instead of 94.8),
+            // the right axis then covers a different range and its ticks land at the wrong
+            // height, although they carry the right values.
+            scale.min = weightScale.min;
+            scale.max = weightScale.max;
           },
           ticks: {
             callback: (weight) => oneDecimalFormat.format(bmiForWeight(weight)),

@@ -1033,3 +1033,16 @@ def test_the_account_button_has_a_menu_icon_after_the_email_address(logged_in_cl
 def test_signed_out_visitors_have_no_account_button(client):
     html = client.get("/").get_data(as_text=True)
     assert 'id="account-trigger"' not in html and 'class="menu-icon"' not in html
+
+
+def test_the_bmi_axis_copies_the_weight_range_again_after_its_ticks_are_built(logged_in_client):
+    """Chart.js snaps an axis to its own ticks after afterDataLimits (bounds: 'ticks'), so on a narrow
+    range (1W) the BMI axis drifted to another range than the weight axis. The copy must happen in
+    afterBuildTicks too; the exact pixel alignment is checked in a real browser (see CLAUDE.md)."""
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    block = html[html.index("afterBuildTicks(scale)"):]
+    block = block[:block.index("ticks: {")]
+    assert "scale.min = weightScale.min" in block and "scale.max = weightScale.max" in block
+    data_limits = html[html.index("afterDataLimits(scale)"):html.index("afterBuildTicks(scale)")]
+    assert "scale.min = weightScale.min" in data_limits and "scale.max = weightScale.max" in data_limits
