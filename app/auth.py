@@ -21,10 +21,11 @@ context shared by all pages.
 """
 
 import secrets
+import time
 from datetime import timedelta
 from functools import wraps
 
-from flask import Blueprint, flash, redirect, render_template, session, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, session, url_for
 from flask_babel import get_locale, gettext as _
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -57,6 +58,29 @@ def login_required(view):
         return view(*args, **kwargs)
 
     return wrapped
+
+
+@bp.before_app_request
+def keep_session_alive():
+    """Keep signed-in users signed in across browser restarts, but not forever.
+
+    A signed-in session is marked permanent, so its cookie gets an expiry date
+    (PERMANENT_SESSION_LIFETIME, 30 days) that is pushed forward on every visit, and it
+    survives closing the browser. `login_at` caps that: 90 days after the sign-in
+    (SESSION_ABSOLUTE_LIFETIME) the user has to sign in again, however active they are, so a
+    copied cookie cannot be kept alive for ever. Sessions from before this existed (no
+    `login_at`) are adopted: their 90 days start at the first visit.
+    """
+    if "user_id" not in session:
+        return
+    now = int(time.time())
+    login_at = session.get("login_at")
+    if login_at is None:
+        session["login_at"] = now
+    elif now - login_at > current_app.config["SESSION_ABSOLUTE_LIFETIME"].total_seconds():
+        session.clear()  # the page then asks for the email address again, as for any visitor
+        return
+    session.permanent = True
 
 
 @bp.app_context_processor
@@ -134,6 +158,8 @@ def verify():
             session.pop("pending_email", None)
             session["user_id"] = user.id
             session["email"] = email
+            session["login_at"] = int(time.time())
+            session.permanent = True  # the cookie outlives the browser window, see keep_session_alive
             flash(_("Email verified — you're signed in."), "success")
             return redirect(url_for("main.index"))
 
@@ -161,9 +187,8 @@ def resend_code():
 
 @bp.route("/logout", methods=["POST"])
 def logout():
-    """Sign out by clearing the user from the session."""
-    session.pop("user_id", None)
-    session.pop("email", None)
+    """Sign out: forget everything in the session (the user, their address, the export flag, ...)."""
+    session.clear()
     flash(_("Signed out."), "success")
     return redirect(url_for("main.index"))
 

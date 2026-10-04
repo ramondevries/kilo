@@ -94,6 +94,9 @@ example `/etc/kilo.env`, readable only by the service user
 #   python -c "import secrets; print(secrets.token_hex(32))"
 SECRET_KEY=replace-with-64-random-hex-characters
 
+# Production runs behind HTTPS: only ever send the sign-in cookie over it.
+SESSION_COOKIE_SECURE=1
+
 # Outgoing mail (see "Email sign-up" above). MAIL_SUPPRESS_SEND must be 0,
 # otherwise no email is sent and the codes are only written to the log.
 MAIL_SERVER=smtp.example.com
@@ -111,7 +114,8 @@ MAIL_SUPPRESS_SEND=0
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `SECRET_KEY` | `dev` | Session signing key. Always set your own. |
+| `SECRET_KEY` | `dev` | Session signing key. Always set your own (the app warns in its log if it is `dev` or short). |
+| `SESSION_COOKIE_SECURE` | `0` | `1` in production: the sign-in cookie is then only sent over HTTPS |
 | `MAIL_SERVER` | `localhost` | SMTP host |
 | `MAIL_PORT` | `25` | SMTP port, usually `587` |
 | `MAIL_USE_TLS` | `0` | `1` for STARTTLS (port 587). Implicit SSL on port 465 is not supported. |
@@ -119,6 +123,13 @@ MAIL_SUPPRESS_SEND=0
 | `MAIL_DEFAULT_SENDER` | `no-reply@weight-tracker.local` | The From address |
 | `MAIL_SUPPRESS_SEND` | `1` | `0` to really send mail |
 | `CHECK_EMAIL_MX` | `1` | `0` to disable the MX-record check at sign-up |
+
+Signed-in users stay signed in when they close the browser: the `session` cookie lasts
+30 days after the last visit (renewed on every visit) and never more than 90 days after the
+sign-in, after which the email code is asked for again. Logging out removes it. The cookie is
+signed with `SECRET_KEY` (anyone who knows the key can forge a sign-in, so keep it secret and
+constant; changing it signs everyone out) and holds the signed-in address, so with
+`SESSION_COOKIE_SECURE=1` it is only sent over HTTPS.
 
 Values with spaces or `<>` (such as `MAIL_DEFAULT_SENDER`) are fine in a
 systemd `EnvironmentFile`; if you source the file from a shell instead, quote

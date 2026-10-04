@@ -21,6 +21,7 @@ ones.
 
 import os
 import sqlite3
+from datetime import timedelta
 
 from flask import Flask, request
 from flask_mail import Mail
@@ -83,10 +84,27 @@ def create_app(test_config=None):
         BABEL_DEFAULT_LOCALE=i18n.DEFAULT_LANGUAGE,
         BABEL_TRANSLATION_DIRECTORIES=os.path.join(app.root_path, "..", "translations"),
         WTF_I18N_ENABLED=True,
+        # Signed-in users stay signed in when the browser is closed: the session cookie is
+        # renewed on every visit and expires 30 days after the last one, but never more than
+        # 90 days after the sign-in itself (enforced in auth.py).
+        PERMANENT_SESSION_LIFETIME=timedelta(days=30),
+        SESSION_ABSOLUTE_LIFETIME=timedelta(days=90),
+        SESSION_COOKIE_SAMESITE="Lax",
+        # In production set SESSION_COOKIE_SECURE=1, so the cookie is only ever sent over HTTPS.
+        # Off by default: it would stop the plain-http development server from signing in.
+        SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "0") == "1",
     )
 
     if test_config:
         app.config.update(test_config)
+
+    secret_key = str(app.config["SECRET_KEY"])
+    if not app.testing and (secret_key == "dev" or len(secret_key) < 16):
+        # The signed session cookie is the only thing that proves who is signed in.
+        app.logger.warning(
+            "SECRET_KEY is the insecure default or very short: anyone who knows it can forge a "
+            "signed-in session. Set SECRET_KEY in the environment (see the README)."
+        )
 
     os.makedirs(app.instance_path, exist_ok=True)
 
