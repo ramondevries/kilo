@@ -89,6 +89,10 @@ def create_app(test_config=None):
         # 90 days after the sign-in itself (enforced in auth.py).
         PERMANENT_SESSION_LIFETIME=timedelta(days=30),
         SESSION_ABSOLUTE_LIFETIME=timedelta(days=90),
+        # How old the CSRF token in a page may be, counted from when the page was rendered (in
+        # seconds, as Flask-WTF wants). The token is also tied to the session, so this matches the
+        # 30 days a session lasts: a tab left open or restored later keeps working.
+        WTF_CSRF_TIME_LIMIT=int(timedelta(days=30).total_seconds()),
         SESSION_COOKIE_SAMESITE="Lax",
         # In production set SESSION_COOKIE_SECURE=1, so the cookie is only ever sent over HTTPS.
         # Off by default: it would stop the plain-http development server from signing in.

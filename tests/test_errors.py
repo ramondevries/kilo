@@ -219,3 +219,47 @@ def test_everything_else_keeps_a_plain_404(client, method, path, headers):
 def test_existing_pages_are_not_redirected(client):
     assert client.get("/about", headers=BROWSER).status_code == 200
     assert client.get("/robots.txt", headers=BROWSER).status_code == 200
+
+
+# ---- how long a page's CSRF token stays valid ----------------------------------
+
+
+def aged_token(client, app, days):
+    """A valid token for the client's session, signed as if its page had been rendered `days` ago.
+
+    Only this one signature is back-dated; patching the clock while a request runs would also
+    back-date Flask's own session cookie, which is signed by the same library.
+    """
+    import time
+
+    from itsdangerous import TimestampSigner, URLSafeTimedSerializer
+
+    client.get("/")  # makes sure the session has its raw CSRF token
+    with client.session_transaction() as session:
+        raw = session["csrf_token"]
+    serializer = URLSafeTimedSerializer(app.secret_key, salt="wtf-csrf-token")
+    original = TimestampSigner.get_timestamp
+    TimestampSigner.get_timestamp = lambda self: int(time.time()) - int(days * 24 * 3600)
+    try:
+        return serializer.dumps(raw)
+    finally:
+        TimestampSigner.get_timestamp = original
+
+
+def test_the_csrf_time_limit_is_30_days(app):
+    assert app.config["WTF_CSRF_TIME_LIMIT"] == 30 * 24 * 3600
+
+
+@pytest.mark.parametrize("days, accepted", [(0, True), (1, True), (29, True), (31, False), (60, False)])
+def test_a_page_stays_usable_for_30_days_and_then_asks_to_reload(logged_in_client, app, csrf_on, days, accepted):
+    client, _user_id = logged_in_client
+    token = aged_token(client, app, days)
+    response = client.post(
+        "/entries/field", json={"date": "2026-01-01", "weight": "80", "confirm": True}, headers={"X-CSRFToken": token}
+    )
+    if accepted:
+        assert response.status_code == 200
+    else:
+        assert response.status_code == 400 and response.get_json()["code"] == "csrf_expired"
+    # only the page's token aged; the user is still signed in (reloading the page fixes it)
+    assert client.get("/settings").status_code == 200
