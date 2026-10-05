@@ -13,6 +13,8 @@
       <div class="note-popover" hidden>
         <textarea class="note-textarea" maxlength="280" placeholder="{{ _('Add a note…') }}"></textarea>
         <div class="note-popover-actions">
+          {# NOTE: Tooltip and screen-reader label of the button that opens a panel of emoji to put in a note. #}
+          <button type="button" class="note-emoji-btn" aria-expanded="false" aria-label="{{ _('Insert an emoji') }}" title="{{ _('Insert an emoji') }}">😊</button>
           <button type="button" class="note-cancel">{{ _("Cancel") }}</button>
           {# NOTE: Button that saves a note (verb). #}
           <button type="button" class="note-save">{{ _("Save") }}</button>
@@ -122,6 +124,16 @@
       </div>
       {# The empty row that scrolling clones for each older day it loads. #}
       <template id="day-row-template">{{ day_row(none) }}</template>
+      {# One emoji panel for the whole log: it is moved into the note editor that asks for it
+         (a copy per day would add thousands of buttons to the page). The grids are filled by the script. #}
+      <div class="emoji-panel" id="emoji-panel" role="group" aria-label="{{ _('Insert an emoji') }}" hidden>
+        <div id="emoji-recent" hidden>
+          {# NOTE: Heading above the emoji the user picked most recently. #}
+          <p class="emoji-heading">{{ _("Recently used") }}</p>
+          <div class="emoji-grid" id="emoji-recent-grid"></div>
+        </div>
+        <div class="emoji-grid" id="emoji-grid"></div>
+      </div>
       <div id="scroll-sentinel" data-oldest="{{ grid_days[-1].date if grid_days else '' }}"></div>
       <p class="loading-hint" id="loading-hint" hidden>{{ _("Loading more days…") }}</p>
     </section>
@@ -702,8 +714,10 @@
           // though, so that filter only applies to the weight series.
           filter: (item) => item.datasetIndex !== 0 || shouldShowTooltip(item.dataIndex),
           // The day's note, under the BMI: in the footer, which has its own spacing
-          // and (here) a lighter, italic style so it reads as a remark.
-          footerFont: { weight: 'normal', style: 'italic' },
+          // and a normal weight and slightly dimmer colour so it reads as a remark.
+          // Not italic: the canvas would slant the emoji in a note too.
+          footerFont: { weight: 'normal', style: 'normal' },
+          footerColor: 'rgba(255, 255, 255, 0.82)',
           footerMarginTop: 8,
           callbacks: {
             title: (items) => (items.length ? fmtWeekdayDate(items[0].label) : ''),
@@ -1008,10 +1022,103 @@
     }
   }
 
+  // ---- Emoji picker for the note editor ------------------------------------
+  // Most common first: the emoji people use most overall, then the ones that suit
+  // a weight diary (movement, food and drink, how the day felt). Single code points
+  // (plus a variation selector) only: no joined sequences that break on older systems.
+  const EMOJI = [
+    '😊', '😂', '👍', '❤️', '😢', '🎉', '🔥', '🙏', '😍', '😅', '😴', '🤔', '😎', '😁', '🥰', '💪',
+    '🏃', '🚶', '🚴', '🏋️', '🧘', '🏊', '⚽', '🥾',
+    '🍎', '🥗', '🍕', '🍔', '🍟', '🍰', '🍫', '🍺', '🍷', '☕', '💧', '🥤', '🍽️',
+    '😋', '😩', '😐', '🙂', '😡', '🤒', '🤢', '🥵', '🥳', '😭', '⭐', '✅', '⚠️', '☀️', '🌧️', '✈️', '🛌', '🎂',
+  ];
+  const EMOJI_STORAGE_KEY = 'kilo.recentEmoji';
+  const EMOJI_RECENT_MAX = 8;
+  const emojiPanel = document.getElementById('emoji-panel');
+  let emojiTarget = null; // {textarea, button} of the note editor the panel is open in
+
+  function loadRecentEmoji() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(EMOJI_STORAGE_KEY));
+      return Array.isArray(saved) ? saved.filter((e) => typeof e === 'string').slice(0, EMOJI_RECENT_MAX) : [];
+    } catch (err) {
+      return []; // storage unavailable (private window) or not valid JSON
+    }
+  }
+
+  function rememberEmoji(emoji) {
+    const list = [emoji, ...loadRecentEmoji().filter((e) => e !== emoji)].slice(0, EMOJI_RECENT_MAX);
+    try {
+      localStorage.setItem(EMOJI_STORAGE_KEY, JSON.stringify(list));
+    } catch (err) {
+      // not saved: the "recently used" row just stays empty
+    }
+  }
+
+  function fillEmojiGrid(grid, emojis) {
+    grid.replaceChildren(...emojis.map((emoji) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'emoji-btn';
+      button.textContent = emoji;
+      return button;
+    }));
+  }
+
+  function closeEmojiPicker() {
+    emojiPanel.hidden = true;
+    if (emojiTarget) emojiTarget.button.setAttribute('aria-expanded', 'false');
+    emojiTarget = null;
+  }
+
+  function toggleEmojiPicker(popover, button, textarea) {
+    const wasOpenHere = !emojiPanel.hidden && emojiPanel.parentElement === popover;
+    closeEmojiPicker();
+    if (wasOpenHere) return;
+    popover.insertBefore(emojiPanel, popover.querySelector('.note-popover-actions'));
+    const recent = loadRecentEmoji();
+    fillEmojiGrid(document.getElementById('emoji-recent-grid'), recent);
+    document.getElementById('emoji-recent').hidden = recent.length === 0;
+    emojiPanel.hidden = false;
+    button.setAttribute('aria-expanded', 'true');
+    emojiTarget = { textarea, button };
+    textarea.focus();
+  }
+
+  // Put an emoji at the cursor (replacing a selection). setRangeText ignores
+  // maxlength, so the limit is checked here; returns false when it would not fit.
+  function insertEmoji(textarea, emoji) {
+    const selected = textarea.selectionEnd - textarea.selectionStart;
+    if (textarea.value.length - selected + emoji.length > textarea.maxLength) return false;
+    textarea.setRangeText(emoji, textarea.selectionStart, textarea.selectionEnd, 'end');
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    textarea.focus();
+    return true;
+  }
+
+  fillEmojiGrid(document.getElementById('emoji-grid'), EMOJI);
+  // Keep the cursor in the note: pressing a button would otherwise take the focus.
+  emojiPanel.addEventListener('mousedown', (e) => e.preventDefault());
+  emojiPanel.addEventListener('click', (e) => {
+    const button = e.target.closest('.emoji-btn');
+    if (!button || !emojiTarget) return;
+    if (insertEmoji(emojiTarget.textarea, button.textContent)) rememberEmoji(button.textContent);
+  });
+
+  // The editor hangs to the left of the note icon, which on a phone is close to
+  // the left edge of the screen: if it would stick out, slide it back inside.
+  const POPOVER_EDGE_GAP = 8;
+  function placePopover(popover) {
+    popover.style.insetInlineEnd = '';
+    const overflow = POPOVER_EDGE_GAP - popover.getBoundingClientRect().left;
+    if (overflow > 0) popover.style.insetInlineEnd = `${-overflow}px`;
+  }
+
   function closeAllPopovers(except) {
     document.querySelectorAll('.note-popover').forEach((p) => {
       if (p !== except) p.hidden = true;
     });
+    closeEmojiPicker();
   }
 
   // Only one row is ever highlighted at a time: selecting a new one (by
@@ -1128,12 +1235,18 @@
     weightInput.addEventListener('change', () => save());
     weightInput.addEventListener('focus', () => setHighlightedRow(row));
 
+    popover.querySelector('.note-emoji-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleEmojiPicker(popover, e.currentTarget, textarea);
+    });
+
     noteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const opening = popover.hidden;
       closeAllPopovers(opening ? popover : null);
       popover.hidden = !opening;
       if (opening) {
+        placePopover(popover);
         textarea.value = noteValue.value;
         textarea.focus();
       }

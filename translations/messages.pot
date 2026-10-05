@@ -2,14 +2,14 @@
 # Copyright (C) 2026 Ramón de Vries
 # This file is distributed under the same license as the Kilo Tracker
 # project.
-# Source strings of Kilo Tracker (English).
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Kilo Tracker\n"
+"Project-Id-Version: Kilo Tracker VERSION\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-03 20:17+0200\n"
+"POT-Creation-Date: 2026-10-05 11:51+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -383,6 +383,11 @@ msgstr ""
 msgid "Add a note…"
 msgstr ""
 
+#. Tooltip and screen-reader label of the button that opens a panel of emoji to
+#. put in a note.
+msgid "Insert an emoji"
+msgstr ""
+
 msgid "Cancel"
 msgstr ""
 
@@ -453,6 +458,10 @@ msgid "Weight (kg)"
 msgstr ""
 
 msgid "Note"
+msgstr ""
+
+#. Heading above the emoji the user picked most recently.
+msgid "Recently used"
 msgstr ""
 
 msgid "Loading more days…"

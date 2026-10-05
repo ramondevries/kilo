@@ -1092,3 +1092,74 @@ def test_chart_tooltip_shows_the_note_under_the_bmi(logged_in_client):
     assert "footer: (items) => (items.length ? wrapNote(fullNotes[items[0].label]) : [])" in html
     assert "function wrapNote(" in html
     assert "fullNotes = data.chart_notes;" in html  # refreshed after every save
+
+
+def test_note_editor_has_an_emoji_button_and_one_shared_panel(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    # one panel for the whole log, not one per day (a copy per row would add thousands of buttons)
+    assert html.count('id="emoji-panel"') == 1
+    assert 'id="emoji-panel" role="group"' in html and "hidden>" in html.split('id="emoji-panel"')[1][:200]
+    # every note editor (the day-row template and the server-rendered rows) has the toggle button
+    assert html.count('class="note-emoji-btn"') == html.count('class="note-textarea"')
+    assert 'aria-expanded="false" aria-label="Insert an emoji"' in html
+
+
+def test_emoji_picker_lists_the_most_common_emoji_first(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    # general favourites first, then the ones for movement, food and mood
+    assert "const EMOJI = [\n    '😊', '😂', '👍', '❤️', '😢', '🎉', '🔥', '🙏'" in html
+    assert html.index("'🏃'") > html.index("'🙏'")  # movement after the general favourites
+    # recently used ones (kept per device) are shown above the list
+    assert "const EMOJI_STORAGE_KEY = 'kilo.recentEmoji';" in html
+    assert 'id="emoji-recent"' in html and "Recently used" in html
+
+
+def test_emoji_picker_respects_the_note_length_limit(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    # setRangeText ignores maxlength, so inserting checks it itself
+    assert "textarea.value.length - selected + emoji.length > textarea.maxLength" in html
+    assert 'maxlength="280"' in html
+
+
+def test_emoji_picker_labels_are_translated(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/?lang=nl").data.decode()
+    assert 'aria-label="Emoji invoegen"' in html
+    assert "Onlangs gebruikt" in html
+
+
+def test_emoji_picker_styles_exist(client):
+    css = client.get("/static/style.css").data.decode()
+    assert ".emoji-panel" in css and ".emoji-grid" in css and ".emoji-btn" in css
+    assert "@media (pointer: coarse)" in css  # bigger targets for fingertips
+
+
+def test_note_editor_buttons_stay_on_one_line_and_the_box_is_wide(client):
+    css = client.get("/static/style.css").data.decode()
+    editor = css[css.index(".note-popover {"):css.index(".note-popover[hidden]")]
+    assert "width: 260px;" in editor  # wide enough for the emoji button, Cancel and Save in any language
+    assert "max-width: calc(100vw - 1.5rem);" in editor  # but never wider than a tiny screen
+    actions = css[css.index(".note-popover-actions {"):]
+    actions = actions[:actions.index("}")]
+    assert "flex-wrap: nowrap;" in actions
+    assert "flex-wrap: wrap" not in actions  # a wrapped row put Save under Cancel in 12 of 15 languages
+
+
+def test_note_in_the_tooltip_is_not_italic(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    # the canvas would slant the emoji in a note as well
+    assert "footerFont: { weight: 'normal', style: 'normal' }" in html
+    assert "italic" not in html.split("footerFont")[1][:120]
+
+
+def test_note_editor_is_kept_inside_the_screen(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    assert "function placePopover(popover)" in html
+    # called when the editor opens, before the cursor goes into the text box
+    opening = html.split("if (opening) {")[1][:120]
+    assert "placePopover(popover);" in opening

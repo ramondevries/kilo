@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-03 20:17+0200\n"
+"POT-Creation-Date: 2026-10-05 11:51+0200\n"
 "PO-Revision-Date: 2026-10-02 16:37+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: it\n"
@@ -508,6 +508,12 @@ msgid "Add a note…"
 msgstr "Aggiungi una nota…"
 
 # machine-translated
+#. Tooltip and screen-reader label of the button that opens a panel of emoji to
+#. put in a note.
+msgid "Insert an emoji"
+msgstr "Inserisci un'emoji"
+
+# machine-translated
 msgid "Cancel"
 msgstr "Annulla"
 
@@ -597,6 +603,11 @@ msgstr "Peso (kg)"
 # machine-translated
 msgid "Note"
 msgstr "Nota"
+
+# machine-translated
+#. Heading above the emoji the user picked most recently.
+msgid "Recently used"
+msgstr "Usate di recente"
 
 # machine-translated
 msgid "Loading more days…"
