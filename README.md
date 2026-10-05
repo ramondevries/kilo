@@ -1,7 +1,8 @@
 # Kilo Tracker
 
 A small Flask app for logging your weight over time: add daily entries, see
-a trend chart, and track 7-day/30-day/total change.
+a trend chart, and track your progress with the 7-, 14-, 30-, 90-, 180- and
+365-day change and the total change, all based on a moving average.
 
 ## Try it now
 
@@ -10,8 +11,10 @@ at [kilo.11tools.com](https://kilo.11tools.com)** - no install, no password and
 nothing to pay. Sign in with just your email address, log your weight in
 seconds, and watch the trend line cut through the daily ups and downs. It works
 great on your phone, shows your BMI at a glance, and you can import or export
-all your data as CSV whenever you like (the CSV and XML exports of The Hacker's Diet Online and the CSV export of Yet Another Diet Tool can be imported too). Give it a spin, and if you'd rather host
-it yourself, everything you need is below.
+all your data as CSV whenever you like (the CSV and XML exports of The Hacker's
+Diet Online and the CSV export of Yet Another Diet Tool can be imported too).
+Give it a spin, and if you'd rather host it yourself, everything you need is
+below.
 
 ## Setup
 
