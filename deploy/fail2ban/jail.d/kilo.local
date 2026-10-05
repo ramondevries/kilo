@@ -1,0 +1,33 @@
+# Jails for Kilo Tracker. Install as /etc/fail2ban/jail.d/kilo.local, with the two files from
+# filter.d/ in /etc/fail2ban/filter.d/, then:  fail2ban-client reload
+#
+# They set only what is specific to Kilo. The ban action (banaction), ignoreip and the default
+# bantime come from your [DEFAULT] section (jail.local); check that your action covers ports 80
+# and 443 and that ignoreip holds your own address.
+#
+# The numbers come from five days of real traffic: of 41 visitors, the two scanners sent 295 and
+# 12 requests for unknown pages (.env, .git/config, ...) within a minute, and the other 39 sent
+# none; nobody typed more than a few wrong codes.
+
+# Scanners asking for pages that do not exist.
+[kilo-notfound]
+enabled  = true
+filter   = kilo-notfound
+logpath  = /var/log/gunicorn/kilo-security.log
+# read the file itself, whatever backend [DEFAULT] uses (Debian and Ubuntu can set systemd)
+backend  = auto
+port     = http,https
+maxretry = 10
+findtime = 60
+bantime  = 1h
+
+# Wrong sign-in codes, and requests the code limits refused (not the global cap, see the filter).
+[kilo-auth]
+enabled  = true
+filter   = kilo-auth
+logpath  = /var/log/gunicorn/kilo-security.log
+backend  = auto
+port     = http,https
+maxretry = 10
+findtime = 10m
+bantime  = 1h
