@@ -89,19 +89,52 @@ no header and is the same in every language, such as `23-9-26,79.7,some text`
 
 Whenever a string is added, removed or reworded in the code or the templates:
 
+**1. Extract** the strings into the template:
+
 ```bash
 pybabel extract -F babel.cfg -k _l -c NOTE: --no-location \
   --project="Kilo Tracker" --copyright-holder="Ramón de Vries" \
   --msgid-bugs-address=info@11tools.com -o translations/messages.pot .
-pybabel update -i translations/messages.pot -d translations \
-  --no-fuzzy-matching --ignore-obsolete
 ```
 
-Then translate the new, empty entries in every `.po` file (mark machine
-translations with a `# machine-translated` line above the entry), run
+**2. Merge** the template into every catalog with this script, run from the
+project folder:
+
+```bash
+python - <<'EOF'
+from pathlib import Path
+
+from babel.messages.pofile import read_po, write_po
+
+with open("translations/messages.pot", "rb") as f:
+    template = read_po(f)
+
+for path in sorted(Path("translations").glob("*/LC_MESSAGES/messages.po")):
+    with open(path, "rb") as f:
+        catalog = read_po(f, locale=path.parent.parent.name)
+    catalog.update(template, no_fuzzy_matching=True, update_header_comment=False)
+    with open(path, "wb") as f:
+        write_po(f, catalog, width=79, no_location=True, ignore_obsolete=True)
+    empty = sum(1 for m in catalog if m.id and not m.string)
+    print(f"{path.parent.parent.name}: {empty} to translate")
+EOF
+```
+
+It adds the new entries (with an empty translation), empties the entries whose
+English text changed, removes entries that are no longer used, and updates
+`POT-Creation-Date`. Everything else in the files stays as it was.
+
+Do not use `pybabel update` for this step. It re-wraps every long line in every
+catalog at 76 columns, while these files are wrapped at 79, so one new string
+turns into a diff of well over a hundred lines per language and hides what
+really changed.
+
+**3. Translate** the new, empty entries in every `.po` file (a plural entry
+needs both `msgstr[0]` and `msgstr[1]`; mark machine translations with a
+`# machine-translated` line above the entry), run
 `pybabel compile -d translations` and `python scripts/check_i18n.py`.
 
-`--no-fuzzy-matching` keeps `pybabel` from guessing: a changed English string
+`no_fuzzy_matching=True` keeps Babel from guessing: a changed English string
 becomes an empty entry that has to be translated again, instead of a "fuzzy"
 entry. Fuzzy entries are skipped by `pybabel compile`, so they would show up in
 English; the check script fails on them.

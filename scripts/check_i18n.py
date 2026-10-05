@@ -112,9 +112,9 @@ def _catalog_problems(lang, po_path, template):
     if '"Plural-Forms:' not in po_path.read_text(encoding="utf-8"):
         problems.append(f"{lang}: the header has no Plural-Forms line (plurals would use a default rule)")
     for msgid in template.keys() - entries.keys():
-        problems.append(f"{lang}: missing entry {_show(msgid)} (run pybabel update)")
+        problems.append(f"{lang}: missing entry {_show(msgid)} (merge the template: see TRANSLATING.md)")
     for msgid in entries.keys() - template.keys():
-        problems.append(f"{lang}: stale entry {_show(msgid)} (run pybabel update --ignore-obsolete)")
+        problems.append(f"{lang}: stale entry {_show(msgid)} (merge the template: see TRANSLATING.md)")
 
     for msgid, message in entries.items():
         if msgid not in template:
