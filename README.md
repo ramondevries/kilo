@@ -126,6 +126,13 @@ MAIL_SUPPRESS_SEND=0
 | `MAIL_DEFAULT_SENDER` | `no-reply@weight-tracker.local` | The From address |
 | `MAIL_SUPPRESS_SEND` | `1` | `0` to really send mail |
 | `CHECK_EMAIL_MX` | `1` | `0` to disable the MX-record check at sign-up |
+| `RATELIMIT_MODE` | `log` | Limits on emailed codes: `off`, `log` (count and log what would be refused, refuse nothing) or `enforce`; see "Limits on emailed codes" below |
+| `RATELIMIT_COOLDOWN_SECONDS` | `60` | Wait between two codes for one address |
+| `RATELIMIT_ADDRESS_PER_HOUR` | `5` | Sign-in codes an hour for one address |
+| `RATELIMIT_REMOVAL_PER_HOUR` | `3` | Account-removal codes an hour for one address |
+| `RATELIMIT_IP_PER_HOUR` | `20` | Codes an hour started from one visitor address (a /64 for IPv6) |
+| `RATELIMIT_GLOBAL_PER_HOUR` | `60` | Codes an hour for the whole site |
+| `SECURITY_LOG_FILE` | unset | File for the security log (unknown pages, wrong sign-in codes); see "Security log" below. Nothing is logged when unset. |
 
 Signed-in users stay signed in when they close the browser: the `session` cookie lasts
 30 days after the last visit (renewed on every visit) and never more than 90 days after the
@@ -225,10 +232,35 @@ config file avoids that.)
 
 `set` replaces whatever the client sent, so the header cannot be forged, as long
 as gunicorn only listens on `127.0.0.1` (the examples bind it there). Restart
-gunicorn afterwards. The app itself never needs the address; if you add something
-that does (rate limiting), wrap it in Werkzeug's `ProxyFix(x_for=1)`. If another
-proxy or a CDN sits in front of this one, the address you see is that proxy's;
-with Apache add `mod_remoteip` (`RemoteIPHeader X-Forwarded-For`).
+gunicorn afterwards. The app reads the same header for the security log below,
+and believes it only when the connection comes from the loopback interface (a
+direct connection could send a forged one); without the header it logs `-`
+instead of treating everyone as `127.0.0.1`. If another proxy or a CDN sits in
+front of this one, the address you see is that proxy's; with Apache add
+`mod_remoteip` (`RemoteIPHeader X-Forwarded-For`).
+
+#### Security log
+
+Set `SECURITY_LOG_FILE` (for example `/var/log/gunicorn/kilo-security.log`; the
+user that runs gunicorn must be able to write there) and the app adds one line
+for every suspicious request, in a fixed format that fail2ban can read:
+
+```
+2026-10-05 15:30:00 kilo-notfound ip=203.0.113.9 path=/.env
+2026-10-05 15:31:12 kilo-auth ip=203.0.113.9 event=code-wrong
+```
+
+* `kilo-notfound`: a request for a page that does not exist, also when a browser
+  was redirected to the start page. The `/favicon.ico` and `apple-touch-icon`
+  requests browsers make by themselves are left out.
+* `kilo-auth`: a wrong sign-in code (`code-wrong`) or a wrong code for removing
+  an account (`removal-code-wrong`).
+
+Only the address and the event are logged, never an email address or a code, and
+a path is percent-encoded and cut to 200 characters so a request cannot forge a
+line. If the file cannot be written the app still starts and says so once in its
+log. `deploy/logrotate/kilo-gunicorn` is an example logrotate rule for this file
+and the gunicorn logs (the app reopens its file by itself after rotation).
 
 ### Backups and updates
 
@@ -250,6 +282,102 @@ otherwise the 7-character commit id, plus the commit date. It is read once, so
 restart the service after updating. If no version is shown, the app couldn't
 run `git` on its folder - for example when the checkout belongs to another
 user (`git config --global --add safe.directory /srv/kilo` fixes that).
+
+#### Banning with fail2ban
+
+`deploy/fail2ban/` has two filters and a jail file that read the security log, for a server that
+runs [fail2ban](https://www.fail2ban.org/) (written for 1.0.x):
+
+| Jail | Bans an address that... | Default |
+|---|---|---|
+| `kilo-notfound` | asks for 10 pages that do not exist within 60 seconds (`/.env`, `/.git/config`...) | 1 hour |
+| `kilo-auth` | gets 10 wrong codes, or requests refused by the per-address or per-visitor limit, within 10 minutes | 1 hour |
+
+Deliberately NOT banned: a double click on "send code" (the wait), the site-wide cap (it trips for
+everybody, so banning the visitors who run into it would punish the innocent), what the limits would
+do in `RATELIMIT_MODE=log`, and a log line without a known address (`ip=-`). The thresholds come
+from five days of real traffic: of 41 visitors, two scanners sent 295 and 12 requests for unknown
+pages within a minute and the others none, and nobody typed more than a few wrong codes.
+
+```bash
+sudo cp deploy/fail2ban/filter.d/*.conf /etc/fail2ban/filter.d/
+sudo cp deploy/fail2ban/jail.d/kilo.local /etc/fail2ban/jail.d/
+
+# look before you ban: what would each filter catch in the real log? (no ban is made)
+fail2ban-regex /var/log/gunicorn/kilo-security.log kilo-notfound
+fail2ban-regex /var/log/gunicorn/kilo-security.log kilo-auth
+
+sudo fail2ban-client reload
+sudo fail2ban-client status kilo-notfound                    # the banned addresses
+sudo fail2ban-client set kilo-notfound unbanip 203.0.113.9   # lift one
+```
+
+The jails set only what is specific to Kilo. The ban action, `ignoreip` and the default `bantime`
+come from your `[DEFAULT]` section (`jail.local`): check that the action covers ports 80 and 443
+and that `ignoreip` holds your own address, so a typo-storm cannot ban you. Everyone behind a shared
+address (an office, a mobile carrier) is banned together, hence the generous numbers; for the first
+days you may want `bantime = 10m` in `kilo.local` while you watch `fail2ban-client status`.
+The filters were tested with `fail2ban-regex` 1.1.0 against lines the app itself wrote, and the
+automated tests keep the filters and the app's log format in step (they run the real
+`fail2ban-regex` as well when it is installed); run the two `fail2ban-regex` commands above on the
+server before you rely on them.
+
+#### Limits on emailed codes
+
+Anyone can type any address into the sign-in form, which makes the server send a mail to it. To
+stop that being used to mail-bomb someone, to ruin your mail server's reputation, or to try many
+codes, a code is only mailed when it is within these limits (the numbers are in the table above;
+`0` turns a limit off):
+
+* one address: one code per minute, and 5 sign-in codes (3 removal codes) an hour;
+* one visitor (needs the `X-Real-IP` header, see above): 20 codes an hour. Without a known
+  visitor address this limit is skipped and the app says so once in its log;
+* the whole site: 60 codes an hour, a circuit breaker for your mail server's reputation. When it
+  trips, nobody can request a code until the hour moves on.
+
+The limits are on sending. A code that was already mailed stays valid, and a second request within
+the minute does not send or replace anything (the visitor sees the same answer as for a fresh
+send), so nobody is locked out of their own address by someone else asking for codes. A refused
+request says "Too many requests. Try again in N minutes." in the visitor's language, without saying
+which limit it was, and the same for an address with and without an account. Refused requests
+are not counted, and a mail that fails to send gives its count back. If the limiter itself fails
+(a locked database) the request is let through.
+
+`RATELIMIT_MODE` decides what happens. The default is `log`: nothing is ever refused, but each
+request that WOULD have been refused is written to the security log
+(`kilo-auth ip=... event=code-would-refuse scope=address`; the scope is `cooldown`, `address`,
+`removal`, `ip` or `global`). Run in `log` for a week or two, look at what it says
+(`grep code-would-refuse /var/log/gunicorn/kilo-security.log`), adjust the numbers if real visitors
+would have been caught, and then set `RATELIMIT_MODE=enforce` (in `kilo.env`, then restart). A
+refusal in `enforce` mode is logged as `event=code-refused`. `off` switches it all off. The counts
+are in the database (table `rate_event`, shared by all workers and kept for at most a day by the
+cleanup below).
+
+#### Cleaning up stale sign-ups
+
+Anyone can create an account row by typing an address into the sign-in form, and
+an address that is never verified would stay in the database for ever.
+`scripts/cleanup_signups.py` removes accounts that were never verified and have
+been idle for 7 days (idle counts from the later of the creation and the latest
+sign-in code, so nobody loses a row while typing a code), clears the hashes
+of codes that have expired, and removes the rate-limit counts older than a day. Verified accounts, and accounts with weight entries,
+are never touched. Look first, then run it:
+
+```bash
+.venv/bin/python scripts/cleanup_signups.py --dry-run   # only print what would happen
+.venv/bin/python scripts/cleanup_signups.py             # do it (--stale-days N changes the 7)
+```
+
+It is safe to run at any time and twice in a row. To run it every day, copy the
+two units from `deploy/systemd/` (check the paths and user in the `.service` file):
+
+```bash
+sudo cp deploy/systemd/flaskapp-kilo-cleanup.* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now flaskapp-kilo-cleanup.timer
+systemctl list-timers flaskapp-kilo-cleanup.timer      # when it runs next
+journalctl -u flaskapp-kilo-cleanup                    # what the last runs did
+```
 
 ## Test
 

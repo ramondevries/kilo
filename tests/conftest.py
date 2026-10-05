@@ -51,6 +51,9 @@ def app():
             "WTF_CSRF_ENABLED": False,
             # No real DNS in tests; test_mx.py turns this on with a stubbed resolver.
             "CHECK_EMAIL_MX": False,
+            # Off in the shared fixtures, like CSRF: most tests sign the same address up again and
+            # again. tests/test_ratelimit.py turns it on.
+            "RATELIMIT_MODE": "off",
         }
     )
 

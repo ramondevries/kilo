@@ -1,0 +1,12 @@
+# /etc/systemd/system/flaskapp-kilo-cleanup.timer
+[Unit]
+Description=Run the Kilo Tracker cleanup once a day
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+# Spread the start a little, and catch up after a reboot if a run was missed.
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

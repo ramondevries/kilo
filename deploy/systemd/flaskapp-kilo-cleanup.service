@@ -1,0 +1,19 @@
+# /etc/systemd/system/flaskapp-kilo-cleanup.service
+#
+# Removes sign-ups that were never verified and clears expired code hashes
+# (scripts/cleanup_signups.py). Started daily by flaskapp-kilo-cleanup.timer.
+# The paths and the user follow the example deployment in the README
+# (flaskapp-kilo.service); change them to match yours.
+[Unit]
+Description=Kilo Tracker: remove stale sign-ups and expired code hashes
+After=network.target
+
+[Service]
+Type=oneshot
+User=flaskapp
+Group=flaskapp
+WorkingDirectory=/opt/flaskapp/kilo
+Environment="PATH=/opt/flaskapp/venv/bin:/usr/bin"
+EnvironmentFile=/etc/kilo.env
+ExecStart=/opt/flaskapp/venv/bin/python scripts/cleanup_signups.py
+PrivateTmp=true

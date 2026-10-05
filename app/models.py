@@ -11,7 +11,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-"""Database models: `WeightEntry` and `User`."""
+"""Database models: `WeightEntry`, `User` and `RateEvent`."""
 
 from datetime import date
 
@@ -81,3 +81,22 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User {self.email_hash[:8]}…>"
+
+
+class RateEvent(db.Model):
+    """One counted action (a code email that was sent), for the rate limits in app/ratelimit.py.
+
+    Short-lived: nothing needs a row for longer than the longest window (an hour), and the daily
+    cleanup removes the rest. `subject` is a hash (of an address, or a keyed hash of a network),
+    never plaintext.
+    """
+
+    __table_args__ = (db.Index("ix_rate_event_lookup", "kind", "subject", "at"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    kind = db.Column(db.String(16), nullable=False)  # which limit: "cooldown", "address-hour", ...
+    subject = db.Column(db.String(64), nullable=False)  # who it counts against
+    at = db.Column(db.DateTime, nullable=False)
+
+    def __repr__(self):
+        return f"<RateEvent {self.kind} {self.at}>"
