@@ -113,6 +113,23 @@ MAIL_SUPPRESS_SEND=0
 # Optional: set to 0 to skip the MX-record check of the email domain at
 # sign-up (it needs outbound DNS from the server).
 # CHECK_EMAIL_MX=1
+
+# Log of suspicious requests (unknown pages, wrong sign-in codes) for fail2ban;
+# the user that runs gunicorn must be able to write there. See "Security log".
+SECURITY_LOG_FILE=/var/log/gunicorn/kilo-security.log
+
+# Limits on emailed codes (see "Limits on emailed codes"). "log" refuses nothing
+# and only logs what it WOULD refuse: leave it so for a week or two, look at the
+# security log, and then change it to "enforce". "off" switches the limits off.
+RATELIMIT_MODE=log
+# The numbers, shown with their defaults (uncomment to change one; 0 turns that
+# limit off). Codes per address wait this many seconds and are limited per hour;
+# a "visitor" is one client address (a /64 for IPv6).
+# RATELIMIT_COOLDOWN_SECONDS=60
+# RATELIMIT_ADDRESS_PER_HOUR=5
+# RATELIMIT_REMOVAL_PER_HOUR=3
+# RATELIMIT_IP_PER_HOUR=20
+# RATELIMIT_GLOBAL_PER_HOUR=60
 ```
 
 | Variable | Default | Purpose |
