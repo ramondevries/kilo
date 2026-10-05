@@ -203,6 +203,13 @@
     minimumFractionDigits: 1, maximumFractionDigits: 2, useGrouping: false,
   });
   const dateFormat = new Intl.DateTimeFormat(LOCALE, { dateStyle: 'medium' });
+  // The same date with the weekday in front (the chart tooltip). dateStyle can't
+  // carry a weekday, so spell out the parts: Intl then orders them the way the
+  // language does ("Maandag 5 okt 2026", "Montag, 5. Okt. 2026", and in Hungarian
+  // "2026. okt. 5., hétfő").
+  const weekdayDateFormat = new Intl.DateTimeFormat(LOCALE, {
+    weekday: 'long', day: 'numeric', month: 'short', year: 'numeric',
+  });
 
   // A local calendar date from 'YYYY-MM-DD' (new Date(iso) would be UTC midnight,
   // a day off west of Greenwich when formatted in local time).
@@ -212,6 +219,11 @@
   }
   function fmtDate(iso) {
     return dateFormat.format(parseIsoDate(iso));
+  }
+  // Starts with a capital, like a title (most languages write weekdays in lower case).
+  function fmtWeekdayDate(iso) {
+    const text = weekdayDateFormat.format(parseIsoDate(iso));
+    return text.charAt(0).toLocaleUpperCase(LOCALE) + text.slice(1);
   }
   function fmtSignedKg(value) {
     return signedWeightFormat.format(value);
@@ -660,7 +672,7 @@
           // though, so that filter only applies to the weight series.
           filter: (item) => item.datasetIndex !== 0 || shouldShowTooltip(item.dataIndex),
           callbacks: {
-            title: (items) => (items.length ? fmtDate(items[0].label) : ''),
+            title: (items) => (items.length ? fmtWeekdayDate(items[0].label) : ''),
             // The BMI at the hovered date, from that date's moving-average
             // weight (the same smoothed value the stats boxes use).
             afterBody: (items) => {

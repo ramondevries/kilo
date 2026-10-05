@@ -1046,3 +1046,14 @@ def test_the_bmi_axis_copies_the_weight_range_again_after_its_ticks_are_built(lo
     assert "scale.min = weightScale.min" in block and "scale.max = weightScale.max" in block
     data_limits = html[html.index("afterDataLimits(scale)"):html.index("afterBuildTicks(scale)")]
     assert "scale.min = weightScale.min" in data_limits and "scale.max = weightScale.max" in data_limits
+
+
+def test_chart_tooltip_title_has_the_weekday_in_the_languages_own_order(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    # Intl spells out weekday, day, abbreviated month and year, and orders them per language
+    # ("Maandag 5 okt 2026", "Montag, 5. Okt. 2026", "2026. okt. 5., hétfő")
+    assert "weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'" in html
+    # the tooltip title uses it (the daily log and the stat boxes keep the plain medium date)
+    assert "title: (items) => (items.length ? fmtWeekdayDate(items[0].label) : '')" in html
+    assert "dateFormat.format(parseIsoDate(iso))" in html
