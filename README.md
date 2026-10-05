@@ -126,6 +126,7 @@ MAIL_SUPPRESS_SEND=0
 | `MAIL_DEFAULT_SENDER` | `no-reply@weight-tracker.local` | The From address |
 | `MAIL_SUPPRESS_SEND` | `1` | `0` to really send mail |
 | `CHECK_EMAIL_MX` | `1` | `0` to disable the MX-record check at sign-up |
+| `SECURITY_LOG_FILE` | unset | File for the security log (unknown pages, wrong sign-in codes); see "Security log" below. Nothing is logged when unset. |
 
 Signed-in users stay signed in when they close the browser: the `session` cookie lasts
 30 days after the last visit (renewed on every visit) and never more than 90 days after the
@@ -225,10 +226,35 @@ config file avoids that.)
 
 `set` replaces whatever the client sent, so the header cannot be forged, as long
 as gunicorn only listens on `127.0.0.1` (the examples bind it there). Restart
-gunicorn afterwards. The app itself never needs the address; if you add something
-that does (rate limiting), wrap it in Werkzeug's `ProxyFix(x_for=1)`. If another
-proxy or a CDN sits in front of this one, the address you see is that proxy's;
-with Apache add `mod_remoteip` (`RemoteIPHeader X-Forwarded-For`).
+gunicorn afterwards. The app reads the same header for the security log below,
+and believes it only when the connection comes from the loopback interface (a
+direct connection could send a forged one); without the header it logs `-`
+instead of treating everyone as `127.0.0.1`. If another proxy or a CDN sits in
+front of this one, the address you see is that proxy's; with Apache add
+`mod_remoteip` (`RemoteIPHeader X-Forwarded-For`).
+
+#### Security log
+
+Set `SECURITY_LOG_FILE` (for example `/var/log/gunicorn/kilo-security.log`; the
+user that runs gunicorn must be able to write there) and the app adds one line
+for every suspicious request, in a fixed format that fail2ban can read:
+
+```
+2026-10-05 15:30:00 kilo-notfound ip=203.0.113.9 path=/.env
+2026-10-05 15:31:12 kilo-auth ip=203.0.113.9 event=code-wrong
+```
+
+* `kilo-notfound`: a request for a page that does not exist, also when a browser
+  was redirected to the start page. The `/favicon.ico` and `apple-touch-icon`
+  requests browsers make by themselves are left out.
+* `kilo-auth`: a wrong sign-in code (`code-wrong`) or a wrong code for removing
+  an account (`removal-code-wrong`).
+
+Only the address and the event are logged, never an email address or a code, and
+a path is percent-encoded and cut to 200 characters so a request cannot forge a
+line. If the file cannot be written the app still starts and says so once in its
+log. `deploy/logrotate/kilo-gunicorn` is an example logrotate rule for this file
+and the gunicorn logs (the app reopens its file by itself after rotation).
 
 ### Backups and updates
 

@@ -30,6 +30,14 @@ from flask import flash, jsonify, redirect, request, url_for
 from flask_babel import gettext as _
 from flask_wtf.csrf import CSRFError
 
+from app.security import log_event
+
+# Pages that browsers ask for by themselves and that this app does not have: they are
+# not an attack, so they are not logged (and cannot add up to a ban).
+ROUTINE_BROWSER_PATHS = frozenset(
+    {"/favicon.ico", "/apple-touch-icon.png", "/apple-touch-icon-precomposed.png"}
+)
+
 # Sent as "code" in the JSON error so the page can tell an expired session from
 # any other failed save.
 CSRF_ERROR_CODE = "csrf_expired"
@@ -75,7 +83,13 @@ def csrf_failed(error):
 
 
 def page_not_available(error):
-    """404 or 405: send a browser to the start page, leave every other client alone."""
+    """404 or 405: send a browser to the start page, leave every other client alone.
+
+    Every request for an unknown page (404) is also written to the security log, whatever
+    the answer, because fail2ban bans addresses that keep asking for pages such as /.env.
+    """
+    if error.code == 404 and request.path not in ROUTINE_BROWSER_PATHS:
+        log_event("notfound", path=request.path)
     if _is_browser_page_request():
         flash(_("That page isn't available, so you were taken to the start page."), "error")
         return redirect(url_for("main.index"))

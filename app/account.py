@@ -31,6 +31,7 @@ from app.auth import get_current_user, login_required
 from app.email_utils import send_deletion_email
 from app.forms import VerifyCodeForm
 from app.models import User
+from app.security import log_event
 from app.utils import DELETE_CODE_TTL_MINUTES, utcnow
 
 bp = Blueprint("account", __name__)
@@ -104,6 +105,7 @@ def confirm_removal():
     elif not check_password_hash(user.delete_code_hash, form.code.data):
         user.delete_code_attempts += 1
         db.session.commit()
+        log_event("auth", event="removal-code-wrong")
         flash(_("Incorrect code."), "error")
     else:
         # WeightEntry rows go with the user (cascade="all, delete-orphan").

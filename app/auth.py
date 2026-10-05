@@ -33,6 +33,7 @@ from app import db
 from app.email_utils import send_verification_email
 from app.forms import SignupForm, VerifyCodeForm
 from app.models import User
+from app.security import log_event
 from app.utils import SIGNIN_CODE_TTL_MINUTES, hash_email, normalize_email, utcnow
 from app.version import app_version
 
@@ -148,6 +149,7 @@ def verify():
         elif not check_password_hash(user.code_hash, form.code.data):
             user.code_attempts += 1
             db.session.commit()
+            log_event("auth", event="code-wrong")
             flash(_("Incorrect code."), "error")
         else:
             user.verified_at = user.verified_at or utcnow()

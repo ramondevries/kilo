@@ -30,7 +30,7 @@ from flask_wtf import CSRFProtect
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
-from . import i18n
+from . import i18n, security
 
 db = SQLAlchemy()
 csrf = CSRFProtect()
@@ -77,6 +77,9 @@ def create_app(test_config=None):
         MAIL_DEFAULT_SENDER=os.environ.get("MAIL_DEFAULT_SENDER", "no-reply@weight-tracker.local"),
         MAIL_SUPPRESS_SEND=os.environ.get("MAIL_SUPPRESS_SEND", "1") == "1",
         CHECK_EMAIL_MX=os.environ.get("CHECK_EMAIL_MX", "1") == "1",
+        # A log of suspicious requests (unknown pages, wrong sign-in codes) in a fixed format
+        # for fail2ban, see app/security.py. Unset: nothing is written.
+        SECURITY_LOG_FILE=os.environ.get("SECURITY_LOG_FILE"),
         MAX_CONTENT_LENGTH=1 * 1024 * 1024,
         # An import may be bigger: a Hacker's Diet XML export lists every day (about 75 KB a year).
         IMPORT_MAX_CONTENT_LENGTH=8 * 1024 * 1024,
@@ -112,6 +115,7 @@ def create_app(test_config=None):
 
     os.makedirs(app.instance_path, exist_ok=True)
 
+    security.init_app(app)
     db.init_app(app)
 
     @app.before_request
