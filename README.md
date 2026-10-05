@@ -277,6 +277,32 @@ restart the service after updating. If no version is shown, the app couldn't
 run `git` on its folder - for example when the checkout belongs to another
 user (`git config --global --add safe.directory /srv/kilo` fixes that).
 
+#### Cleaning up stale sign-ups
+
+Anyone can create an account row by typing an address into the sign-in form, and
+an address that is never verified would stay in the database for ever.
+`scripts/cleanup_signups.py` removes accounts that were never verified and have
+been idle for 7 days (idle counts from the later of the creation and the latest
+sign-in code, so nobody loses a row while typing a code), and clears the hashes
+of codes that have expired. Verified accounts, and accounts with weight entries,
+are never touched. Look first, then run it:
+
+```bash
+.venv/bin/python scripts/cleanup_signups.py --dry-run   # only print what would happen
+.venv/bin/python scripts/cleanup_signups.py             # do it (--stale-days N changes the 7)
+```
+
+It is safe to run at any time and twice in a row. To run it every day, copy the
+two units from `deploy/systemd/` (check the paths and user in the `.service` file):
+
+```bash
+sudo cp deploy/systemd/flaskapp-kilo-cleanup.* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now flaskapp-kilo-cleanup.timer
+systemctl list-timers flaskapp-kilo-cleanup.timer      # when it runs next
+journalctl -u flaskapp-kilo-cleanup                    # what the last runs did
+```
+
 ## Test
 
 ```bash

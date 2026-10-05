@@ -42,6 +42,10 @@ def parse_decimal(raw):
 SIGNIN_CODE_TTL_MINUTES = 30
 DELETE_CODE_TTL_MINUTES = 10
 
+# An account that was never verified and has been idle this long is removed by
+# the daily cleanup (see app/cleanup.py).
+STALE_SIGNUP_DAYS = 7
+
 
 def normalize_email(email):
     """Trim and lowercase an email so equivalent addresses hash the same."""
