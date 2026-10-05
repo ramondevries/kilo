@@ -21,7 +21,7 @@ import pytest
 
 from app import db, mail
 from app.cleanup import cleanup, main
-from app.models import User, WeightEntry
+from app.models import RateEvent, User, WeightEntry
 from app.utils import SIGNIN_CODE_TTL_MINUTES, hash_email
 
 NOW = datetime(2026, 10, 5, 12, 0, 0)
@@ -162,8 +162,8 @@ def test_a_second_run_changes_nothing(app):
     make_user("m", 20 * DAY)
     make_user("n", 3 * DAY, verified=True, code_issued_ago=2 * DAY)
     first = cleanup(now=NOW)
-    assert first == {"stale_signups": 1, "signin_hashes": 1, "removal_hashes": 0}
-    assert cleanup(now=NOW) == {"stale_signups": 0, "signin_hashes": 0, "removal_hashes": 0}
+    assert first == {"stale_signups": 1, "signin_hashes": 1, "removal_hashes": 0, "rate_events": 0}
+    assert cleanup(now=NOW) == {"stale_signups": 0, "signin_hashes": 0, "removal_hashes": 0, "rate_events": 0}
 
 
 def test_a_dry_run_reports_what_the_real_run_does_and_changes_nothing(app):
@@ -177,7 +177,7 @@ def test_a_dry_run_reports_what_the_real_run_does_and_changes_nothing(app):
     before = snapshot()
     planned = cleanup(now=NOW, dry_run=True)
     assert snapshot() == before
-    assert planned == {"stale_signups": 1, "signin_hashes": 1, "removal_hashes": 1}
+    assert planned == {"stale_signups": 1, "signin_hashes": 1, "removal_hashes": 1, "rate_events": 0}
     assert cleanup(now=NOW) == planned
 
 
@@ -187,6 +187,20 @@ def test_stale_days_can_be_changed(app):
     assert exists(two_days)
     cleanup(now=NOW, stale_days=1)
     assert not exists(two_days)
+
+
+# --- the counts behind the rate limits ------------------------------------------------------------
+
+
+def test_rate_limit_counts_older_than_a_day_are_removed(app):
+    for age in (timedelta(hours=25), timedelta(hours=23), timedelta(minutes=5)):
+        db.session.add(RateEvent(kind="cooldown", subject="x", at=NOW - age))
+    db.session.commit()
+    planned = cleanup(now=NOW, dry_run=True)
+    assert planned["rate_events"] == 1 and RateEvent.query.count() == 3  # a dry run changes nothing
+    assert cleanup(now=NOW)["rate_events"] == 1
+    assert sorted(e.at for e in RateEvent.query) == [NOW - timedelta(hours=23), NOW - timedelta(minutes=5)]
+    assert cleanup(now=NOW)["rate_events"] == 0
 
 
 # --- the command ------------------------------------------------------------------------------

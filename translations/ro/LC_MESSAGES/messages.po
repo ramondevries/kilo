@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-05 11:51+0200\n"
+"POT-Creation-Date: 2026-10-05 19:04+0200\n"
 "PO-Revision-Date: 2026-10-02 20:46+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: ro\n"
@@ -260,6 +260,16 @@ msgstr "%(date)s: greutate în afara intervalului"
 #, python-format
 msgid "%(grams)s g/day"
 msgstr "%(grams)s g/zi"
+
+# machine-translated
+#. NOTE: Shown when too many sign-in codes were requested. %(num)d is a number
+#. of minutes.
+#, python-format
+msgid "Too many requests. Try again in %(num)d minute."
+msgid_plural "Too many requests. Try again in %(num)d minutes."
+msgstr[0] "Prea multe cereri. Încearcă din nou peste %(num)d minut."
+msgstr[1] "Prea multe cereri. Încearcă din nou peste %(num)d minute."
+msgstr[2] "Prea multe cereri. Încearcă din nou peste %(num)d de minute."
 
 # machine-translated
 #. NOTE: Chart range button: the whole recorded history.

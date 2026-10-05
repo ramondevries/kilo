@@ -40,6 +40,14 @@ mail = Mail()
 SQLITE_BUSY_TIMEOUT_MS = 30_000
 
 
+def _env_int(name, default):
+    """An integer setting from the environment; a missing or invalid value gives the default."""
+    try:
+        return int(os.environ[name])
+    except (KeyError, ValueError):
+        return default
+
+
 @event.listens_for(Engine, "connect")
 def _configure_sqlite(dbapi_connection, connection_record):
     """Make SQLite behave with several app processes (e.g. gunicorn workers)
@@ -80,6 +88,14 @@ def create_app(test_config=None):
         # A log of suspicious requests (unknown pages, wrong sign-in codes) in a fixed format
         # for fail2ban, see app/security.py. Unset: nothing is written.
         SECURITY_LOG_FILE=os.environ.get("SECURITY_LOG_FILE"),
+        # Limits on emailed codes, see app/ratelimit.py. The mode is "log" until the numbers have
+        # been checked against real traffic; 0 turns a single limit off.
+        RATELIMIT_MODE=os.environ.get("RATELIMIT_MODE", "log"),
+        RATELIMIT_COOLDOWN_SECONDS=_env_int("RATELIMIT_COOLDOWN_SECONDS", 60),
+        RATELIMIT_ADDRESS_PER_HOUR=_env_int("RATELIMIT_ADDRESS_PER_HOUR", 5),
+        RATELIMIT_REMOVAL_PER_HOUR=_env_int("RATELIMIT_REMOVAL_PER_HOUR", 3),
+        RATELIMIT_IP_PER_HOUR=_env_int("RATELIMIT_IP_PER_HOUR", 20),
+        RATELIMIT_GLOBAL_PER_HOUR=_env_int("RATELIMIT_GLOBAL_PER_HOUR", 60),
         MAX_CONTENT_LENGTH=1 * 1024 * 1024,
         # An import may be bigger: a Hacker's Diet XML export lists every day (about 75 KB a year).
         IMPORT_MAX_CONTENT_LENGTH=8 * 1024 * 1024,
@@ -131,8 +147,9 @@ def create_app(test_config=None):
     csrf.init_app(app)
     mail.init_app(app)
 
-    from . import account, auth, errors, routes
+    from . import account, auth, errors, ratelimit, routes
     errors.init_app(app)
+    ratelimit.init_app(app)
     app.register_blueprint(routes.bp)
     app.register_blueprint(account.bp)
     app.register_blueprint(auth.bp)

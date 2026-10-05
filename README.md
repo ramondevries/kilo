@@ -126,6 +126,12 @@ MAIL_SUPPRESS_SEND=0
 | `MAIL_DEFAULT_SENDER` | `no-reply@weight-tracker.local` | The From address |
 | `MAIL_SUPPRESS_SEND` | `1` | `0` to really send mail |
 | `CHECK_EMAIL_MX` | `1` | `0` to disable the MX-record check at sign-up |
+| `RATELIMIT_MODE` | `log` | Limits on emailed codes: `off`, `log` (count and log what would be refused, refuse nothing) or `enforce`; see "Limits on emailed codes" below |
+| `RATELIMIT_COOLDOWN_SECONDS` | `60` | Wait between two codes for one address |
+| `RATELIMIT_ADDRESS_PER_HOUR` | `5` | Sign-in codes an hour for one address |
+| `RATELIMIT_REMOVAL_PER_HOUR` | `3` | Account-removal codes an hour for one address |
+| `RATELIMIT_IP_PER_HOUR` | `20` | Codes an hour started from one visitor address (a /64 for IPv6) |
+| `RATELIMIT_GLOBAL_PER_HOUR` | `60` | Codes an hour for the whole site |
 | `SECURITY_LOG_FILE` | unset | File for the security log (unknown pages, wrong sign-in codes); see "Security log" below. Nothing is logged when unset. |
 
 Signed-in users stay signed in when they close the browser: the `session` cookie lasts
@@ -277,14 +283,45 @@ restart the service after updating. If no version is shown, the app couldn't
 run `git` on its folder - for example when the checkout belongs to another
 user (`git config --global --add safe.directory /srv/kilo` fixes that).
 
+#### Limits on emailed codes
+
+Anyone can type any address into the sign-in form, which makes the server send a mail to it. To
+stop that being used to mail-bomb someone, to ruin your mail server's reputation, or to try many
+codes, a code is only mailed when it is within these limits (the numbers are in the table above;
+`0` turns a limit off):
+
+* one address: one code per minute, and 5 sign-in codes (3 removal codes) an hour;
+* one visitor (needs the `X-Real-IP` header, see above): 20 codes an hour. Without a known
+  visitor address this limit is skipped and the app says so once in its log;
+* the whole site: 60 codes an hour, a circuit breaker for your mail server's reputation. When it
+  trips, nobody can request a code until the hour moves on.
+
+The limits are on sending. A code that was already mailed stays valid, and a second request within
+the minute does not send or replace anything (the visitor sees the same answer as for a fresh
+send), so nobody is locked out of their own address by someone else asking for codes. A refused
+request says "Too many requests. Try again in N minutes." in the visitor's language, without saying
+which limit it was, and the same for an address with and without an account. Refused requests
+are not counted, and a mail that fails to send gives its count back. If the limiter itself fails
+(a locked database) the request is let through.
+
+`RATELIMIT_MODE` decides what happens. The default is `log`: nothing is ever refused, but each
+request that WOULD have been refused is written to the security log
+(`kilo-auth ip=... event=code-would-refuse scope=address`; the scope is `cooldown`, `address`,
+`removal`, `ip` or `global`). Run in `log` for a week or two, look at what it says
+(`grep code-would-refuse /var/log/gunicorn/kilo-security.log`), adjust the numbers if real visitors
+would have been caught, and then set `RATELIMIT_MODE=enforce` (in `kilo.env`, then restart). A
+refusal in `enforce` mode is logged as `event=code-refused`. `off` switches it all off. The counts
+are in the database (table `rate_event`, shared by all workers and kept for at most a day by the
+cleanup below).
+
 #### Cleaning up stale sign-ups
 
 Anyone can create an account row by typing an address into the sign-in form, and
 an address that is never verified would stay in the database for ever.
 `scripts/cleanup_signups.py` removes accounts that were never verified and have
 been idle for 7 days (idle counts from the later of the creation and the latest
-sign-in code, so nobody loses a row while typing a code), and clears the hashes
-of codes that have expired. Verified accounts, and accounts with weight entries,
+sign-in code, so nobody loses a row while typing a code), clears the hashes
+of codes that have expired, and removes the rate-limit counts older than a day. Verified accounts, and accounts with weight entries,
 are never touched. Look first, then run it:
 
 ```bash

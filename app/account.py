@@ -26,7 +26,7 @@ from flask import Blueprint, flash, redirect, render_template, session, url_for
 from flask_babel import gettext as _
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from app import db
+from app import db, ratelimit
 from app.auth import get_current_user, login_required
 from app.email_utils import send_deletion_email
 from app.forms import VerifyCodeForm
@@ -74,12 +74,21 @@ def send_removal_code():
         flash(_("Sign in again to confirm this request."), "error")
         return redirect(url_for("account.remove_data"))
 
+    reservation = ratelimit.reserve_code("removal", user.email_hash)
+    if not reservation.allowed:
+        flash(ratelimit.refused_message(reservation), "error")
+        return redirect(url_for("account.remove_data"))
+
     code = f"{secrets.randbelow(1_000_000):06d}"
     user.delete_code_hash = generate_password_hash(code)
     user.delete_code_expires_at = utcnow() + timedelta(minutes=DELETE_CODE_TTL_MINUTES)
     user.delete_code_attempts = 0
     db.session.commit()
-    send_deletion_email(email, code)
+    try:
+        send_deletion_email(email, code)
+    except Exception:
+        reservation.release()  # a failed send does not use up the allowance
+        raise
     flash(_("We sent a confirmation code to %(email)s.", email=email), "success")
     return redirect(url_for("account.remove_data"))
 

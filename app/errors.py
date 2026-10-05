@@ -48,7 +48,7 @@ def _wants_json():
     return request.is_json or request.accept_mimetypes.best == "application/json"
 
 
-def _back_url():
+def back_url():
     """The page the visitor came from if it is on this site, else the start page.
 
     Only the path and query are used, so a foreign Referer can never send
@@ -79,7 +79,7 @@ def csrf_failed(error):
         message = _("Your session has expired. Reload the page and try again.")
         return jsonify(error=message, code=CSRF_ERROR_CODE), 400
     flash(_("Your session has expired and nothing was changed. Please try again."), "error")
-    return redirect(_back_url())
+    return redirect(back_url())
 
 
 def page_not_available(error):

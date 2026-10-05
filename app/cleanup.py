@@ -23,7 +23,9 @@ nothing else ever removes it. This removes
   never touched, however long ago its owner signed in, and neither is one that has
   weight entries;
 * **expired code hashes**: a sign-in or account-removal code that is past its expiry
-  is useless but its hash would otherwise stay in the row until the next code.
+  is useless but its hash would otherwise stay in the row until the next code;
+* **old rate-limit events**: the counts behind the limits on emailed codes (app/ratelimit.py)
+  are only needed for an hour; anything older than a day is deleted.
 
 Each part is a single SQL statement with all its conditions in it, so there is no moment
 between "looks stale" and "deleted" in which a code could be verified. Running it twice,
@@ -37,8 +39,11 @@ from datetime import timedelta
 from sqlalchemy import and_, delete, exists, func, or_, select, update
 
 from app import db
-from app.models import User, WeightEntry
+from app.models import RateEvent, User, WeightEntry
 from app.utils import SIGNIN_CODE_TTL_MINUTES, STALE_SIGNUP_DAYS, utcnow
+
+# Rate-limit counts older than this are of no use any more (the longest window is an hour).
+RATE_EVENT_KEEP = timedelta(hours=24)
 
 
 def _stale_signup(now, stale_days):
@@ -89,12 +94,15 @@ def cleanup(now=None, dry_run=False, stale_days=STALE_SIGNUP_DAYS):
     signin = _expired_signin_hash(now)
     removal = _expired_removal_hash(now)
 
+    old_events = RateEvent.at < now - RATE_EVENT_KEEP
+
     if dry_run:
         # Count the hashes as they would be AFTER the stale rows are gone, like the real run.
         return {
             "stale_signups": _count(stale),
             "signin_hashes": _count(and_(signin, ~stale)),
             "removal_hashes": _count(and_(removal, ~stale)),
+            "rate_events": db.session.scalar(select(func.count()).select_from(RateEvent).where(old_events)),
         }
 
     removed = db.session.execute(delete(User).where(stale)).rowcount
@@ -102,11 +110,13 @@ def cleanup(now=None, dry_run=False, stale_days=STALE_SIGNUP_DAYS):
     removal_cleared = db.session.execute(
         update(User).where(removal).values(delete_code_hash=None)
     ).rowcount
+    events_removed = db.session.execute(delete(RateEvent).where(old_events)).rowcount
     db.session.commit()
     return {
         "stale_signups": removed,
         "signin_hashes": signin_cleared,
         "removal_hashes": removal_cleared,
+        "rate_events": events_removed,
     }
 
 
@@ -140,6 +150,7 @@ def main(argv=None, app=None):
     print(f"{verb} {result['stale_signups']} stale sign-up(s) (unverified, idle for {args.stale_days}+ days).")
     print(f"{clear} {result['signin_hashes']} expired sign-in code hash(es).")
     print(f"{clear} {result['removal_hashes']} expired account-removal code hash(es).")
+    print(f"{verb} {result['rate_events']} old rate-limit count(s).")
     return 0
 
 

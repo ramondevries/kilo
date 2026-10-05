@@ -29,8 +29,9 @@ from flask import Blueprint, current_app, flash, redirect, render_template, sess
 from flask_babel import get_locale, gettext as _
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from app import db
+from app import db, ratelimit
 from app.email_utils import send_verification_email
+from app.errors import back_url
 from app.forms import SignupForm, VerifyCodeForm
 from app.models import User
 from app.security import log_event
@@ -96,14 +97,22 @@ def inject_current_user():
     }
 
 
-def _issue_code(user, email):
-    """Create a new sign-in code for `user`: store its hash and expiry, then email it."""
+def _issue_code(user, email, reservation):
+    """Create a new sign-in code for `user`: store its hash and expiry, then email it.
+
+    `reservation` is what the rate limit counted for this send; it is given back when the mail
+    cannot be sent, so a failed send does not use up the visitor's allowance.
+    """
     code = f"{secrets.randbelow(1_000_000):06d}"
     user.code_hash = generate_password_hash(code)
     user.code_expires_at = utcnow() + timedelta(minutes=SIGNIN_CODE_TTL_MINUTES)
     user.code_attempts = 0
     db.session.commit()
-    send_verification_email(email, code)
+    try:
+        send_verification_email(email, code)
+    except Exception:
+        reservation.release()
+        raise
 
 
 @bp.route("/signup", methods=["GET", "POST"])
@@ -113,13 +122,27 @@ def signup():
     if form.validate_on_submit():
         email = normalize_email(form.email.data)
         email_hash = hash_email(email)
+
+        # Before anything is created or sent. A refused request leaves no account row behind.
+        reservation = ratelimit.reserve_code("signin", email_hash)
+        if not reservation.allowed:
+            if reservation.scope != "cooldown":
+                flash(ratelimit.refused_message(reservation), "error")
+                return redirect(back_url())
+            # A code was mailed less than a minute ago: a double click, or someone else asking for
+            # this address. Do not send another one and do not replace the one in the mailbox
+            # (that would invalidate it); answer exactly as for a fresh send.
+            session["pending_email"] = email
+            flash(_("We sent a verification code to %(email)s.", email=email), "success")
+            return redirect(url_for("auth.verify"))
+
         user = User.query.filter_by(email_hash=email_hash).first()
         if user is None:
             user = User(email_hash=email_hash)
             db.session.add(user)
             db.session.commit()
 
-        _issue_code(user, email)
+        _issue_code(user, email, reservation)
         session["pending_email"] = email
         flash(_("We sent a verification code to %(email)s.", email=email), "success")
         return redirect(url_for("auth.verify"))
@@ -182,7 +205,12 @@ def resend_code():
         session.pop("pending_email", None)
         return redirect(url_for("auth.signup"))
 
-    _issue_code(user, email)
+    reservation = ratelimit.reserve_code("signin", user.email_hash)
+    if not reservation.allowed:
+        flash(ratelimit.refused_message(reservation), "error")
+        return redirect(url_for("auth.verify"))
+
+    _issue_code(user, email, reservation)
     flash(_("We sent a new code to %(email)s.", email=email), "success")
     return redirect(url_for("auth.verify"))
 
