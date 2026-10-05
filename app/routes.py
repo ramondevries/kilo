@@ -227,9 +227,9 @@ def _moving_average(values, window):
 def _overview(user):
     """Everything the dashboard needs, as one dict.
 
-    Stats, the chart series (labels, weights, BMIs, moving average), the BMI and the
-    available ranges. It is also returned as JSON after each save so the page can
-    refresh in place.
+    Stats, the chart series (labels, weights, BMIs, moving average), the BMI, the
+    available ranges and the notes by date (for the chart tooltip). It is also
+    returned as JSON after each save so the page can refresh in place.
     """
     entries = _entries_sorted(user)
     chart_labels, chart_values, chart_bmis, chart_real = _daily_series(
@@ -249,6 +249,8 @@ def _overview(user):
         "chart_bmis": chart_bmis,
         "chart_real": chart_real,
         "chart_moving_average": chart_moving_average,
+        # Only the days that have a note, {"2026-10-05": "text"}: most entries have none.
+        "chart_notes": {e.entry_date.isoformat(): e.note for e in entries if e.note},
         "moving_avg_days": user.moving_avg_days,
         "bmi": _bmi(chart_moving_average, user.height_cm),
         "available_ranges": _available_range_keys(entries),

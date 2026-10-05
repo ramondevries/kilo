@@ -1057,3 +1057,38 @@ def test_chart_tooltip_title_has_the_weekday_in_the_languages_own_order(logged_i
     # the tooltip title uses it (the daily log and the stat boxes keep the plain medium date)
     assert "title: (items) => (items.length ? fmtWeekdayDate(items[0].label) : '')" in html
     assert "dateFormat.format(parseIsoDate(iso))" in html
+
+
+def test_overview_has_the_notes_by_date_for_the_chart_tooltip(logged_in_client):
+    client, _ = logged_in_client
+    _post_weights(client, [80.0, 79.0, 78.0], start=date(2026, 1, 1))
+
+    def overview_notes():
+        resp = client.post("/entries/field", json={"date": "2026-01-02", "weight": 79.0, "note": client_note[0]})
+        return resp.get_json()["chart_notes"]
+
+    client_note = ["Felt great after the long walk"]
+    assert overview_notes() == {"2026-01-02": "Felt great after the long walk"}  # only days that have a note
+
+    client_note[0] = "Changed my mind"
+    assert overview_notes() == {"2026-01-02": "Changed my mind"}
+
+    client_note[0] = ""  # clearing the note removes it from the tooltip data
+    assert overview_notes() == {}
+
+
+def test_page_embeds_the_notes_without_breaking_out_of_the_script(logged_in_client):
+    client, _ = logged_in_client
+    client.post("/entries/field", json={"date": "2026-01-02", "weight": 80.0, "note": "</script><b>hi</b> & more"})
+    html = client.get("/").data.decode()
+    assert "let fullNotes = " in html
+    assert "</script><b>hi" not in html  # tojson escapes < > &, so a note cannot close the script
+    assert "\\u003c/script\\u003e" in html
+
+
+def test_chart_tooltip_shows_the_note_under_the_bmi(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    assert "footer: (items) => (items.length ? wrapNote(fullNotes[items[0].label]) : [])" in html
+    assert "function wrapNote(" in html
+    assert "fullNotes = data.chart_notes;" in html  # refreshed after every save

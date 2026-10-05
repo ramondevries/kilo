@@ -247,6 +247,7 @@
   let fullBmis = {{ chart_bmis|tojson }};
   let fullReal = {{ chart_real|tojson }};
   let fullMovingAvg = {{ chart_moving_average|tojson }};
+  let fullNotes = {{ chart_notes|tojson }};
   const movingAvgDays = {{ moving_avg_days|tojson }};
   let currentBmis = fullBmis;
   let currentReal = fullReal;
@@ -583,6 +584,35 @@
     chart.update();
   });
 
+  // A note as tooltip lines. Chart.js does not wrap text, and a note can be 280
+  // characters, so break it at word boundaries (and split a very long word, such
+  // as a link) into lines of about NOTE_LINE_WIDTH characters.
+  const NOTE_LINE_WIDTH = 36;
+  function wrapNote(note) {
+    if (!note) return [];
+    const lines = [];
+    note.split(/\r?\n/).forEach((paragraph) => {
+      let line = '';
+      paragraph.split(/\s+/).filter(Boolean).forEach((word) => {
+        let chars = Array.from(word); // code points, so an emoji is never cut in half
+        while (chars.length > NOTE_LINE_WIDTH) {
+          if (line) { lines.push(line); line = ''; }
+          lines.push(chars.slice(0, NOTE_LINE_WIDTH).join(''));
+          chars = chars.slice(NOTE_LINE_WIDTH);
+        }
+        word = chars.join('');
+        if (line && Array.from(line + ' ' + word).length > NOTE_LINE_WIDTH) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = line ? line + ' ' + word : word;
+        }
+      });
+      if (line) lines.push(line);
+    });
+    return lines;
+  }
+
   // BMI on a given date from the moving-average weight of that date; null
   // without a height or if the date isn't in the full series. The date ->
   // index lookup is rebuilt only when the full series is replaced (after a
@@ -671,8 +701,13 @@
           // average lines always have a value at every plotted point
           // though, so that filter only applies to the weight series.
           filter: (item) => item.datasetIndex !== 0 || shouldShowTooltip(item.dataIndex),
+          // The day's note, under the BMI: in the footer, which has its own spacing
+          // and (here) a lighter, italic style so it reads as a remark.
+          footerFont: { weight: 'normal', style: 'italic' },
+          footerMarginTop: 8,
           callbacks: {
             title: (items) => (items.length ? fmtWeekdayDate(items[0].label) : ''),
+            footer: (items) => (items.length ? wrapNote(fullNotes[items[0].label]) : []),
             // The BMI at the hovered date, from that date's moving-average
             // weight (the same smoothed value the stats boxes use).
             afterBody: (items) => {
@@ -935,6 +970,7 @@
     fullBmis = data.chart_bmis;
     fullReal = data.chart_real;
     fullMovingAvg = data.chart_moving_average;
+    fullNotes = data.chart_notes;
     applyRange(currentRange);
     if (data.available_ranges) applyAvailableRanges(data.available_ranges);
 
