@@ -363,7 +363,12 @@ def test_enforce_mode_logs_the_refusal_for_fail2ban(enforcing, clock, client, ca
 def test_an_unknown_mode_becomes_log_and_says_so(caplog):
     caplog.set_level(logging.WARNING)
     made = create_app(
-        {"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:", "CHECK_EMAIL_MX": False, "RATELIMIT_MODE": "strict"}
+        {
+            "TESTING": True,
+            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+            "CHECK_EMAIL_MX": False,
+            "RATELIMIT_MODE": "strict",
+        }
     )
     assert made.config["RATELIMIT_MODE"] == "log"
     assert any("RATELIMIT_MODE" in r.getMessage() for r in caplog.records)
@@ -413,7 +418,9 @@ def test_the_default_mode_is_log_so_deploying_changes_nothing(monkeypatch):
         ("ro", 22, "peste 22 de minute."),
     ],
 )
-def test_the_refusal_is_translated_with_the_plural_form_of_the_language(enforcing, clock, client, app, lang, minutes, expected):
+def test_the_refusal_is_translated_with_the_plural_form_of_the_language(
+    enforcing, clock, client, app, lang, minutes, expected
+):
     app.config["RATELIMIT_ADDRESS_PER_HOUR"] = 1
     sign_up(client, "slow@example.com", lang=lang)
     clock.advance(seconds=3600 - minutes * 60)  # so that the wait is exactly `minutes` minutes

@@ -237,10 +237,11 @@ def test_creating_apps_again_does_not_stack_handlers(app, tmp_path):
                 "SECURITY_LOG_FILE": str(path),
             }
         )
-    handlers = [h for h in logging.getLogger(security.LOGGER_NAME).handlers if getattr(h, "_kilo_security_handler", False)]
+    logger = logging.getLogger(security.LOGGER_NAME)
+    handlers = [h for h in logger.handlers if getattr(h, "_kilo_security_handler", False)]
     assert len(handlers) == 1
     security.init_app(app)  # back to "no file"
-    assert not [h for h in logging.getLogger(security.LOGGER_NAME).handlers if getattr(h, "_kilo_security_handler", False)]
+    assert not [h for h in logger.handlers if getattr(h, "_kilo_security_handler", False)]
 
 
 def test_an_unwritable_log_path_does_not_stop_the_app(app, tmp_path, caplog):

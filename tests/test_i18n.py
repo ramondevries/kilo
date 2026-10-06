@@ -302,7 +302,9 @@ def test_the_new_languages_are_matched_on_the_primary_subtag(client, header, exp
     assert html_lang(client.get("/", headers={"Accept-Language": header})) == expected
 
 
-@pytest.mark.parametrize("override, expected", [("no", "nb"), ("nn", "nb"), ("nb", "nb"), ("pl-PL", "pl"), ("sv", "sv")])
+@pytest.mark.parametrize(
+    "override, expected", [("no", "nb"), ("nn", "nb"), ("nb", "nb"), ("pl-PL", "pl"), ("sv", "sv")]
+)
 def test_lang_query_accepts_aliases_and_full_tags(client, override, expected):
     assert html_lang(client.get(f"/?lang={override}")) == expected
 

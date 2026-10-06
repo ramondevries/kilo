@@ -47,7 +47,6 @@ from app.csv_io import (
     CsvRowError,
     ImportFileError,
     ImportResult,
-    decode_text,
     parse_ddmyy,
 )
 from app.forms import SettingsForm
@@ -152,8 +151,8 @@ def parse_hackdiet_xml(data):
         raise invalid
     try:
         root = ET.fromstring(data)
-    except ET.ParseError:
-        raise invalid
+    except ET.ParseError as exc:
+        raise invalid from exc
     if root.tag != "hackersdiet":
         raise invalid
 

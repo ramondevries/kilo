@@ -76,7 +76,10 @@ def hd_xml(days=DAYS, unit="kilogram", height="187", display_unit=None, doctype=
         "<epoch>2025-11-20T14:07:40Z</epoch>",
         '<account version="1.0"><user version="1.0"><login-name>somebody</login-name>',
         f"<e-mail>somebody@example.com</e-mail><height>{height}</height></user>",
-        f"<preferences><log-unit>{unit}</log-unit><display-unit>{display_unit or unit}</display-unit></preferences></account>",
+        (
+            f"<preferences><log-unit>{unit}</log-unit>"
+            f"<display-unit>{display_unit or unit}</display-unit></preferences></account>"
+        ),
         '<monthlogs version="1.0">',
     ]
     for (year, month), month_days in days.items():
@@ -149,7 +152,9 @@ def test_the_xml_export_gives_the_height():
     assert parse_import(hd_xml(height="187")).height_cm == 187.0
 
 
-@pytest.mark.parametrize("height, expected", [("", None), ("abc", None), ("20", None), ("400", None), ("50", 50.0), ("186.5", 186.5)])
+@pytest.mark.parametrize(
+    "height, expected", [("", None), ("abc", None), ("20", None), ("400", None), ("50", 50.0), ("186.5", 186.5)]
+)
 def test_only_a_sensible_height_is_used(height, expected):
     assert parse_import(hd_xml(height=height)).height_cm == expected
 
@@ -304,7 +309,7 @@ def test_a_windows_1252_csv_keeps_its_accents():
 
 
 def test_a_utf_8_csv_with_a_bom_works():
-    rows, errors = parse_csv("﻿date,weight,note\n23-9-26,79.7,x\n".encode("utf-8"))
+    rows, errors = parse_csv("﻿date,weight,note\n23-9-26,79.7,x\n".encode())
     assert errors == [] and len(rows) == 1
 
 
@@ -325,10 +330,13 @@ def upload(client, data, name="export.csv", **kwargs):
 def flashes(response):
     import html
 
-    return [html.unescape(m) for m in re.findall(r'class="flash flash-(?:success|error)">([^<]+)<', response.get_data(as_text=True))]
+    page = response.get_data(as_text=True)
+    return [html.unescape(m) for m in re.findall(r'class="flash flash-(?:success|error)">([^<]+)<', page)]
 
 
-@pytest.mark.parametrize("make, name", [(hd_csv, "hackdiet_db.csv"), (hd_xml, "hackdiet_db.xml"), (hd_csv, "renamed.txt")])
+@pytest.mark.parametrize(
+    "make, name", [(hd_csv, "hackdiet_db.csv"), (hd_xml, "hackdiet_db.xml"), (hd_csv, "renamed.txt")]
+)
 def test_uploading_a_hacker_s_diet_export_saves_the_entries(logged_in_client, make, name):
     client, user_id = logged_in_client
     response = upload(client, make(), name)
@@ -393,7 +401,8 @@ def test_messages_are_translated(logged_in_client):
     client, _user_id = logged_in_client
     client.environ_base["HTTP_ACCEPT_LANGUAGE"] = "nl"
     messages = flashes(upload(client, hd_xml(), "x.xml"))
-    assert "5 metingen geïmporteerd." in " ".join(messages).replace("Geïmporteerd: 5 metingen.", "5 metingen geïmporteerd.")
+    joined = " ".join(messages).replace("Geïmporteerd: 5 metingen.", "5 metingen geïmporteerd.")
+    assert "5 metingen geïmporteerd." in joined
     assert "Je lengte is ingesteld op 1,87 m." in messages
     assert "1 notitie zonder gewicht is overgeslagen." in messages
 

@@ -43,7 +43,7 @@ class SignupForm(FlaskForm):
         try:
             check_mx(field.data)
         except MxCheckError as exc:
-            raise ValidationError(str(exc))
+            raise ValidationError(str(exc)) from exc
 
 
 class VerifyCodeForm(FlaskForm):

@@ -17,7 +17,6 @@ import re
 
 from app import db, mail
 from app.models import User, WeightEntry
-from tests.conftest import signup_and_verify
 
 
 def _request_code(client):

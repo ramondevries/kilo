@@ -24,7 +24,8 @@ def variables_the_app_reads():
     """Every name read with os.environ.get("NAME", ...) or _env_int("NAME", ...) in app/."""
     names = set()
     for source in (ROOT / "app").glob("*.py"):
-        names |= set(re.findall(r'(?:os\.environ\.get|_env_int)\("([A-Z][A-Z0-9_]+)"', source.read_text(encoding="utf-8")))
+        text = source.read_text(encoding="utf-8")
+        names |= set(re.findall(r'(?:os\.environ\.get|_env_int)\("([A-Z][A-Z0-9_]+)"', text))
     return names
 
 
@@ -46,7 +47,8 @@ def test_the_app_reads_the_variables_this_test_expects():
 def test_every_variable_is_in_the_kilo_env_example():
     _, example, _ = configuration_section()
     # in the example, active or as a commented-out default
-    assert [name for name in sorted(variables_the_app_reads()) if not re.search(rf"^#? ?{name}=", example, re.M)] == []
+    missing = [n for n in sorted(variables_the_app_reads()) if not re.search(rf"^#? ?{n}=", example, re.MULTILINE)]
+    assert missing == []
 
 
 def test_every_variable_is_in_the_table_of_settings():

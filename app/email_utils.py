@@ -90,10 +90,10 @@ def check_mx(email):
     domain = email.rsplit("@", 1)[-1].strip().rstrip(".")
     try:
         answers = dns.resolver.resolve(domain, "MX", lifetime=5)
-    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.name.NameTooLong, dns.name.EmptyLabel):
-        raise MxCheckError(no_mx)
-    except (dns.exception.Timeout, dns.resolver.NoNameservers):
-        raise MxCheckError(try_again, temporary=True)
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.name.NameTooLong, dns.name.EmptyLabel) as exc:
+        raise MxCheckError(no_mx) from exc
+    except (dns.exception.Timeout, dns.resolver.NoNameservers) as exc:
+        raise MxCheckError(try_again, temporary=True) from exc
 
     if not any(str(r.exchange).rstrip(".") for r in answers):
         raise MxCheckError(no_mx)

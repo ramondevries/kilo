@@ -179,7 +179,7 @@ def test_dark_mode_field_is_first_in_settings_form(logged_in_client):
 
 
 def test_bmi_shown_once_height_and_weight_are_set(logged_in_client, app):
-    client, user_id = logged_in_client
+    client, _ = logged_in_client
     client.post("/settings", data={"height_value": "180", "height_unit": "cm"})
     client.post("/entries/field", json={"date": date.today().isoformat(), "weight": 81.0})
 
@@ -321,7 +321,7 @@ def test_import_rejects_wrong_file_type(logged_in_client, app):
 
 
 def test_export_returns_csv_attachment(logged_in_client, app):
-    client, user_id = logged_in_client
+    client, _ = logged_in_client
     client.post("/entries/field", json={"date": "2026-09-23", "weight": 79.7, "note": "hi"})
 
     resp = client.get("/settings/export")
@@ -778,7 +778,9 @@ def test_non_numeric_height_is_rejected_without_crashing(logged_in_client):
     assert resp.status_code == 200
 
 
-@pytest.mark.parametrize("weight", ["1e2", "1_0", "nan", "inf", "-80", "+80", "abc", "8,0,1", "1,234.5", "80,5.1", "80.5.1", ",", "."])
+@pytest.mark.parametrize(
+    "weight", ["1e2", "1_0", "nan", "inf", "-80", "+80", "abc", "8,0,1", "1,234.5", "80,5.1", "80.5.1", ",", "."]
+)
 def test_weight_must_be_a_plain_decimal(logged_in_client, weight):
     client, _ = logged_in_client
     resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight})
@@ -888,7 +890,7 @@ def test_two_week_range_sits_between_one_month_and_one_week(logged_in_client):
 
     keys = [key for key, _label, _days in CHART_RANGES]
     assert keys.index("1m") + 1 == keys.index("2w") == keys.index("1w") - 1
-    assert dict((k, d) for k, _l, d in CHART_RANGES)["2w"] == 14
+    assert {k: d for k, _l, d in CHART_RANGES}["2w"] == 14
 
     client, _ = logged_in_client
     resp = client.post("/chart-range", json={"range": "2w"})
@@ -925,7 +927,7 @@ def test_range_cutoff_uses_local_dates_not_utc(logged_in_client):
 def test_three_and_six_month_ranges_are_multiples_of_30_days(logged_in_client, app):
     from app.routes import CHART_RANGES
 
-    days = dict((k, d) for k, _l, d in CHART_RANGES)
+    days = {k: d for k, _l, d in CHART_RANGES}
     assert days["3m"] == 90
     assert days["6m"] == 180
 
@@ -996,7 +998,10 @@ def test_robots_txt_needs_no_login(logged_in_client):
     assert client.get("/robots.txt").status_code == 200
 
 
-@pytest.mark.parametrize("weight, ok", [("1", True), ("0.9", False), ("500", True), ("500,0", True), ("500.1", False), ("501", False), ("1000", False)])
+@pytest.mark.parametrize(
+    "weight, ok",
+    [("1", True), ("0.9", False), ("500", True), ("500,0", True), ("500.1", False), ("501", False), ("1000", False)],
+)
 def test_weight_must_be_between_1_and_500_kg(logged_in_client, weight, ok):
     client, _ = logged_in_client
     resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": weight, "confirm": True})
@@ -1008,7 +1013,9 @@ def test_weight_must_be_between_1_and_500_kg(logged_in_client, weight, ok):
 
 def test_the_weight_limit_message_is_translated_with_the_limit(logged_in_client):
     client, _ = logged_in_client
-    resp = client.post("/entries/field", json={"date": "2026-01-01", "weight": "501"}, headers={"Accept-Language": "nl"})
+    resp = client.post(
+        "/entries/field", json={"date": "2026-01-01", "weight": "501"}, headers={"Accept-Language": "nl"}
+    )
     assert resp.get_json()["error"] == "Het gewicht moet tussen 1 en 500 kg liggen."
 
 

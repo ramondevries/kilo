@@ -74,8 +74,8 @@ def parse_ddmyy(text):
         raise CsvRowError()
     try:
         numbers = [int(p) for p in parts]
-    except ValueError:
-        raise CsvRowError()
+    except ValueError as exc:
+        raise CsvRowError() from exc
     if len(parts[0]) == 4:
         year, month, day = numbers  # ISO, year first
     else:
@@ -84,8 +84,8 @@ def parse_ddmyy(text):
         year += 2000
     try:
         return date(year, month, day)
-    except ValueError:
-        raise CsvRowError()
+    except ValueError as exc:
+        raise CsvRowError() from exc
 
 
 def format_ddmyy(d):

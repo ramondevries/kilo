@@ -36,6 +36,7 @@ def _git(repo_dir, *args):
             capture_output=True,
             text=True,
             timeout=5,
+            check=False,
             env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
         )
     except (OSError, subprocess.SubprocessError):

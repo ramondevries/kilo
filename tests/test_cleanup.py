@@ -139,7 +139,9 @@ def test_expired_hashes_are_cleared_and_valid_ones_kept(app):
 
 def test_expired_removal_code_hashes_are_cleared_too(app):
     old = make_user("k", 5 * DAY, verified=True, delete_code_hash="x", delete_code_expires_at=NOW - timedelta(hours=1))
-    live = make_user("l", 5 * DAY, verified=True, delete_code_hash="y", delete_code_expires_at=NOW + timedelta(minutes=5))
+    live = make_user(
+        "l", 5 * DAY, verified=True, delete_code_hash="y", delete_code_expires_at=NOW + timedelta(minutes=5)
+    )
     cleanup(now=NOW)
     assert db.session.get(User, old).delete_code_hash is None
     assert db.session.get(User, live).delete_code_hash == "y"

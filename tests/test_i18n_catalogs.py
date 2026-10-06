@@ -169,6 +169,6 @@ def test_the_command_line_fails_when_there_are_problems(monkeypatch, capsys):
 
 
 def test_the_command_line_succeeds_when_everything_is_in_order(monkeypatch, capsys):
-    monkeypatch.setattr(check_i18n, "find_problems", lambda: [])
+    monkeypatch.setattr(check_i18n, "find_problems", list)
     assert check_i18n.main() == 0
     assert "Translations OK" in capsys.readouterr().out

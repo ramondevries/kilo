@@ -509,7 +509,8 @@ def export_entries():
 @bp.route("/settings/import", methods=["POST"])
 @login_required
 def import_entries():
-    """Import entries from an uploaded file (CSV, or a Hacker's Diet CSV/XML export), overwriting entries on the same dates.
+    """Import entries from an uploaded file (CSV, or a Hacker's Diet CSV/XML export), overwriting
+    entries on the same dates.
 
     A height in the file is used only if the user has not set one yet.
     """

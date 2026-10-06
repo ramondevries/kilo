@@ -50,7 +50,7 @@ EXTRACT_COMMAND = shlex.join(["pybabel", "extract", *EXTRACT_ARGS, "-o", "transl
 def supported_languages():
     """The languages listed in app/i18n.py, without "en" (the source language)."""
     sys.path.insert(0, str(PROJECT_ROOT))
-    from app.i18n import SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE
+    from app.i18n import DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES
 
     return [lang for lang in SUPPORTED_LANGUAGES if lang != DEFAULT_LANGUAGE]
 
@@ -62,6 +62,7 @@ def extract_template(project_root, out_path):
         cwd=project_root,
         capture_output=True,
         text=True,
+        check=False,
     )
     if result.returncode != 0:
         raise RuntimeError("pybabel extract failed:\n" + result.stderr)
@@ -100,8 +101,12 @@ def _template_problems(source_pot, committed_pot):
 def _catalog_problems(lang, po_path, template):
     """Problems in one language's catalog, compared with the template's entries."""
     if not po_path.exists():
-        return [f"{lang}: no catalog at {po_path.relative_to(po_path.parents[3])}; "
-                f"create it with: pybabel init -i translations/messages.pot -d translations -l {lang}"]
+        return [
+            (
+                f"{lang}: no catalog at {po_path.relative_to(po_path.parents[3])}; "
+                f"create it with: pybabel init -i translations/messages.pot -d translations -l {lang}"
+            )
+        ]
 
     with open(po_path, "rb") as f:
         catalog = read_po(f, locale=lang)
@@ -166,7 +171,8 @@ def count_machine_translated(translations_dir, languages):
         po_path = Path(translations_dir) / lang / "LC_MESSAGES" / "messages.po"
         if po_path.exists():
             with open(po_path, "rb") as f:
-                counts[lang] = sum(1 for m in read_po(f, locale=lang) if m.id and "machine-translated" in m.user_comments)
+                catalog = read_po(f, locale=lang)
+                counts[lang] = sum(1 for m in catalog if m.id and "machine-translated" in m.user_comments)
     return counts
 
 

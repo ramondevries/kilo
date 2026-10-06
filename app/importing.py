@@ -19,7 +19,7 @@ Hacker's Diet CSV with its `Epoch` line or its column header, and anything else
 is the plain `date,weight[,note]` CSV.
 """
 
-from app.csv_io import ImportResult, decode_text, parse_generic_csv
+from app.csv_io import decode_text, parse_generic_csv
 from app.hackdiet_io import looks_like_hackdiet_csv, parse_hackdiet_csv, parse_hackdiet_xml
 
 
