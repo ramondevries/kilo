@@ -171,8 +171,17 @@ def test_emails_are_sent_in_the_request_language(client):
 
     with mail.record_messages() as outbox:
         client.post("/signup?lang=nl", data={"email": "someone@example.com"})
-    assert outbox[0].subject == "Je verificatiecode"
+    assert re.fullmatch(r"Je verificatiecode is \d{6}", outbox[0].subject)
+    assert outbox[0].subject.rsplit(" ", 1)[1] in outbox[0].body  # the same code as in the text
     assert "verloopt over 30 minuten" in outbox[0].body
+
+
+def test_the_code_ends_the_email_subject_without_a_full_stop(client):
+    from app import mail
+
+    with mail.record_messages() as outbox:
+        client.post("/signup", data={"email": "someone@example.com"})
+    assert re.fullmatch(r"Your verification code is \d{6}", outbox[0].subject)
 
 
 def test_flash_messages_are_translated(client):

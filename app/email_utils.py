@@ -35,7 +35,8 @@ def send_verification_email(email, code):
     suppressed (development).
     """
     message = Message(
-        subject=_("Your verification code"),
+        # NOTE: The email subject; the code is at the end, with no full stop, so it can be copied.
+        subject=_("Your verification code is %(code)s", code=code),
         recipients=[email],
         body=ngettext(
             "Your verification code is %(code)s.\n\n"
