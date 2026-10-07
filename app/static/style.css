@@ -980,7 +980,8 @@ code {
     white-space: nowrap;
   }
 
-  .range-btn { padding: 0.15rem 0.45rem; }
+  .range-buttons { gap: 0.2rem; }
+  .range-btn { padding: 0.15rem 0.3rem; }
 
   .stat-card { padding: 0.55rem 0.7rem; }
   .stat-value { font-size: 1.05rem; }
