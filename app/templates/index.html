@@ -229,6 +229,14 @@
     const [year, month, day] = iso.split('-').map(Number);
     return new Date(year, month - 1, day);
   }
+  // A LOCAL calendar date as YYYY-MM-DD (toISOString() would be UTC, see applyRange).
+  function localIso(date) {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-');
+  }
   function fmtDate(iso) {
     return dateFormat.format(parseIsoDate(iso));
   }
@@ -878,11 +886,7 @@
       const cutoff = new Date();
       cutoff.setHours(0, 0, 0, 0);
       cutoff.setDate(cutoff.getDate() - days);
-      const cutoffStr = [
-        cutoff.getFullYear(),
-        String(cutoff.getMonth() + 1).padStart(2, '0'),
-        String(cutoff.getDate()).padStart(2, '0'),
-      ].join('-');
+      const cutoffStr = localIso(cutoff);
       labels = [];
       values = [];
       bmis = fullBmis ? [] : null;
@@ -904,6 +908,32 @@
     // computed from the range-filtered values before decimation so it
     // stays exact regardless of how coarse the bucketing below gets.
     const overallAvg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+
+    // The right edge of the chart is always today: when there is no entry for
+    // today (or the last few days) those days stay on the axis, empty, and the
+    // line simply stops at the last entry. A decimated range (thousands of days)
+    // has averaged points that no longer stand for single days, so it is left alone.
+    if (labels.length <= MAX_PLOT_POINTS && fullLabels.length) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = localIso(today);
+      const next = labels.length ? parseIsoDate(labels[labels.length - 1]) : new Date(today);
+      if (labels.length) next.setDate(next.getDate() + 1);
+      else next.setDate(next.getDate() - days);
+      // The arrays may still be the full data (the "all" range): copy before adding to them.
+      labels = labels.slice();
+      values = values.slice();
+      bmis = bmis && bmis.slice();
+      reals = reals.slice();
+      movingAvg = movingAvg.slice();
+      for (; localIso(next) <= todayStr; next.setDate(next.getDate() + 1)) {
+        labels.push(localIso(next));
+        values.push(null);
+        if (bmis) bmis.push(null);
+        reals.push(false);
+        movingAvg.push(null);
+      }
+    }
 
     currentDecimated = labels.length > MAX_PLOT_POINTS;
     ({ labels, values, bmis, reals, movingAvg } = decimateForDisplay(labels, values, bmis, reals, movingAvg));

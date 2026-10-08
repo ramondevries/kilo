@@ -921,7 +921,16 @@ def test_range_cutoff_uses_local_dates_not_utc(logged_in_client):
     # toISOString() is UTC: east of Greenwich it moved the cutoff a day too
     # early, so 1W/2W/1M each showed one day too many.
     assert "toISOString().slice(0, 10)" not in html
-    assert "cutoff.getFullYear()" in html
+    assert "date.getFullYear()" in html
+    assert "localIso(cutoff)" in html
+
+
+def test_chart_pads_the_right_edge_up_to_today(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    # The page script adds empty days up to today (local date) after the last entry.
+    assert "localIso(today)" in html
+    assert "values.push(null)" in html
 
 
 def test_three_and_six_month_ranges_are_multiples_of_30_days(logged_in_client, app):
