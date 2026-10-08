@@ -13,9 +13,15 @@
 
 """Development entry point: `python run.py` starts the app with the debugger on."""
 
+import logging
+
 from app import create_app
 
 app = create_app()
 
 if __name__ == "__main__":
+    # Flask picks the logger's level when the logger is first used, and create_app() already
+    # used it (the weak SECRET_KEY warning) before debug mode is switched on below. Without
+    # this the sign-in code, logged at INFO so it can be read from the console, is dropped.
+    app.logger.setLevel(logging.DEBUG)
     app.run(debug=True)
