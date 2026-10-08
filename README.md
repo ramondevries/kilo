@@ -11,8 +11,10 @@ at [kilo.11tools.com](https://kilo.11tools.com)** - no install, no password and
 nothing to pay. Sign in with just your email address, log your weight in
 seconds, and watch the trend line cut through the daily ups and downs. It works
 great on your phone, shows your BMI at a glance, and you can import or export
-all your data as CSV whenever you like (the CSV and XML exports of The Hacker's
-Diet Online and the CSV export of Yet Another Diet Tool can be imported too).
+all your data as CSV whenever you like (the CSV and XML exports of
+[The Hacker's Diet Online](https://www.fourmilab.ch/hackdiet/online/hdo.html) and
+the CSV export of [Yet Another Diet Tool](https://yadt.iotide.com/) can be
+imported too).
 Give it a spin, and if you'd rather host it yourself, everything you need is
 below.
 
