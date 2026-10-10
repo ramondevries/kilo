@@ -1179,3 +1179,14 @@ def test_note_editor_is_kept_inside_the_screen(logged_in_client):
     # called when the editor opens, before the cursor goes into the text box
     opening = html.split("if (opening) {")[1][:120]
     assert "placePopover(popover);" in opening
+
+
+def test_chart_js_is_served_by_the_app_not_a_cdn(logged_in_client):
+    client, _ = logged_in_client
+    html = client.get("/").data.decode()
+    # No visitor data goes to a third party for the chart (see app/static/vendor/README.md).
+    assert re.findall(r'<script src="([^"]+)"', html) == ["/static/vendor/chartjs-4.4.4/chart.umd.js"]
+    script = client.get("/static/vendor/chartjs-4.4.4/chart.umd.js")
+    assert script.status_code == 200
+    assert b"Chart.js v4.4.4" in script.data
+    assert b"sourceMappingURL" not in script.data

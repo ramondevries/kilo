@@ -196,7 +196,9 @@
   "couldNotSavePrompt": _("Could not save."),
   "errorSaving": _("Error saving"),
 }|tojson }}</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{# Chart.js 4.4.4 (MIT), served from here rather than a CDN so no visitor data goes to a third
+   party; see app/static/vendor/README.md. #}
+<script src="{{ url_for('static', filename='vendor/chartjs-4.4.4/chart.umd.js') }}"></script>
 <script>
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
