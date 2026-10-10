@@ -683,8 +683,8 @@
         borderWidth: 1.5,
         // Drawn last, on top of everything. Chart.js draws dataset 0 (the weight line with its
         // semi-transparent BMI fill) over the others by default, which made this line look faded
-        // wherever it ran below the weight line.
-        order: -1,
+        // wherever it ran below the weight line. A lower `order` is drawn later.
+        order: -2,
         fill: false,
         tension: 0,
         pointRadius: 0,
@@ -695,6 +695,8 @@
         borderColor: overallAvgColor,
         borderWidth: 1,
         borderDash: [4, 4],
+        // Over the weight fill too, but under the moving average (see its `order`).
+        order: -1,
         fill: false,
         tension: 0,
         pointRadius: 0,
