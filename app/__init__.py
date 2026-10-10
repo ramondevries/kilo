@@ -88,6 +88,10 @@ def create_app(test_config=None):
         # A log of suspicious requests (unknown pages, wrong sign-in codes) in a fixed format
         # for fail2ban, see app/security.py. Unset: nothing is written.
         SECURITY_LOG_FILE=os.environ.get("SECURITY_LOG_FILE"),
+        # The header's avatar is fetched from Gravatar by the server and cached on disk, see
+        # app/avatar.py. 0 shows a local placeholder for everyone and never contacts Gravatar.
+        GRAVATAR_ENABLED=os.environ.get("GRAVATAR_ENABLED", "1") == "1",
+        AVATAR_CACHE_DIR=os.path.join(app.instance_path, "avatars"),
         # Limits on emailed codes, see app/ratelimit.py. The mode is "log" until the numbers have
         # been checked against real traffic; 0 turns a single limit off.
         RATELIMIT_MODE=os.environ.get("RATELIMIT_MODE", "log"),

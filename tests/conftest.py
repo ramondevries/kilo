@@ -43,9 +43,13 @@ def compiled_catalogs():
 
 
 @pytest.fixture
-def app():
+def app(tmp_path):
     app = create_app(
         {
+            # Never contact Gravatar or write to the real instance folder; tests/test_avatar.py
+            # turns fetching on with a stubbed download.
+            "GRAVATAR_ENABLED": False,
+            "AVATAR_CACHE_DIR": str(tmp_path / "avatars"),
             "TESTING": True,
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
             "WTF_CSRF_ENABLED": False,

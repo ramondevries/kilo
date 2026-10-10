@@ -116,6 +116,10 @@ MAIL_SUPPRESS_SEND=0
 # sign-up (it needs outbound DNS from the server).
 # CHECK_EMAIL_MX=1
 
+# Optional: set to 0 to never contact Gravatar; everyone then gets the local
+# placeholder avatar. With 1 the server fetches avatars over HTTPS (see "Avatars").
+# GRAVATAR_ENABLED=1
+
 # Log of suspicious requests (unknown pages, wrong sign-in codes) for fail2ban;
 # the user that runs gunicorn must be able to write there. See "Security log".
 SECURITY_LOG_FILE=/var/log/gunicorn/kilo-security.log
@@ -145,6 +149,7 @@ RATELIMIT_MODE=log
 | `MAIL_DEFAULT_SENDER` | `no-reply@weight-tracker.local` | The From address |
 | `MAIL_SUPPRESS_SEND` | `1` | `0` to really send mail |
 | `CHECK_EMAIL_MX` | `1` | `0` to disable the MX-record check at sign-up |
+| `GRAVATAR_ENABLED` | `1` | `0` to never contact Gravatar and show a placeholder avatar for everyone; see "Avatars" below |
 | `RATELIMIT_MODE` | `log` | Limits on emailed codes: `off`, `log` (count and log what would be refused, refuse nothing) or `enforce`; see "Limits on emailed codes" below |
 | `RATELIMIT_COOLDOWN_SECONDS` | `60` | Wait between two codes for one address |
 | `RATELIMIT_ADDRESS_PER_HOUR` | `5` | Sign-in codes an hour for one address |
@@ -281,6 +286,19 @@ line. If the file cannot be written the app still starts and says so once in its
 log. `deploy/logrotate/kilo-gunicorn` is an example logrotate rule for this file
 and the gunicorn logs (the app reopens its file by itself after rotation).
 
+#### Avatars
+
+The avatar in the header is the user's [Gravatar](https://gravatar.com), but the
+browser never contacts gravatar.com: it asks Kilo for `/avatar`, and the server
+fetches the image (over HTTPS from `www.gravatar.com`, so the server needs
+outbound HTTPS) and keeps it for a day in `instance/avatars/`. Gravatar sees only
+the server, about once a day per active user, never the visitor's address or
+browser. Without a Gravatar, or when it cannot be reached, a local placeholder is
+shown. Only PNG, JPEG, GIF and WebP images up to 100 KB are accepted. The cached
+file is deleted when its account is removed, and the daily cleanup (see "Cleaning
+up stale sign-ups") deletes the files of removed accounts and of accounts that
+have not visited for a month. `GRAVATAR_ENABLED=0` turns the fetching off.
+
 ### Backups and updates
 
 Back up the database with SQLite's own tool, not a plain file copy (recent
@@ -379,8 +397,9 @@ an address that is never verified would stay in the database for ever.
 `scripts/cleanup_signups.py` removes accounts that were never verified and have
 been idle for 7 days (idle counts from the later of the creation and the latest
 sign-in code, so nobody loses a row while typing a code), clears the hashes
-of codes that have expired, and removes the rate-limit counts older than a day. Verified accounts, and accounts with weight entries,
-are never touched. Look first, then run it:
+of codes that have expired, removes the rate-limit counts older than a day, and
+deletes cached avatars of removed or month-long inactive accounts. Verified
+accounts, and accounts with weight entries, are never touched. Look first, then run it:
 
 ```bash
 .venv/bin/python scripts/cleanup_signups.py --dry-run   # only print what would happen

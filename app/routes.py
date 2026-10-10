@@ -25,6 +25,7 @@ from datetime import date, timedelta
 from flask import (
     Blueprint,
     Response,
+    current_app,
     flash,
     jsonify,
     redirect,
@@ -35,7 +36,7 @@ from flask import (
 )
 from flask_babel import format_date, format_decimal, gettext as _, lazy_gettext as _l, ngettext
 
-from app import db
+from app import avatar, db
 from app.auth import get_current_user, login_required
 from app.csv_io import MAX_WEIGHT_KG, MIN_WEIGHT_KG, ImportFileError, export_csv
 from app.forms import ImportForm, SettingsForm, SignupForm
@@ -291,6 +292,26 @@ Disallow: /
 def robots_txt():
     """Ask search-engine crawlers to stay out of everything but the public pages."""
     return Response(ROBOTS_TXT, mimetype="text/plain")
+
+
+@bp.route("/avatar", methods=["GET"])
+def user_avatar():
+    """The signed-in user's Gravatar, fetched and cached by the server (see app/avatar.py),
+    or a local placeholder. Signed out, the placeholder too: no 404 for an image."""
+    user = get_current_user()
+    found = avatar.get(user.email_hash) if user else None
+    if found is None:
+        response = current_app.send_static_file("avatar-placeholder.svg")
+        max_age = 60 * 60
+    else:
+        content_type, data = found
+        response = Response(data, mimetype=content_type)
+        max_age = avatar.CACHE_SECONDS
+    # The URL carries a short piece of the hash (see base.html), so another account signing in
+    # on the same browser does not get this one from the browser's cache.
+    response.headers["Cache-Control"] = f"private, max-age={max_age}"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @bp.route("/", methods=["GET"])

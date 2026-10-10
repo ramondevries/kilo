@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Kilo Tracker\n"
 "Report-Msgid-Bugs-To: info@11tools.com\n"
-"POT-Creation-Date: 2026-10-07 17:40+0200\n"
+"POT-Creation-Date: 2026-10-10 22:58+0200\n"
 "PO-Revision-Date: 2026-10-02 20:46+0200\n"
 "Last-Translator: Claude (machine translation)\n"
 "Language: fi\n"
@@ -495,6 +495,14 @@ msgstr ""
 "Tiiviste toimii myös Gravatar-tunnisteenasi – jos olet määrittänyt avatarin "
 "osoitteessa %(gravatar_link)s, se tulee näkyviin automaattisesti "
 "kirjauduttuasi sisään."
+
+# machine-translated
+msgid ""
+"Kilo fetches that avatar from Gravatar itself and keeps a copy for a day, so"
+" Gravatar never sees your visits, your browser or your IP address."
+msgstr ""
+"Kilo hakee avatarin itse Gravatarista ja säilyttää siitä kopion vuorokauden,"
+" joten Gravatar ei koskaan näe käyntejäsi, selaintasi tai IP-osoitettasi."
 
 # machine-translated
 msgid "Signed in"

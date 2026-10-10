@@ -52,5 +52,6 @@
     {% set gravatar_link %}<a href="https://gravatar.com" target="_blank" rel="noopener">gravatar.com</a>{% endset %}
     <p>{% trans trimmed gravatar_link=gravatar_link %}That hash also doubles as your Gravatar id — if you have an avatar set
       up at {{ gravatar_link }}, it shows up automatically once you're signed in.{% endtrans %}</p>
+    <p>{{ _("Kilo fetches that avatar from Gravatar itself and keeps a copy for a day, so Gravatar never sees your visits, your browser or your IP address.") }}</p>
   </section>
 {% endblock %}

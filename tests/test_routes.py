@@ -189,11 +189,13 @@ def test_bmi_shown_once_height_and_weight_are_set(logged_in_client, app):
     assert b"25.0" in resp.data
 
 
-def test_gravatar_hash_matches_email_hash(logged_in_client, app):
-    _, user_id = logged_in_client
+def test_the_avatar_comes_from_kilo_not_gravatar(logged_in_client, app):
+    client, user_id = logged_in_client
     with app.app_context():
-        user = db.session.get(User, user_id)
-        assert user.gravatar_url() == f"https://www.gravatar.com/avatar/{user.email_hash}?s=80&d=mp"
+        email_hash = db.session.get(User, user_id).email_hash
+    html = client.get("/").data.decode()
+    assert "gravatar.com/avatar" not in html
+    assert f'src="/avatar?v={email_hash[:8]}"' in html
 
 
 def test_about_page_renders(client):

@@ -75,10 +75,6 @@ class User(db.Model):
         """True once the user has entered a correct emailed code."""
         return self.verified_at is not None
 
-    def gravatar_url(self, size=80, default="mp"):
-        """URL of the user's Gravatar avatar; the email hash doubles as the Gravatar id."""
-        return f"https://www.gravatar.com/avatar/{self.email_hash}?s={size}&d={default}"
-
     def __repr__(self):
         return f"<User {self.email_hash[:8]}…>"
 

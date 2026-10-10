@@ -25,7 +25,9 @@ nothing else ever removes it. This removes
 * **expired code hashes**: a sign-in or account-removal code that is past its expiry
   is useless but its hash would otherwise stay in the row until the next code;
 * **old rate-limit events**: the counts behind the limits on emailed codes (app/ratelimit.py)
-  are only needed for an hour; anything older than a day is deleted.
+  are only needed for an hour; anything older than a day is deleted;
+* **cached avatars** (app/avatar.py) of accounts that no longer exist, and any that has not
+  been refreshed for a month.
 
 Each part is a single SQL statement with all its conditions in it, so there is no moment
 between "looks stale" and "deleted" in which a code could be verified. Running it twice,
@@ -34,11 +36,11 @@ or at any time of day, is safe.
 
 import argparse
 import sys
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 from sqlalchemy import and_, delete, exists, func, or_, select, update
 
-from app import db
+from app import avatar, db
 from app.models import RateEvent, User, WeightEntry
 from app.utils import SIGNIN_CODE_TTL_MINUTES, STALE_SIGNUP_DAYS, utcnow
 
@@ -103,6 +105,7 @@ def cleanup(now=None, dry_run=False, stale_days=STALE_SIGNUP_DAYS):
             "signin_hashes": _count(and_(signin, ~stale)),
             "removal_hashes": _count(and_(removal, ~stale)),
             "rate_events": db.session.scalar(select(func.count()).select_from(RateEvent).where(old_events)),
+            "avatars": avatar.prune(_known_hashes(exclude=stale), now=_timestamp(now), dry_run=True),
         }
 
     removed = db.session.execute(delete(User).where(stale)).rowcount
@@ -117,7 +120,22 @@ def cleanup(now=None, dry_run=False, stale_days=STALE_SIGNUP_DAYS):
         "signin_hashes": signin_cleared,
         "removal_hashes": removal_cleared,
         "rate_events": events_removed,
+        "avatars": avatar.prune(_known_hashes(), now=_timestamp(now)),
     }
+
+
+def _timestamp(now):
+    """A naive UTC datetime as a Unix time, for comparing with file modification times."""
+    return now.replace(tzinfo=timezone.utc).timestamp()
+
+
+def _known_hashes(exclude=None):
+    """The email hashes of all accounts (without those matching `exclude`, for a dry run)."""
+    query = select(User.email_hash)
+    if exclude is not None:
+        # Not `~exclude`: a condition that is NULL for a row (no code issued) would drop that row too.
+        query = query.where(User.id.not_in(select(User.id).where(exclude)))
+    return set(db.session.scalars(query))
 
 
 def main(argv=None, app=None):
@@ -151,6 +169,7 @@ def main(argv=None, app=None):
     print(f"{clear} {result['signin_hashes']} expired sign-in code hash(es).")
     print(f"{clear} {result['removal_hashes']} expired account-removal code hash(es).")
     print(f"{verb} {result['rate_events']} old rate-limit count(s).")
+    print(f"{verb} {result['avatars']} cached avatar file(s) of removed or long-inactive accounts.")
     return 0
 
 

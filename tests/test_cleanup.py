@@ -164,8 +164,8 @@ def test_a_second_run_changes_nothing(app):
     make_user("m", 20 * DAY)
     make_user("n", 3 * DAY, verified=True, code_issued_ago=2 * DAY)
     first = cleanup(now=NOW)
-    assert first == {"stale_signups": 1, "signin_hashes": 1, "removal_hashes": 0, "rate_events": 0}
-    assert cleanup(now=NOW) == {"stale_signups": 0, "signin_hashes": 0, "removal_hashes": 0, "rate_events": 0}
+    assert first == {"stale_signups": 1, "signin_hashes": 1, "removal_hashes": 0, "rate_events": 0, "avatars": 0}
+    assert cleanup(now=NOW) == dict.fromkeys(first, 0)
 
 
 def test_a_dry_run_reports_what_the_real_run_does_and_changes_nothing(app):
@@ -179,7 +179,9 @@ def test_a_dry_run_reports_what_the_real_run_does_and_changes_nothing(app):
     before = snapshot()
     planned = cleanup(now=NOW, dry_run=True)
     assert snapshot() == before
-    assert planned == {"stale_signups": 1, "signin_hashes": 1, "removal_hashes": 1, "rate_events": 0}
+    assert planned == {
+        "stale_signups": 1, "signin_hashes": 1, "removal_hashes": 1, "rate_events": 0, "avatars": 0
+    }
     assert cleanup(now=NOW) == planned
 
 

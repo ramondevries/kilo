@@ -26,7 +26,7 @@ from flask import Blueprint, flash, redirect, render_template, session, url_for
 from flask_babel import gettext as _
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from app import db, ratelimit
+from app import avatar, db, ratelimit
 from app.auth import get_current_user, login_required
 from app.email_utils import send_deletion_email
 from app.forms import VerifyCodeForm
@@ -118,8 +118,10 @@ def confirm_removal():
         flash(_("Incorrect code."), "error")
     else:
         # WeightEntry rows go with the user (cascade="all, delete-orphan").
+        email_hash = user.email_hash
         db.session.delete(user)
         db.session.commit()
+        avatar.forget(email_hash)
         session.clear()
         flash(_("Your account and all your data have been removed."), "success")
         return redirect(url_for("main.index"))
