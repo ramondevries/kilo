@@ -681,6 +681,10 @@
         data: [],
         borderColor: movingAvgColor,
         borderWidth: 1.5,
+        // Drawn last, on top of everything. Chart.js draws dataset 0 (the weight line with its
+        // semi-transparent BMI fill) over the others by default, which made this line look faded
+        // wherever it ran below the weight line.
+        order: -1,
         fill: false,
         tension: 0,
         pointRadius: 0,
@@ -721,6 +725,9 @@
           // average lines always have a value at every plotted point
           // though, so that filter only applies to the weight series.
           filter: (item) => item.datasetIndex !== 0 || shouldShowTooltip(item.dataIndex),
+          // Weight first, as in the data: the moving average's `order` (drawn on top) would
+          // otherwise list it first.
+          itemSort: (a, b) => a.datasetIndex - b.datasetIndex,
           // The day's note, under the BMI: in the footer, which has its own spacing
           // and a normal weight and slightly dimmer colour so it reads as a remark.
           // Not italic: the canvas would slant the emoji in a note too.
