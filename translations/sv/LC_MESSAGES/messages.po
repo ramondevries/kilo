@@ -449,7 +449,7 @@ msgid "Version %(version)s"
 msgstr "Version %(version)s"
 
 msgid "Video tutorial"
-msgstr "Video tutorial"
+msgstr "Videoguide"
 
 msgid ""
 "A 13-minute video on YouTube shows how Kilo Tracker works, from signing in "
@@ -783,7 +783,7 @@ msgid "There is no public chart at this address (any more)."
 msgstr "Det finns inget offentligt diagram (längre) på den här adressen."
 
 msgid "Remove my data"
-msgstr "Ta bort mina data"
+msgstr "Ta bort min data"
 
 msgid "Back to settings"
 msgstr "Tillbaka till inställningar"
@@ -809,10 +809,10 @@ msgid "Download a copy of your weigh-ins before they're deleted. This is require
 msgstr "Ladda ner en kopia av dina vägningar innan de raderas. Det är obligatoriskt."
 
 msgid "Download my data (CSV)"
-msgstr "Ladda ner mina data (CSV)"
+msgstr "Ladda ner min data (CSV)"
 
 msgid "I've downloaded it — continue"
-msgstr "Jag har laddat ner dem – fortsätt"
+msgstr "Jag har laddat ner den – fortsätt"
 
 msgid "Step 2: Confirm by email"
 msgstr "Steg 2: Bekräfta via e-post"
@@ -977,7 +977,7 @@ msgstr ""
 "ner din data och bekräfta med en kod som skickas via e-post."
 
 msgid "Remove my data…"
-msgstr "Ta bort mina data…"
+msgstr "Ta bort min data…"
 
 msgid "Sign up"
 msgstr "Registrera dig"
