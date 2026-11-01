@@ -568,6 +568,24 @@ h2 {
   height: auto;
 }
 
+/* The front page's text for signed-out visitors (login.html), below the sign-in form. */
+.feature-list {
+  padding-inline-start: 1.25rem;
+}
+
+.feature-list li + li {
+  margin-block-start: 0.4rem;
+}
+
+.landing h3 {
+  margin-block: 1.25rem 0.5rem;
+  font-size: 1rem;
+}
+
+.landing .video-link {
+  margin-block: 1rem;
+}
+
 /* Card title row with a round back arrow on the left. */
 .page-head {
   display: flex;

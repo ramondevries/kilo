@@ -940,8 +940,73 @@ msgid "Send code"
 msgstr "Kód küldése"
 
 # machine-translated
-msgid "How does this work?"
-msgstr "Hogyan működik?"
+#. Title of the front page as shown in a search result, after "Kilo Tracker —".
+msgid "Free weight tracker with a moving average"
+msgstr "Ingyenes testsúlynapló mozgóátlaggal"
+
+# machine-translated
+#. Kilo Tracker described in a search result (about 150 characters).
+msgid ""
+"A free, open-source weight tracker that shows your trend, not the daily ups "
+"and downs. No passwords, no ads, no trackers."
+msgstr ""
+"Ingyenes, nyílt forráskódú testsúlynapló, amely a trendet mutatja, nem a "
+"napi ingadozást. Nincs jelszó, nincs reklám, nincsenek nyomkövetők."
+
+# machine-translated
+msgid "A weight tracker that shows the trend"
+msgstr "Testsúlynapló, amely a trendet mutatja"
+
+# machine-translated
+msgid ""
+"Your weight goes up and down from day to day. Kilo Tracker draws a moving "
+"average through your weigh-ins, so you see where you are really heading. "
+"It's free and open source."
+msgstr ""
+"A testsúlyod napról napra ingadozik. A Kilo Tracker mozgóátlagot húz a "
+"méréseiden keresztül, így látod, merre tartasz valójában. Ingyenes és nyílt "
+"forráskódú."
+
+# machine-translated
+msgid "A clear chart, from one week to twenty years, coloured by your BMI."
+msgstr "Áttekinthető diagram egy héttől húsz évig, a BMI-d szerint színezve."
+
+# machine-translated
+msgid "Quick entry: type today's weight and add a note if you like."
+msgstr ""
+"Gyors bevitel: írd be a mai testsúlyt, és ha szeretnéd, adj hozzá egy "
+"jegyzetet."
+
+# machine-translated
+#. "The Hacker's Diet Online" and "Yet Another Diet Tool" are names of other
+#. weight trackers; keep them as they are.
+msgid ""
+"Bring your history from The Hacker's Diet Online, Yet Another Diet Tool or a"
+" CSV file, and download all your data whenever you like."
+msgstr ""
+"Hozd át az előzményeidet a The Hacker's Diet Online-ból, a Yet Another Diet "
+"Toolból vagy egy CSV-fájlból, és töltsd le az összes adatodat, amikor csak "
+"szeretnéd."
+
+# machine-translated
+msgid ""
+"Share your chart with a link or put it on your own website, with or without "
+"the kilograms."
+msgstr ""
+"Oszd meg a diagramodat egy linkkel, vagy tedd ki a saját weboldaladra, "
+"kilogrammokkal vagy azok nélkül."
+
+# machine-translated
+msgid "Private by design"
+msgstr "Adatvédelem az alapoktól"
+
+# machine-translated
+msgid ""
+"There are no passwords: you sign in with a code sent to your email. Kilo "
+"stores only a one-way hash of your address, and has no ads or trackers."
+msgstr ""
+"Nincs jelszó: egy e-mailben küldött kóddal jelentkezel be. A Kilo csak a "
+"címed egyirányú hash-ét tárolja, és nincs benne reklám vagy nyomkövető."
 
 # machine-translated
 #. Shown at a public chart's address when there is no chart there, or its owner

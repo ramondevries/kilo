@@ -1,13 +1,39 @@
 {% extends "base.html" %}
 {% from "_forms.html" import email_form %}
 
-{% block title %}{{ _("Sign in") }} — Kilo Tracker{% endblock %}
+{# The front page for signed-out visitors, and with /about the only page search engines see: the
+   sign-in form first, then what Kilo is (the title and description are what a search result shows). #}
+{# NOTE: Title of the front page as shown in a search result, after "Kilo Tracker —". #}
+{% block title %}Kilo Tracker — {{ _("Free weight tracker with a moving average") }}{% endblock %}
+
+{% block head_meta %}
+  {# NOTE: Kilo Tracker described in a search result (about 150 characters). #}
+  <meta name="description" content="{{ _("A free, open-source weight tracker that shows your trend, not the daily ups and downs. No passwords, no ads, no trackers.") }}">
+{% endblock %}
 
 {% block content %}
   <section class="add-entry">
     <h2>{{ _("Sign in") }}</h2>
     <p>{{ _("Enter your email and we'll send you a 6-digit code — no password needed.") }}</p>
     {{ email_form(form) }}
-    <p class="muted-link"><a href="{{ url_for('auth.about') }}">{{ _("How does this work?") }}</a></p>
+  </section>
+
+  <section class="add-entry landing">
+    <h2>{{ _("A weight tracker that shows the trend") }}</h2>
+    <p>{{ _("Your weight goes up and down from day to day. Kilo Tracker draws a moving average through your weigh-ins, so you see where you are really heading. It's free and open source.") }}</p>
+    <ul class="feature-list">
+      <li>{{ _("A clear chart, from one week to twenty years, coloured by your BMI.") }}</li>
+      <li>{{ _("Quick entry: type today's weight and add a note if you like.") }}</li>
+      {# NOTE: "The Hacker's Diet Online" and "Yet Another Diet Tool" are names of other weight trackers; keep them as they are. #}
+      <li>{{ _("Bring your history from The Hacker's Diet Online, Yet Another Diet Tool or a CSV file, and download all your data whenever you like.") }}</li>
+      <li>{{ _("Share your chart with a link or put it on your own website, with or without the kilograms.") }}</li>
+    </ul>
+    <h3>{{ _("Private by design") }}</h3>
+    <p>{{ _("There are no passwords: you sign in with a code sent to your email. Kilo stores only a one-way hash of your address, and has no ads or trackers.") }}</p>
+    <a class="video-link" href="https://www.youtube.com/watch?v=Yv9qKf6HwIE" target="_blank" rel="noopener">
+      <img src="{{ static_url('video-tutorial.webp') }}" width="960" height="540" loading="lazy"
+           alt="{{ _('Watch the Kilo Tracker video tutorial on YouTube') }}">
+    </a>
+    <p class="muted-link"><a href="{{ url_for('auth.about') }}">{{ _("About Kilo Tracker") }}</a></p>
   </section>
 {% endblock %}

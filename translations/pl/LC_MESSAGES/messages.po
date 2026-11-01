@@ -968,8 +968,72 @@ msgid "Send code"
 msgstr "Wyślij kod"
 
 # machine-translated
-msgid "How does this work?"
-msgstr "Jak to działa?"
+#. Title of the front page as shown in a search result, after "Kilo Tracker —".
+msgid "Free weight tracker with a moving average"
+msgstr "Darmowy dziennik wagi ze średnią kroczącą"
+
+# machine-translated
+#. Kilo Tracker described in a search result (about 150 characters).
+msgid ""
+"A free, open-source weight tracker that shows your trend, not the daily ups "
+"and downs. No passwords, no ads, no trackers."
+msgstr ""
+"Darmowy dziennik wagi o otwartym kodzie, który pokazuje trend, a nie "
+"codzienne wahania. Bez haseł, bez reklam, bez trackerów."
+
+# machine-translated
+msgid "A weight tracker that shows the trend"
+msgstr "Dziennik wagi, który pokazuje trend"
+
+# machine-translated
+msgid ""
+"Your weight goes up and down from day to day. Kilo Tracker draws a moving "
+"average through your weigh-ins, so you see where you are really heading. "
+"It's free and open source."
+msgstr ""
+"Waga zmienia się z dnia na dzień. Kilo Tracker prowadzi średnią kroczącą "
+"przez Twoje pomiary, dzięki czemu widzisz, dokąd naprawdę zmierzasz. Jest "
+"darmowy i ma otwarty kod."
+
+# machine-translated
+msgid "A clear chart, from one week to twenty years, coloured by your BMI."
+msgstr ""
+"Przejrzysty wykres, od tygodnia do dwudziestu lat, w kolorach zależnych od "
+"BMI."
+
+# machine-translated
+msgid "Quick entry: type today's weight and add a note if you like."
+msgstr "Szybkie wpisywanie: wpisz dzisiejszą wagę i, jeśli chcesz, dodaj notatkę."
+
+# machine-translated
+#. "The Hacker's Diet Online" and "Yet Another Diet Tool" are names of other
+#. weight trackers; keep them as they are.
+msgid ""
+"Bring your history from The Hacker's Diet Online, Yet Another Diet Tool or a"
+" CSV file, and download all your data whenever you like."
+msgstr ""
+"Przenieś swoją historię z The Hacker's Diet Online, Yet Another Diet Tool "
+"lub pliku CSV i pobieraj wszystkie swoje dane, kiedy tylko chcesz."
+
+# machine-translated
+msgid ""
+"Share your chart with a link or put it on your own website, with or without "
+"the kilograms."
+msgstr ""
+"Udostępnij swój wykres linkiem lub umieść go na własnej stronie, z "
+"kilogramami lub bez."
+
+# machine-translated
+msgid "Private by design"
+msgstr "Prywatność od podstaw"
+
+# machine-translated
+msgid ""
+"There are no passwords: you sign in with a code sent to your email. Kilo "
+"stores only a one-way hash of your address, and has no ads or trackers."
+msgstr ""
+"Nie ma haseł: logujesz się kodem wysłanym na Twój e-mail. Kilo przechowuje "
+"tylko jednokierunkowy skrót Twojego adresu i nie ma reklam ani trackerów."
 
 # machine-translated
 #. Shown at a public chart's address when there is no chart there, or its owner

@@ -789,8 +789,72 @@ msgstr ""
 msgid "Send code"
 msgstr "Lähetä koodi"
 
-msgid "How does this work?"
-msgstr "Miten tämä toimii?"
+# machine-translated
+#. Title of the front page as shown in a search result, after "Kilo Tracker —".
+msgid "Free weight tracker with a moving average"
+msgstr "Ilmainen painonseuranta liukuvalla keskiarvolla"
+
+# machine-translated
+#. Kilo Tracker described in a search result (about 150 characters).
+msgid ""
+"A free, open-source weight tracker that shows your trend, not the daily ups "
+"and downs. No passwords, no ads, no trackers."
+msgstr ""
+"Ilmainen avoimen lähdekoodin painonseuranta, joka näyttää trendisi eikä "
+"päivittäisiä heilahteluja. Ei salasanoja, ei mainoksia, ei seurantaa."
+
+# machine-translated
+msgid "A weight tracker that shows the trend"
+msgstr "Painonseuranta, joka näyttää trendin"
+
+# machine-translated
+msgid ""
+"Your weight goes up and down from day to day. Kilo Tracker draws a moving "
+"average through your weigh-ins, so you see where you are really heading. "
+"It's free and open source."
+msgstr ""
+"Painosi vaihtelee päivästä toiseen. Kilo Tracker piirtää punnitustesi läpi "
+"liukuvan keskiarvon, joten näet, mihin olet oikeasti menossa. Se on ilmainen"
+" ja avointa lähdekoodia."
+
+# machine-translated
+msgid "A clear chart, from one week to twenty years, coloured by your BMI."
+msgstr "Selkeä kaavio viikosta kahteenkymmeneen vuoteen, väritettynä BMI:si mukaan."
+
+# machine-translated
+msgid "Quick entry: type today's weight and add a note if you like."
+msgstr "Nopea syöttö: kirjoita tämän päivän paino ja lisää halutessasi muistio."
+
+# machine-translated
+#. "The Hacker's Diet Online" and "Yet Another Diet Tool" are names of other
+#. weight trackers; keep them as they are.
+msgid ""
+"Bring your history from The Hacker's Diet Online, Yet Another Diet Tool or a"
+" CSV file, and download all your data whenever you like."
+msgstr ""
+"Tuo historiasi The Hacker's Diet Onlinesta, Yet Another Diet Toolista tai "
+"CSV-tiedostosta, ja lataa kaikki tietosi milloin haluat."
+
+# machine-translated
+msgid ""
+"Share your chart with a link or put it on your own website, with or without "
+"the kilograms."
+msgstr ""
+"Jaa kaaviosi linkillä tai lisää se omalle verkkosivustollesi, kilojen kanssa"
+" tai ilman."
+
+# machine-translated
+msgid "Private by design"
+msgstr "Yksityisyys suunnittelusta lähtien"
+
+# machine-translated
+msgid ""
+"There are no passwords: you sign in with a code sent to your email. Kilo "
+"stores only a one-way hash of your address, and has no ads or trackers."
+msgstr ""
+"Salasanoja ei ole: kirjaudut sisään sähköpostiisi lähetetyllä koodilla. Kilo"
+" tallentaa osoitteestasi vain yksisuuntaisen tiivisteen, eikä siinä ole "
+"mainoksia tai seurantaa."
 
 #. Shown at a public chart's address when there is no chart there, or its owner
 #. stopped sharing it.

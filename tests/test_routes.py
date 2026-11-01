@@ -36,6 +36,40 @@ def test_index_shows_login_prompt_when_logged_out(client):
     assert b"Sign in" in resp.data
 
 
+def _meta_descriptions(page):
+    return re.findall(r'<meta name="description" content="([^"]*)">', page)
+
+
+def test_the_signed_out_front_page_tells_search_engines_what_kilo_is(client):
+    page = client.get("/").get_data(as_text=True)
+    assert "<title>Kilo Tracker — Free weight tracker with a moving average</title>" in page
+    assert _meta_descriptions(page) == [
+        "A free, open-source weight tracker that shows your trend, not the daily ups and downs. "
+        "No passwords, no ads, no trackers."
+    ]
+    # The sign-in form stays first; the text about Kilo comes after it.
+    assert page.index('name="email"') < page.index("A weight tracker that shows the trend")
+    assert page.count('class="feature-list"') == 1
+    assert "Private by design" in page
+    assert 'href="https://www.youtube.com/watch?v=Yv9qKf6HwIE"' in page
+
+
+def test_the_front_page_text_is_translated(client):
+    page = client.get("/?lang=nl").get_data(as_text=True)
+    assert "<title>Kilo Tracker — Gratis gewichtstracker met een voortschrijdend gemiddelde</title>" in page
+    assert _meta_descriptions(page)[0].startswith("Een gratis, open-source gewichtstracker")
+    assert "Een gewichtstracker die de trend laat zien" in page
+
+
+def test_only_the_signed_out_front_page_has_a_description(logged_in_client):
+    signed_in, _ = logged_in_client
+    assert _meta_descriptions(signed_in.get("/").get_data(as_text=True)) == []
+    assert "A weight tracker that shows the trend" not in signed_in.get("/").get_data(as_text=True)
+    signed_in.post("/logout")
+    for path in ("/about", "/signup"):
+        assert _meta_descriptions(signed_in.get(path).get_data(as_text=True)) == [], path
+
+
 def test_index_shows_grid_when_logged_in(logged_in_client):
     client, _ = logged_in_client
     resp = client.get("/")

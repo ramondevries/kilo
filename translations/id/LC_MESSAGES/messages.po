@@ -771,8 +771,74 @@ msgstr "Masukkan emailmu dan kami akan mengirim kode 6 digit - tidak perlu kata 
 msgid "Send code"
 msgstr "Kirim kode"
 
-msgid "How does this work?"
-msgstr "Bagaimana cara kerjanya?"
+# machine-translated
+#. Title of the front page as shown in a search result, after "Kilo Tracker —".
+msgid "Free weight tracker with a moving average"
+msgstr "Pelacak berat badan gratis dengan rata-rata bergerak"
+
+# machine-translated
+#. Kilo Tracker described in a search result (about 150 characters).
+msgid ""
+"A free, open-source weight tracker that shows your trend, not the daily ups "
+"and downs. No passwords, no ads, no trackers."
+msgstr ""
+"Pelacak berat badan gratis dan open source yang menunjukkan trenmu, bukan "
+"naik-turun harian. Tanpa kata sandi, tanpa iklan, tanpa pelacak."
+
+# machine-translated
+msgid "A weight tracker that shows the trend"
+msgstr "Pelacak berat badan yang menunjukkan tren"
+
+# machine-translated
+msgid ""
+"Your weight goes up and down from day to day. Kilo Tracker draws a moving "
+"average through your weigh-ins, so you see where you are really heading. "
+"It's free and open source."
+msgstr ""
+"Berat badanmu naik turun dari hari ke hari. Kilo Tracker menarik garis rata-"
+"rata bergerak melalui penimbanganmu, sehingga kamu melihat ke mana arahmu "
+"sebenarnya. Gratis dan open source."
+
+# machine-translated
+msgid "A clear chart, from one week to twenty years, coloured by your BMI."
+msgstr ""
+"Grafik yang jelas, dari satu minggu hingga dua puluh tahun, diwarnai sesuai "
+"BMI-mu."
+
+# machine-translated
+msgid "Quick entry: type today's weight and add a note if you like."
+msgstr "Input cepat: ketik berat badan hari ini dan tambahkan catatan jika mau."
+
+# machine-translated
+#. "The Hacker's Diet Online" and "Yet Another Diet Tool" are names of other
+#. weight trackers; keep them as they are.
+msgid ""
+"Bring your history from The Hacker's Diet Online, Yet Another Diet Tool or a"
+" CSV file, and download all your data whenever you like."
+msgstr ""
+"Bawa riwayatmu dari The Hacker's Diet Online, Yet Another Diet Tool, atau "
+"file CSV, dan unduh semua datamu kapan saja."
+
+# machine-translated
+msgid ""
+"Share your chart with a link or put it on your own website, with or without "
+"the kilograms."
+msgstr ""
+"Bagikan grafikmu dengan tautan atau pasang di situs webmu sendiri, dengan "
+"atau tanpa kilogramnya."
+
+# machine-translated
+msgid "Private by design"
+msgstr "Privasi sejak awal"
+
+# machine-translated
+msgid ""
+"There are no passwords: you sign in with a code sent to your email. Kilo "
+"stores only a one-way hash of your address, and has no ads or trackers."
+msgstr ""
+"Tidak ada kata sandi: kamu masuk dengan kode yang dikirim ke emailmu. Kilo "
+"hanya menyimpan hash satu arah dari alamatmu, dan tidak ada iklan maupun "
+"pelacak."
 
 #. Shown at a public chart's address when there is no chart there, or its owner
 #. stopped sharing it.
