@@ -1,14 +1,30 @@
 {% extends "base.html" %}
 {% from "_forms.html" import email_form %}
+{% from "_meta.html" import page_meta with context %}
 
 {# The front page for signed-out visitors, and with /about the only page search engines see: the
    sign-in form first, then what Kilo is (the title and description are what a search result shows). #}
 {# NOTE: Title of the front page as shown in a search result, after "Kilo Tracker —". #}
-{% block title %}Kilo Tracker — {{ _("Free weight tracker with a moving average") }}{% endblock %}
+{% set page_title = "Kilo Tracker — " ~ _("Free weight tracker with a moving average") %}
+{# NOTE: Kilo Tracker described in a search result (about 150 characters). #}
+{% set description = _("A free, open-source weight tracker that shows your trend, not the daily ups and downs. No passwords, no ads, no trackers.") %}
+{% block title %}{{ page_title }}{% endblock %}
 
 {% block head_meta %}
-  {# NOTE: Kilo Tracker described in a search result (about 150 characters). #}
-  <meta name="description" content="{{ _("A free, open-source weight tracker that shows your trend, not the daily ups and downs. No passwords, no ads, no trackers.") }}">
+  {{ page_meta(page_title, description) }}
+  {# What search engines read as facts about Kilo (schema.org); a data block, so no nonce. #}
+  <script type="application/ld+json">{{ {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Kilo Tracker",
+    "url": url_for("main.index", _external=True),
+    "description": description,
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "isAccessibleForFree": true,
+    "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
+    "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+  }|tojson }}</script>
 {% endblock %}
 
 {% block content %}

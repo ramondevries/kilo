@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% from "_forms.html" import code_field %}
+{% from "_meta.html" import noindex %}
 
 {% block title %}{{ _("Verify your email") }}{% endblock %}
+{% block head_meta %}{{ noindex() }}{% endblock %}
 
 {% block content %}
   <section class="add-entry">

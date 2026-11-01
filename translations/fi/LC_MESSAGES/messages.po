@@ -406,6 +406,15 @@ msgstr "Takaisin yleisnäkymään"
 msgid "About Kilo Tracker"
 msgstr "Tietoja Kilo Trackerista"
 
+# machine-translated
+#. The About page described in a search result (about 150 characters).
+msgid ""
+"Why Kilo Tracker was made, a video tutorial, and how signing in works "
+"without a password or a stored email address."
+msgstr ""
+"Miksi Kilo Tracker tehtiin, opetusvideo ja miten kirjautuminen toimii ilman "
+"salasanaa tai tallennettua sähköpostiosoitetta."
+
 #, python-format
 msgid ""
 "For many years I tracked my weight with %(hdo_link)s, created by "

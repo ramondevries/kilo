@@ -493,6 +493,15 @@ msgid "About Kilo Tracker"
 msgstr "Sobre o Kilo Tracker"
 
 # machine-translated
+#. The About page described in a search result (about 150 characters).
+msgid ""
+"Why Kilo Tracker was made, a video tutorial, and how signing in works "
+"without a password or a stored email address."
+msgstr ""
+"Por que o Kilo Tracker foi criado, um tutorial em vídeo e como funciona o "
+"login sem senha nem e-mail armazenado."
+
+# machine-translated
 #, python-format
 msgid ""
 "For many years I tracked my weight with %(hdo_link)s, created by "

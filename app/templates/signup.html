@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% from "_forms.html" import email_form %}
+{% from "_meta.html" import noindex %}
 
 {% block title %}{{ _("Sign up") }}{% endblock %}
+{% block head_meta %}{{ noindex() }}{% endblock %}
 
 {% block content %}
   <section class="add-entry">

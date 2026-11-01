@@ -45,13 +45,14 @@ def nonce_of(response):
 
 def assert_every_inline_script_has_the_nonce(response):
     """Each <script> either loads a file from Kilo (src="/static/...") or carries this response's
-    nonce, or is a JSON data block (which never runs)."""
+    nonce, or is a JSON data block: application/json, or the front page's application/ld+json for
+    search engines (a type that is not JavaScript never runs)."""
     html = response.get_data(as_text=True)
     nonce = nonce_of(response)
     tags = SCRIPT_TAG.findall(html)
     assert tags, "the page has no scripts at all"
     for attrs in tags:
-        if 'type="application/json"' in attrs:
+        if re.search(r'type="application/(ld\+)?json"', attrs):
             continue
         src = re.search(r'src="([^"]+)"', attrs)
         if src:

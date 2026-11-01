@@ -53,3 +53,5 @@ known-first-party = ["app", "tests"]
 "tests/**" = ["S101", "S104", "S105", "S106", "S603", "S607"]
 # The no-break and narrow no-break spaces are what these tests check.
 "tests/test_i18n.py" = ["S101", "RUF001"]
+# Parses the sitemap Kilo itself just rendered, not outside XML.
+"tests/test_seo.py" = ["S101", "S314"]

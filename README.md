@@ -284,6 +284,11 @@ With Apache (`mod_proxy`, `mod_proxy_http` and `mod_headers` enabled):
 </VirtualHost>
 ```
 
+Keep the `Host` and `X-Forwarded-Proto` lines: `/sitemap.xml`, `robots.txt` and the link-preview
+tags need full addresses (`https://kilo.example.com/...`). gunicorn believes `X-Forwarded-Proto`
+from a proxy on the same machine (its `forwarded_allow_ips` default), so the addresses start with
+`https://`; without the header they say `http://`.
+
 The page language comes from the browser's `Accept-Language` header, which
 both proxies pass on, and every page answers with `Vary: Accept-Language`. If
 you cache responses in front of the app (Apache `mod_cache`, a CDN), let the

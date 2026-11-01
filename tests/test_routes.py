@@ -61,13 +61,14 @@ def test_the_front_page_text_is_translated(client):
     assert "Een gewichtstracker die de trend laat zien" in page
 
 
-def test_only_the_signed_out_front_page_has_a_description(logged_in_client):
+def test_the_dashboard_and_the_sign_up_page_have_no_description(logged_in_client):
+    """Only the pages search engines may index have one: the signed-out front page and /about."""
     signed_in, _ = logged_in_client
-    assert _meta_descriptions(signed_in.get("/").get_data(as_text=True)) == []
-    assert "A weight tracker that shows the trend" not in signed_in.get("/").get_data(as_text=True)
+    dashboard = signed_in.get("/").get_data(as_text=True)
+    assert _meta_descriptions(dashboard) == []
+    assert "A weight tracker that shows the trend" not in dashboard
     signed_in.post("/logout")
-    for path in ("/about", "/signup"):
-        assert _meta_descriptions(signed_in.get(path).get_data(as_text=True)) == [], path
+    assert _meta_descriptions(signed_in.get("/signup").get_data(as_text=True)) == []
 
 
 def test_index_shows_grid_when_logged_in(logged_in_client):
@@ -81,8 +82,9 @@ def test_index_shows_grid_when_logged_in(logged_in_client):
 # Endpoints anyone may reach. Every other endpoint must send a signed-out visitor away; adding one
 # here is a decision about what strangers may do, not a way to make a failing test pass.
 PUBLIC_ENDPOINTS = {
-    "static", "main.index", "main.robots_txt", "main.favicon", "main.set_language", "main.user_avatar",
-    "main.public_chart", "auth.about", "auth.signup", "auth.verify", "auth.resend_code", "auth.logout",
+    "static", "main.index", "main.robots_txt", "main.sitemap_xml", "main.favicon", "main.set_language",
+    "main.user_avatar", "main.public_chart", "auth.about", "auth.signup", "auth.verify", "auth.resend_code",
+    "auth.logout",
 }
 
 
@@ -708,6 +710,10 @@ def test_robots_txt_blocks_crawlers_except_the_public_pages(client):
     assert "Disallow: /\n" in body
     assert "Allow: /$" in body
     assert "Allow: /about$" in body
+    # The sitemap and the link-preview picture (some preview fetchers obey robots.txt).
+    assert "Allow: /sitemap.xml$" in body
+    assert "Allow: /static/kilo-og.png$" in body
+    assert "\nSitemap: http://localhost/sitemap.xml\n" in body
 
 
 def test_robots_txt_needs_no_login(logged_in_client):

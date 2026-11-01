@@ -393,6 +393,15 @@ msgstr "Kembali ke dasbor"
 msgid "About Kilo Tracker"
 msgstr "Tentang Kilo Tracker"
 
+# machine-translated
+#. The About page described in a search result (about 150 characters).
+msgid ""
+"Why Kilo Tracker was made, a video tutorial, and how signing in works "
+"without a password or a stored email address."
+msgstr ""
+"Mengapa Kilo Tracker dibuat, video tutorial, dan cara masuk tanpa kata sandi"
+" atau alamat email yang disimpan."
+
 #, python-format
 msgid ""
 "For many years I tracked my weight with %(hdo_link)s, created by "

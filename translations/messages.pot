@@ -383,6 +383,12 @@ msgstr ""
 msgid "About Kilo Tracker"
 msgstr ""
 
+#. The About page described in a search result (about 150 characters).
+msgid ""
+"Why Kilo Tracker was made, a video tutorial, and how signing in works "
+"without a password or a stored email address."
+msgstr ""
+
 #, python-format
 msgid ""
 "For many years I tracked my weight with %(hdo_link)s, created by "

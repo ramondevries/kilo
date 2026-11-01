@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 {% from "_back_link.html" import back_link %}
+{% from "_meta.html" import page_meta with context %}
 
-{% block title %}{{ _("About") }} — Kilo Tracker{% endblock %}
+{% set page_title = _("About") ~ " — Kilo Tracker" %}
+{# NOTE: The About page described in a search result (about 150 characters). #}
+{% set description = _("Why Kilo Tracker was made, a video tutorial, and how signing in works without a password or a stored email address.") %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block head_meta %}{{ page_meta(page_title, description) }}{% endblock %}
 
 {% block content %}
   <section class="add-entry">

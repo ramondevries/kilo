@@ -69,17 +69,43 @@ ROBOTS_TXT = """\
 # charts users share at /public/..., which are meant for whoever gets the link,
 # not for search engines; so crawlers are kept to the first two. (robots.txt is
 # a request, not access control - the data itself is protected by sign-in.)
+# The sitemap and the link-preview image are allowed too: some sites that show
+# link previews (X/Twitter) obey robots.txt for the image.
 User-agent: *
 Allow: /$
 Allow: /about$
+Allow: /sitemap.xml$
+Allow: /static/{og_image}$
 Disallow: /
+
+Sitemap: {sitemap}
 """
+
+# The picture a link to Kilo shows in WhatsApp, Mastodon, LinkedIn... (1200x630, see
+# templates/_meta.html). Its name is also allowed in robots.txt.
+OG_IMAGE = "kilo-og.png"
+bp.add_app_template_global(OG_IMAGE, "OG_IMAGE")
+
+# The pages search engines may index (the same as robots.txt allows).
+SITEMAP_ENDPOINTS = ("main.index", "auth.about")
 
 
 @bp.route("/robots.txt", methods=["GET"])
 def robots_txt():
-    """Ask search-engine crawlers to stay out of everything but the public pages."""
-    return Response(ROBOTS_TXT, mimetype="text/plain")
+    """Ask search-engine crawlers to stay out of everything but the public pages.
+
+    The sitemap's address must be absolute; behind the proxy it is https because gunicorn
+    trusts X-Forwarded-Proto from the proxy on 127.0.0.1 (see the README).
+    """
+    text = ROBOTS_TXT.format(og_image=OG_IMAGE, sitemap=url_for("main.sitemap_xml", _external=True))
+    return Response(text, mimetype="text/plain")
+
+
+@bp.route("/sitemap.xml", methods=["GET"])
+def sitemap_xml():
+    """The pages search engines may index, as absolute addresses."""
+    urls = [url_for(endpoint, _external=True) for endpoint in SITEMAP_ENDPOINTS]
+    return Response(render_template("sitemap.xml", urls=urls), mimetype="application/xml")
 
 
 @bp.route("/favicon.ico", methods=["GET"])

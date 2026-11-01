@@ -1,7 +1,9 @@
 {% extends "base.html" %}
+{% from "_meta.html" import noindex %}
 
 {# The page for an unexpected error (500), see app/errors.py. #}
 {% block title %}{{ _("Something went wrong") }} — Kilo Tracker{% endblock %}
+{% block head_meta %}{{ noindex() }}{% endblock %}
 
 {% block content %}
   <section class="add-entry">
