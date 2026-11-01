@@ -1,6 +1,6 @@
 # Continuous integration: the tests (which include the translation check) on every push and pull
-# request, on the Python that production runs and on the newest one, the browser tests in
-# Chromium, plus ruff with the committed ruff.toml.
+# request, on the Python that production runs, the browser tests in Chromium, plus ruff with the
+# committed ruff.toml.
 name: CI
 
 on:
@@ -24,8 +24,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 3.12 is what production runs; 3.14 catches what the next upgrade would break.
-        python: ["3.12", "3.14"]
+        # 3.14 is what production runs (Ubuntu 26.04 since 2026-11-01). Add a newer version here
+        # to catch what the next upgrade would break.
+        python: ["3.14"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -50,7 +51,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.14"
           cache: pip
           cache-dependency-path: requirements*.txt
       - name: Install
@@ -67,7 +68,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.14"
       # Pinned in requirements-lint.txt: a newer ruff can add findings for the same code. Dependabot
       # proposes a new version; its pull request shows here what that version finds.
       - name: Install

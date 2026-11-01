@@ -537,8 +537,8 @@ The lint settings are in `ruff.toml`; with [ruff](https://docs.astral.sh/ruff/) 
 Kilo), `ruff check .` checks the code. It should pass without findings;
 the deliberate exceptions are listed in that file with their reasons.
 
-GitHub Actions (`.github/workflows/ci.yml`) runs the tests on Python 3.12 (as in
-production) and 3.14, and ruff, on every push to `main` and every pull request.
+GitHub Actions (`.github/workflows/ci.yml`) runs the tests on Python 3.14 (as in
+production) and ruff, on every push to `main` and every pull request.
 Dependabot (`.github/dependabot.yml`) proposes newer Python packages and GitHub Actions
 once a month, each kind grouped in one pull request that CI then checks. The vendored
 Chart.js is not covered: see `app/static/vendor/README.md` for updating it by hand.

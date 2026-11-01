@@ -1,8 +1,8 @@
 # Ruff (https://docs.astral.sh/ruff/) settings for Kilo Tracker: `ruff check .` from the
 # project root. Not a test requirement; install ruff in any environment to use it.
 
-# Production runs Python 3.12.
-target-version = "py312"
+# Production runs Python 3.14.
+target-version = "py314"
 line-length = 120
 # The user's drop folder (local data, never committed) and the database folder.
 extend-exclude = [".claude", "instance"]
