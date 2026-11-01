@@ -299,7 +299,7 @@
 }|tojson }}</script>
 {# Chart.js 4.4.4 (MIT), served from here rather than a CDN so no visitor data goes to a third
    party; see app/static/vendor/README.md. #}
-<script src="{{ url_for('static', filename='vendor/chartjs-4.4.4/chart.umd.js') }}"></script>
+<script src="{{ static_url('vendor/chartjs-4.4.4/chart.umd.js') }}"></script>
 <script src="{{ static_url('dashboard-chart.js') }}"></script>
 {% if not public %}
 <script src="{{ static_url('dashboard-log.js') }}"></script>

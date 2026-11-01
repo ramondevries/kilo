@@ -20,6 +20,7 @@ the database to the newest migration (Alembic, migrations/versions) at every sta
 
 import os
 import sqlite3
+import time
 from contextlib import contextmanager
 from datetime import timedelta
 
@@ -50,13 +51,34 @@ mail = Mail()
 SQLITE_BUSY_TIMEOUT_MS = 30_000
 
 
+# How long a browser keeps a static file asked for by its versioned address (see static_url).
+VERSIONED_STATIC_MAX_AGE = timedelta(days=365)
+
+
 def static_url(filename):
-    """The address of a file in static/ with its modification time as `?v=`: Kilo sends static
-    files without a cache lifetime, so a browser may reuse its copy for a while. A deploy that
-    changes the dashboard scripts changes the address too, so the new page never runs with an
-    old script."""
+    """The address of a file in static/ with its modification time as `?v=`. Such an address
+    never gets different content: a deploy that changes the file changes the address. So the
+    browser may keep it for a year without asking again (`_cache_versioned_static`), and a new
+    page never runs with an old script or style sheet. Link every static file this way."""
     mtime = int(os.path.getmtime(os.path.join(current_app.static_folder, filename)))
     return url_for("static", filename=filename, v=mtime)
+
+
+def _cache_versioned_static(response):
+    """A year's cache lifetime for a static file asked for by its static_url() address.
+
+    Other static addresses keep Flask's answer (`no-cache`: the browser asks again each time,
+    and gets a short 304 when nothing changed). The Expires header goes with it: Apache's
+    mod_expires leaves a response that already has one alone.
+    """
+    if request.endpoint == "static" and "v" in request.args and response.status_code in (200, 304):
+        seconds = int(VERSIONED_STATIC_MAX_AGE.total_seconds())
+        response.cache_control.no_cache = None
+        response.cache_control.public = True
+        response.cache_control.max_age = seconds
+        response.cache_control.immutable = True
+        response.expires = int(time.time()) + seconds
+    return response
 
 
 def _env_int(name, default):
@@ -172,6 +194,7 @@ def create_app(test_config=None):
     # The note length limit, for the note editor's maxlength (see app/utils.py).
     app.jinja_env.globals["NOTE_MAX_LENGTH"] = NOTE_MAX_LENGTH
     app.add_template_global(static_url)
+    app.after_request(_cache_versioned_static)
 
     # Content-Security-Policy and X-Frame-Options on every response (see app/csp.py).
     csp.init_app(app)

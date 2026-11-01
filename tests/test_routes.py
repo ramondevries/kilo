@@ -870,7 +870,7 @@ def test_chart_js_is_served_by_the_app_not_a_cdn(logged_in_client):
     html = client.get("/").data.decode()
     # No visitor data goes to a third party for the chart (see app/static/vendor/README.md).
     sources = re.findall(r'<script src="([^"]+)"', html)
-    assert sources[0] == "/static/vendor/chartjs-4.4.4/chart.umd.js"
+    assert sources[0].split("?v=")[0] == "/static/vendor/chartjs-4.4.4/chart.umd.js"
     assert all(src.startswith("/static/") for src in sources)  # the rest are Kilo's own scripts
     script = client.get("/static/vendor/chartjs-4.4.4/chart.umd.js")
     assert script.status_code == 200
