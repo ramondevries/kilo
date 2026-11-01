@@ -27,7 +27,7 @@ import re
 from datetime import date
 
 from babel.units import format_unit
-from flask import current_app, has_request_context, request
+from flask import current_app, has_request_context, request, url_for
 from flask_babel import Babel, format_date, format_decimal, get_locale, gettext as _, refresh
 
 # The languages the app is translated into: the only place they are listed.
@@ -95,6 +95,25 @@ def select_locale():
             return language
 
     return current_app.config["BABEL_DEFAULT_LOCALE"]
+
+
+def language_versions(endpoint):
+    """A page in every language, for search engines: (hreflang, absolute address) pairs.
+
+    Each language has its own address, `?lang=xx` (never remembered, see select_locale); the
+    plain address is `x-default`: it follows the visitor's browser.
+    """
+    versions = [("x-default", url_for(endpoint, _external=True))]
+    versions += [(language, url_for(endpoint, lang=language, _external=True))
+                 for language in current_app.config["SUPPORTED_LANGUAGES"]]
+    return versions
+
+
+def canonical_url():
+    """This page's own address for search engines: its language version when the address asks for
+    one (`?lang=no` is `?lang=nb`), else the plain one. Other query parameters are left out."""
+    language = _supported_language(request.args.get("lang", ""), current_app.config["SUPPORTED_LANGUAGES"])
+    return url_for(request.endpoint, lang=language, _external=True)
 
 
 def menu_languages():
@@ -176,6 +195,8 @@ def init_app(app):
     babel.init_app(app, locale_selector=select_locale)
     app.add_template_global(chosen_language)
     app.add_template_global(menu_languages)
+    app.add_template_global(language_versions)
+    app.add_template_global(canonical_url)
     app.jinja_env.globals["LANGUAGE_NAMES"] = LANGUAGE_NAMES
     for func in (kg, meters, megabytes, grams_per_day, decimal1, decimal_input, localdate):
         app.add_template_filter(func)

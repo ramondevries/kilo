@@ -557,6 +557,21 @@ def test_it_goes_back_only_to_a_page_of_this_site(client):
     assert pick(client, "nl", referrer="https://evil.example/x").location == "/"
 
 
+@pytest.mark.parametrize(
+    ("referrer", "back"),
+    [
+        ("http://localhost/?lang=fr", "/"),
+        ("http://localhost/about?lang=fr", "/about"),
+        ("http://localhost/about?x=1&lang=fr&y=", "/about?x=1&y="),
+    ],
+)
+def test_it_goes_back_without_a_lang_in_the_address(client, referrer, back):
+    """A search engine sends visitors to /?lang=fr; that ?lang= would beat the language they pick."""
+    response = pick(client, "nl", referrer=referrer)
+    assert response.location == back
+    assert html_lang(client.get(response.location)) == "nl"
+
+
 def test_it_needs_a_csrf_token(client, app):
     app.config["WTF_CSRF_ENABLED"] = True
     response = pick(client, "fi")

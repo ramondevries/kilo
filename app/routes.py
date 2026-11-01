@@ -25,6 +25,7 @@ import re
 import secrets
 import time
 from datetime import date, timedelta
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from flask import (
     Blueprint,
@@ -46,7 +47,7 @@ from app import avatar, db, session_address
 from app.csv_io import MAX_WEIGHT_KG, MIN_WEIGHT_KG, ImportFileError, export_csv
 from app.errors import back_url
 from app.forms import ImportForm, PublicChartForm, SettingsForm, SignupForm
-from app.i18n import LANGUAGE_COOKIE, LANGUAGE_COOKIE_DAYS, meters
+from app.i18n import LANGUAGE_COOKIE, LANGUAGE_COOKIE_DAYS, language_versions, meters
 from app.importing import parse_import
 from app.models import User, WeightEntry
 from app.overview import (
@@ -67,13 +68,16 @@ bp = Blueprint("main", __name__)
 ROBOTS_TXT = """\
 # Everything is behind a login except the front page, the About page and the
 # charts users share at /public/..., which are meant for whoever gets the link,
-# not for search engines; so crawlers are kept to the first two. (robots.txt is
+# not for search engines; so crawlers are kept to the first two, in each language
+# (?lang=xx, see i18n.language_versions). (robots.txt is
 # a request, not access control - the data itself is protected by sign-in.)
 # The sitemap and the link-preview image are allowed too: some sites that show
 # link previews (X/Twitter) obey robots.txt for the image.
 User-agent: *
 Allow: /$
 Allow: /about$
+Allow: /?lang=
+Allow: /about?lang=
 Allow: /sitemap.xml$
 Allow: /static/{og_image}$
 Disallow: /
@@ -103,9 +107,10 @@ def robots_txt():
 
 @bp.route("/sitemap.xml", methods=["GET"])
 def sitemap_xml():
-    """The pages search engines may index, as absolute addresses."""
-    urls = [url_for(endpoint, _external=True) for endpoint in SITEMAP_ENDPOINTS]
-    return Response(render_template("sitemap.xml", urls=urls), mimetype="application/xml")
+    """The pages search engines may index, in every language, as absolute addresses; each lists
+    its other language versions (the same as the hreflang links in the pages)."""
+    pages = [language_versions(endpoint) for endpoint in SITEMAP_ENDPOINTS]
+    return Response(render_template("sitemap.xml", pages=pages), mimetype="application/xml")
 
 
 @bp.route("/favicon.ico", methods=["GET"])
@@ -113,6 +118,14 @@ def favicon():
     """The icon browsers, bookmarks and feed readers ask for at the root by themselves; the pages
     link the SVG one (static/kilo-icon-*.svg)."""
     return send_from_directory(current_app.static_folder, "favicon.ico", mimetype="image/vnd.microsoft.icon")
+
+
+def _without_lang(path):
+    """`path` without its `?lang=`, which would beat the language just picked (a search engine
+    sends visitors to /?lang=nl)."""
+    parts = urlsplit(path)
+    query = urlencode([(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k != "lang"])
+    return urlunsplit(("", "", parts.path, query, ""))
 
 
 @bp.route("/language", methods=["POST"])
@@ -123,7 +136,7 @@ def set_language():
     per browser. Goes back to the page the menu was on.
     """
     language = request.form.get("language", "")
-    response = redirect(back_url())
+    response = redirect(_without_lang(back_url()))
     if language in current_app.config["SUPPORTED_LANGUAGES"]:
         response.set_cookie(
             LANGUAGE_COOKIE,

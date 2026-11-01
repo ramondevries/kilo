@@ -27,6 +27,7 @@ from xml.etree import ElementTree
 import pytest
 
 from app import db
+from app.i18n import SUPPORTED_LANGUAGES
 from app.models import User
 from app.routes import OG_IMAGE
 from tests.conftest import ROOT, sign_up
@@ -40,13 +41,33 @@ def _meta(page, attr, name):
     return [html.unescape(m) for m in re.findall(rf'<meta {attr}="{re.escape(name)}" content="([^"]*)">', page)]
 
 
-def test_the_sitemap_lists_the_two_indexable_pages_as_absolute_addresses(client):
+LANGUAGES = SUPPORTED_LANGUAGES
+XHTML_NS = "{http://www.w3.org/1999/xhtml}"
+
+
+def _versions(path):
+    """The address of `path` for each hreflang: the plain one is x-default, then one per language."""
+    return {"x-default": f"http://localhost{path}"} | {
+        language: f"http://localhost{path}?lang={language}" for language in LANGUAGES
+    }
+
+
+def test_the_sitemap_lists_both_indexable_pages_in_every_language(client):
     response = client.get("/sitemap.xml")
     assert response.status_code == 200
     assert response.mimetype == "application/xml"
     root = ElementTree.fromstring(response.data)
     assert root.tag == f"{SITEMAP_NS}urlset"
-    assert [loc.text for loc in root.iter(f"{SITEMAP_NS}loc")] == ["http://localhost/", "http://localhost/about"]
+    entries = root.findall(f"{SITEMAP_NS}url")
+    expected = [*_versions("/").values(), *_versions("/about").values()]
+    assert [entry.find(f"{SITEMAP_NS}loc").text for entry in entries] == expected
+    assert len(expected) == 2 * (len(LANGUAGES) + 1)
+    # Each address lists all versions of its page, itself included (as the sitemap rules ask).
+    for entry in entries:
+        loc = entry.find(f"{SITEMAP_NS}loc").text
+        page = "/about" if "/about" in loc else "/"
+        links = {link.get("hreflang"): link.get("href") for link in entry.findall(f"{XHTML_NS}link")}
+        assert links == _versions(page), loc
 
 
 def test_the_sitemap_needs_no_sign_in(logged_in_client):
@@ -67,6 +88,35 @@ def test_the_indexable_pages_have_a_description_and_a_link_preview(client, path)
     assert _meta(page, "property", "og:image:alt") == ["Weight chart"]
     assert _meta(page, "name", "twitter:card") == ["summary_large_image"]
     assert _meta(page, "name", "robots") == []
+
+
+def _links(page, rel):
+    return re.findall(rf'<link rel="{rel}"(?: hreflang="([^"]*)")? href="([^"]*)">', page)
+
+
+@pytest.mark.parametrize("path", ["/", "/about"])
+def test_the_indexable_pages_name_their_language_versions(client, path):
+    page = client.get(path).get_data(as_text=True)
+    assert dict(_links(page, "alternate")) == _versions(path)
+    assert _links(page, "canonical") == [("", f"http://localhost{path}")]
+
+
+@pytest.mark.parametrize(
+    ("query", "canonical"),
+    [
+        ("?lang=nl", "?lang=nl"),
+        ("?lang=NL", "?lang=nl"),
+        ("?lang=no", "?lang=nb"),  # the alias is the same page as Bokmål
+        ("?lang=nl&utm_source=x", "?lang=nl"),  # other parameters are not another page
+        ("?lang=xx", ""),  # an unknown language shows the browser's: the plain page
+        ("?utm_source=x", ""),
+    ],
+)
+def test_each_language_version_is_its_own_canonical_page(client, query, canonical):
+    page = client.get(f"/about{query}").get_data(as_text=True)
+    assert _links(page, "canonical") == [("", f"http://localhost/about{canonical}")]
+    assert _meta(page, "property", "og:url") == [f"http://localhost/about{canonical}"]
+    assert len(_links(page, "alternate")) == len(LANGUAGES) + 1
 
 
 def test_the_link_preview_is_in_the_visitors_language(client):
@@ -100,6 +150,7 @@ def test_the_signed_in_dashboard_has_no_search_tags(logged_in_client):
     page = client.get("/").get_data(as_text=True)
     assert "ld+json" not in page
     assert _meta(page, "property", "og:title") == []
+    assert _links(page, "alternate") == []
 
 
 def _noindex(page):
@@ -137,3 +188,5 @@ def test_the_public_chart_has_neither_search_nor_preview_tags(client, app):
     page = client.get("/public/shared").get_data(as_text=True)
     assert _meta(page, "name", "description") == []
     assert _meta(page, "property", "og:image") == []
+    assert _links(page, "alternate") == []
+    assert _links(page, "canonical") == []

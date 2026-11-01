@@ -710,6 +710,8 @@ def test_robots_txt_blocks_crawlers_except_the_public_pages(client):
     assert "Disallow: /\n" in body
     assert "Allow: /$" in body
     assert "Allow: /about$" in body
+    assert "Allow: /?lang=\n" in body  # each language version (see test_seo.py)
+    assert "Allow: /about?lang=\n" in body
     # The sitemap and the link-preview picture (some preview fetchers obey robots.txt).
     assert "Allow: /sitemap.xml$" in body
     assert "Allow: /static/kilo-og.png$" in body
