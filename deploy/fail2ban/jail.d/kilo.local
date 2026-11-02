@@ -1,4 +1,4 @@
-# Jails for Kilo Tracker. Install as /etc/fail2ban/jail.d/kilo.local, with the two files from
+# Jails for Kilo Tracker. Install as /etc/fail2ban/jail.d/kilo.local, with the three files from
 # filter.d/ in /etc/fail2ban/filter.d/, then:  fail2ban-client reload
 #
 # They set only what is specific to Kilo. The ban action (banaction), ignoreip and the default
@@ -31,3 +31,16 @@ port     = http,https
 maxretry = 10
 findtime = 10m
 bantime  = 1h
+
+# Scanners asking for PHP, WordPress, phpMyAdmin or CGI pages, which Kilo never has: one request is
+# enough. In a month of real traffic the scanners sent up to 375 requests within 12 seconds, so
+# kilo-notfound banned them only after they had finished; this jail stops them at the first one.
+[kilo-probe]
+enabled  = true
+filter   = kilo-probe
+logpath  = /var/log/gunicorn/kilo-security.log
+backend  = auto
+port     = http,https
+maxretry = 1
+findtime = 1h
+bantime  = 1d

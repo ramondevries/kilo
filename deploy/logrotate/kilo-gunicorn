@@ -12,6 +12,8 @@
 
 /var/log/gunicorn/kilo*.log {
     weekly
+    # 8 weeks of old logs, then the oldest is deleted. To keep every old log (compressed), use
+    # "rotate -1" instead; "dateext" and "dateformat -%Y%m%d" then give them dated names.
     rotate 8
     compress
     delaycompress

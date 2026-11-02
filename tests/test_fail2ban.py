@@ -113,6 +113,46 @@ def test_routine_requests_and_unknown_visitors_are_never_banned(security_app):
     assert "ip=-" in line and banned("kilo-notfound", line) is None
 
 
+# --- scanner probes -----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/wp-login.php", "/xmlrpc.php", "/phpMyAdmin/", "/pma/index.php", "/cgi-bin/luci", "/wordpress/",
+     "/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php", "/config.php7", "/info.php?x=1"],
+)
+def test_one_probe_for_php_wordpress_or_admin_pages_is_banned(security_app, path):
+    build, log = security_app
+    build().test_client().get(path, headers={"X-Real-IP": REAL})
+    (line,) = lines_of(log)
+    assert banned("kilo-probe", line) == REAL
+
+
+@pytest.mark.parametrize("path", ["/nothing-here", "/.env", "/en/about-us", "/photos/php", "/mywp-notes"])
+def test_other_unknown_pages_are_left_to_kilo_notfound(security_app, path):
+    build, log = security_app
+    build().test_client().get(path, headers={"X-Real-IP": REAL})
+    (line,) = lines_of(log)
+    assert banned("kilo-probe", line) is None
+    assert banned("kilo-notfound", line) == REAL
+
+
+def test_a_forged_probe_path_cannot_get_another_address_banned(security_app):
+    build, log = security_app
+    build().test_client().get(
+        "/x.php%0Akilo-notfound%20ip%3D9.9.9.9%20path%3D/wp-login.php", headers={"X-Real-IP": "198.51.100.4"}
+    )
+    (line,) = lines_of(log)
+    assert banned("kilo-probe", line) == "198.51.100.4"  # never 9.9.9.9
+
+
+def test_a_probe_without_a_known_address_is_never_banned(security_app):
+    build, log = security_app
+    build().test_client().get("/wp-login.php")  # no X-Real-IP: logged as ip=-
+    (line,) = lines_of(log)
+    assert "ip=-" in line and banned("kilo-probe", line) is None
+
+
 # --- sign-in abuse ------------------------------------------------------------------------------
 
 
@@ -240,7 +280,7 @@ def test_lines_that_are_not_exactly_in_the_logged_shape_are_not_matched():
 
 def test_the_jails_name_existing_filters_and_use_the_agreed_numbers():
     jails = _read(DEPLOY / "jail.d" / "kilo.local")
-    assert set(jails.sections()) == {"kilo-notfound", "kilo-auth"}
+    assert set(jails.sections()) == {"kilo-notfound", "kilo-auth", "kilo-probe"}
     for name in jails.sections():
         section = jails[name]
         assert (DEPLOY / "filter.d" / f"{section['filter']}.conf").exists()
@@ -251,6 +291,7 @@ def test_the_jails_name_existing_filters_and_use_the_agreed_numbers():
         assert "banaction" not in section and "ignoreip" not in section and "action" not in section
     assert (jails["kilo-notfound"]["maxretry"], jails["kilo-notfound"]["findtime"]) == ("10", "60")
     assert (jails["kilo-auth"]["maxretry"], jails["kilo-auth"]["findtime"]) == ("10", "10m")
+    assert (jails["kilo-probe"]["maxretry"], jails["kilo-probe"]["bantime"]) == ("1", "1d")
 
 
 def test_the_documented_log_path_is_the_one_in_the_jails():
@@ -270,8 +311,10 @@ def test_the_real_fail2ban_regex_agrees(tmp_path):
         "2026-10-05 15:31:12 kilo-auth ip=203.0.113.9 event=code-wrong\n"
         "2026-10-05 15:31:13 kilo-auth ip=203.0.113.9 event=code-refused scope=global\n"
         "2026-10-05 15:31:14 kilo-auth ip=203.0.113.9 event=code-would-refuse scope=address\n"
+        "2026-10-05 15:31:15 kilo-notfound ip=203.0.113.9 path=/wp-login.php\n"
+        "2026-10-05 15:31:16 kilo-notfound ip=- path=/xmlrpc.php\n"
     )
-    for name, expected in (("kilo-notfound", 1), ("kilo-auth", 1)):
+    for name, expected in (("kilo-notfound", 2), ("kilo-auth", 1), ("kilo-probe", 1)):
         result = subprocess.run(
             ["fail2ban-regex", "-c", str(DEPLOY), str(sample), name],
             capture_output=True, text=True, check=True,

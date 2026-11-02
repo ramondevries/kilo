@@ -383,13 +383,20 @@ user (`git config --global --add safe.directory /srv/kilo` fixes that).
 
 #### Banning with fail2ban
 
-`deploy/fail2ban/` has two filters and a jail file that read the security log, for a server that
+`deploy/fail2ban/` has three filters and a jail file that read the security log, for a server that
 runs [fail2ban](https://www.fail2ban.org/) (written for 1.0.x):
 
 | Jail | Bans an address that... | Default |
 |---|---|---|
 | `kilo-notfound` | asks for 10 pages that do not exist within 60 seconds (`/.env`, `/.git/config`...) | 1 hour |
 | `kilo-auth` | gets 10 wrong codes, or requests refused by the per-address or per-visitor limit, within 10 minutes | 1 hour |
+| `kilo-probe` | asks for one PHP, WordPress, phpMyAdmin, CGI or XML-RPC page (`/wp-login.php`, `/phpmyadmin/`...), which Kilo never has | 1 day |
+
+Scanners send their whole list within seconds (up to 375 requests in 12 seconds in a month of real
+traffic), so `kilo-notfound` bans them only after they have finished; `kilo-probe` stops most of them
+at their first request. The same scanners usually sweep every site on a server, so if the server
+hosts more sites, a jail that reads all access logs and bans on the first request for `/.env`,
+`/.git/`, `/.aws/` and the like protects all of them at once.
 
 Deliberately NOT banned: a double click on "send code" (the wait), the site-wide cap (it trips for
 everybody, so banning the visitors who run into it would punish the innocent), what the limits would
@@ -404,6 +411,7 @@ sudo cp deploy/fail2ban/jail.d/kilo.local /etc/fail2ban/jail.d/
 # look before you ban: what would each filter catch in the real log? (no ban is made)
 fail2ban-regex /var/log/gunicorn/kilo-security.log kilo-notfound
 fail2ban-regex /var/log/gunicorn/kilo-security.log kilo-auth
+fail2ban-regex /var/log/gunicorn/kilo-security.log kilo-probe
 
 sudo fail2ban-client reload
 sudo fail2ban-client status kilo-notfound                    # the banned addresses
@@ -417,7 +425,7 @@ address (an office, a mobile carrier) is banned together, hence the generous num
 days you may want `bantime = 10m` in `kilo.local` while you watch `fail2ban-client status`.
 The filters were tested with `fail2ban-regex` 1.1.0 against lines the app itself wrote, and the
 automated tests keep the filters and the app's log format in step (they run the real
-`fail2ban-regex` as well when it is installed); run the two `fail2ban-regex` commands above on the
+`fail2ban-regex` as well when it is installed); run the three `fail2ban-regex` commands above on the
 server before you rely on them.
 
 #### Limits on emailed codes
