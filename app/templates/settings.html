@@ -36,6 +36,18 @@
         {{ form.moving_avg_days(min="1", max="3650", step="1") }}
         {{ field_errors(form.moving_avg_days) }}
       </div>
+      {# NOTE: Explanation above the goal weight fields in the settings. #}
+      <p class="field-wide">{{ _("A goal weight is optional: it shows as a line on the chart and, under the current average, how far it is and roughly when you reach it at your current pace. That pace is the change of your moving average over the goal date trend.") }}</p>
+      <div class="field">
+        {{ form.goal_weight.label }}
+        {{ form.goal_weight(inputmode="decimal", autocomplete="off", **{"data-decimal-only": ""}) }}
+        {{ field_errors(form.goal_weight) }}
+      </div>
+      <div class="field">
+        {{ form.trend_days.label }}
+        {{ form.trend_days(min="1", max="3650", step="1") }}
+        {{ field_errors(form.trend_days) }}
+      </div>
       {# NOTE: Button that saves the settings (verb). #}
       <button type="submit" class="form-action">{{ _("Save") }}</button>
     </form>
@@ -77,6 +89,16 @@
           {{ public_form.public_show_stats.label.text }}
           <span class="toggle-switch">
             {{ public_form.public_show_stats(disabled=weight_off) }}
+            <span class="toggle-slider"></span>
+          </span>
+        </label>
+      </div>
+      {# The goal too: its line on the 0-100 scale of hidden weights would give the scale away. #}
+      <div class="field field-wide">
+        <label class="toggle-row{{ ' is-disabled' if weight_off }}" id="public-goal-row">
+          {{ public_form.public_show_goal.label.text }}
+          <span class="toggle-switch">
+            {{ public_form.public_show_goal(disabled=weight_off) }}
             <span class="toggle-slider"></span>
           </span>
         </label>
@@ -203,16 +225,21 @@
 
 {% block scripts %}
 <script nonce="{{ csp_nonce() }}">
-  // "Show the stat boxes" only while "Show my weight" is on: switched off and greyed out otherwise.
+  // "Show the stat boxes" and "Show my goal" only while "Show my weight" is on: switched off and
+  // greyed out otherwise.
   (function () {
     var weight = document.getElementById('public_show_weight');
-    var stats = document.getElementById('public_show_stats');
-    var row = document.getElementById('public-stats-row');
-    if (!weight || !stats) return;
+    if (!weight) return;
+    var dependent = [
+      [document.getElementById('public_show_stats'), document.getElementById('public-stats-row')],
+      [document.getElementById('public_show_goal'), document.getElementById('public-goal-row')],
+    ];
     weight.addEventListener('change', function () {
-      if (!weight.checked) stats.checked = false;
-      stats.disabled = !weight.checked;
-      row.classList.toggle('is-disabled', !weight.checked);
+      dependent.forEach(function (pair) {
+        if (!weight.checked) pair[0].checked = false;
+        pair[0].disabled = !weight.checked;
+        pair[1].classList.toggle('is-disabled', !weight.checked);
+      });
     });
   })();
 

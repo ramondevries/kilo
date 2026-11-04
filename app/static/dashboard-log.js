@@ -23,6 +23,21 @@ function setChangeCell(cell, value, format) {
   cell.classList.toggle('down', !missing && value < 0);
 }
 
+// The goal line under the current average and the box's tooltip (goal_line and goal_title in
+// index.html), after a save.
+function showGoal(goal) {
+  const goalEl = document.getElementById('stat-goal');
+  if (!goalEl || !goal) return;
+  const weight = weightFormat.format(goal.weight);
+  goalEl.textContent = goal.reached
+    ? t('goalReached', { goal: weight })
+    : t('goalToGo', { goal: weight, distance: weightFormat.format(goal.to_go) });
+  // The box's tooltip says when (or why there is no date); a reached goal has nothing to add.
+  const tip = document.getElementById('goal-tip');
+  tip.textContent = goalWhen(goal) ?? '';
+  if (!tip.textContent) tip.hidden = true;
+}
+
 function updateOverview(data) {
   setSeries(data);
   applyRange(currentRange);
@@ -52,9 +67,11 @@ function updateOverview(data) {
     });
   }
 
-  // Below BMI 22 the change colours flip: a loss is red, a gain green.
+  // Towards a goal above the average (or without a goal, below BMI 22) the change colours flip:
+  // a loss is red, a gain green.
   const statsEl = document.querySelector('.stats');
-  if (statsEl) statsEl.classList.toggle('bmi-low', data.bmi != null && data.bmi < 22);
+  if (statsEl) statsEl.classList.toggle('gain-good', !!data.gain_is_good);
+  showGoal(data.goal);
 
   const bmiEl = document.getElementById('stat-bmi');
   if (bmiEl) {

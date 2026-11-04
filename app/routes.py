@@ -54,7 +54,9 @@ from app.overview import (
     CHART_RANGE_KEYS,
     CHART_RANGES,
     GRID_PAGE_SIZE,
+    current_average,
     entries_sorted,
+    goal_direction,
     grid_page,
     overview,
     range_name,
@@ -231,6 +233,8 @@ def _without_weights(chart_data):
         "chart_bmis": None,
         "stats": None,
         "bmi": None,
+        "goal": None,  # never shown without the weight (User.public_goal_shown); not even sent
+        "gain_is_good": False,
     }
 
 
@@ -253,7 +257,7 @@ def public_chart(public_id):
     theme = request.args.get("theme")
     if theme not in ("light", "dark"):
         theme = "dark" if user.public_dark_mode else "light"
-    chart_data = overview(user, notes=False)
+    chart_data = overview(user, notes=False, goal=user.public_goal_shown)
     context = _chart_context(user, chart_data)
     # A fixed range (?range=3m, else the saved one) shows the chart in that range without the
     # range buttons; any range key is allowed, also one the data does not span yet, in any case
@@ -450,6 +454,8 @@ def set_chart_range():
 def _fill_settings_form(form, user):
     form.dark_mode.data = user.dark_mode
     form.moving_avg_days.data = user.moving_avg_days
+    form.goal_weight.data = user.goal_weight_kg
+    form.trend_days.data = user.trend_days
     if user.height_cm is not None:
         form.height_unit.data = user.height_unit
         form.height_value.data = height_from_cm(user.height_cm, user.height_unit)
@@ -483,10 +489,13 @@ def _render_settings(user, form=None, public_form=None):
         public_form.public_enabled.data = user.public_enabled
         public_form.public_show_weight.data = user.public_show_weight
         public_form.public_show_stats.data = user.public_stats_shown
+        public_form.public_show_goal.data = user.public_goal_shown
         public_form.public_dark_mode.data = user.public_dark_mode
         public_form.public_id.data = user.public_id or propose_public_id(session_address.signed_in())
     if not public_form.public_show_weight.data:
-        public_form.public_show_stats.data = False  # shown switched off and greyed out
+        # shown switched off and greyed out
+        public_form.public_show_stats.data = False
+        public_form.public_show_goal.data = False
     return render_template(
         "settings.html",
         form=form,
@@ -495,6 +504,18 @@ def _render_settings(user, form=None, public_form=None):
         user=user,
         chart_ranges=CHART_RANGES,
     )
+
+
+def _set_goal(user, goal_kg):
+    """Save a goal weight (None: no goal). A new or changed goal gets its direction from the
+    moving average now (with the window just saved); an unchanged one keeps the direction it
+    was set with, so it stays reached once passed. Without entries the direction stays None and
+    the first entry decides (see overview._goal)."""
+    if goal_kg == user.goal_weight_kg:
+        return
+    user.goal_weight_kg = goal_kg
+    current = current_average(user) if goal_kg is not None else None
+    user.goal_losing = None if current is None else goal_direction(goal_kg, current)
 
 
 @bp.route("/settings", methods=["GET", "POST"])
@@ -512,6 +533,8 @@ def settings():
         user.height_unit = form.height_unit.data
         user.dark_mode = form.dark_mode.data
         user.moving_avg_days = form.moving_avg_days.data
+        user.trend_days = form.trend_days.data
+        _set_goal(user, form.goal_weight.data)
         db.session.commit()
         flash(_("Settings updated."), "success")
         return redirect(url_for("main.settings"))
@@ -533,6 +556,8 @@ def set_public_chart():
     user.public_show_weight = form.public_show_weight.data
     # The stat boxes show kilograms, so they go when the weight does.
     user.public_show_stats = form.public_show_weight.data and form.public_show_stats.data
+    # So does the goal: its line would give the scale of the hidden weights away.
+    user.public_show_goal = form.public_show_weight.data and form.public_show_goal.data
     user.public_dark_mode = form.public_dark_mode.data
     # The range menu is not a form field (its choices are CHART_RANGES, from app.overview); "" or
     # anything unknown: the visitor chooses.

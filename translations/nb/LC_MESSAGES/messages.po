@@ -1281,3 +1281,69 @@ msgstr "Skriv inn koden din"
 msgid "Verify"
 msgstr "Bekreft"
 
+# machine-translated
+#. NOTE: Label of the optional goal weight field in the settings.
+msgid "Goal weight (kg)"
+msgstr "Målvekt (kg)"
+
+# machine-translated
+#. NOTE: Error under the goal weight field in the settings.
+msgid "Enter the goal as a plain number, e.g. 75 or 72.5."
+msgstr "Skriv inn målet som et vanlig tall, for eksempel 75 eller 72,5."
+
+# machine-translated
+#. NOTE: Settings label: the days over which the goal date's pace is measured.
+msgid "Goal date trend (days)"
+msgstr "Trend for måldatoen (dager)"
+
+# machine-translated
+#. NOTE: Switch in the settings: show the goal weight on the public chart.
+msgid "Show my goal"
+msgstr "Vis målet mitt"
+
+# machine-translated
+#. E.g. "Goal 75.0 kg: 4.3 kg to go"; both values include the unit.
+#, python-format
+msgid "Goal %(goal)s: %(distance)s to go"
+msgstr "Mål %(goal)s: %(distance)s igjen"
+
+# machine-translated
+#. The moving average has reached the goal, e.g. "Goal 75.0 kg reached".
+#, python-format
+msgid "Goal %(goal)s reached"
+msgstr "Mål %(goal)s nådd"
+
+
+# machine-translated
+#. Instead of a goal date: the trend does not head for the goal. Neutral.
+msgid "No date at this pace"
+msgstr "Ingen dato i dette tempoet"
+
+# machine-translated
+#. Instead of a goal date: too few days of data for the trend yet.
+msgid "Not enough data for a date yet"
+msgstr "Ikke nok data for en dato ennå"
+
+# machine-translated
+#. Name of the goal weight line in the chart's tooltip.
+msgid "Goal"
+msgstr "Mål"
+
+# machine-translated
+#. Explanation above the goal weight fields in the settings.
+msgid ""
+"A goal weight is optional: it shows as a line on the chart and, under the "
+"current average, how far it is and roughly when you reach it at your current"
+" pace. That pace is the change of your moving average over the goal date "
+"trend."
+msgstr ""
+"En målvekt er valgfri: den vises som en linje i diagrammet og, under det "
+"nåværende gjennomsnittet, hvor langt det er igjen og omtrent når du når den "
+"i nåværende tempo. Det tempoet er endringen i det glidende gjennomsnittet "
+"ditt over trenden for måldatoen."
+
+# machine-translated
+#. Goal line tooltip, e.g. "Goal can be reached around 12 March 2027".
+#, python-format
+msgid "Goal can be reached around %(date)s"
+msgstr "Målet kan nås rundt %(date)s"

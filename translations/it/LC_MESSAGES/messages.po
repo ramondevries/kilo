@@ -1087,3 +1087,69 @@ msgstr "Inserisci il tuo codice"
 msgid "Verify"
 msgstr "Verifica"
 
+# machine-translated
+#. NOTE: Label of the optional goal weight field in the settings.
+msgid "Goal weight (kg)"
+msgstr "Peso obiettivo (kg)"
+
+# machine-translated
+#. NOTE: Error under the goal weight field in the settings.
+msgid "Enter the goal as a plain number, e.g. 75 or 72.5."
+msgstr "Inserisci l'obiettivo come numero semplice, ad esempio 75 o 72,5."
+
+# machine-translated
+#. NOTE: Settings label: the days over which the goal date's pace is measured.
+msgid "Goal date trend (days)"
+msgstr "Tendenza per la data dell'obiettivo (giorni)"
+
+# machine-translated
+#. NOTE: Switch in the settings: show the goal weight on the public chart.
+msgid "Show my goal"
+msgstr "Mostra il mio obiettivo"
+
+# machine-translated
+#. E.g. "Goal 75.0 kg: 4.3 kg to go"; both values include the unit.
+#, python-format
+msgid "Goal %(goal)s: %(distance)s to go"
+msgstr "Obiettivo %(goal)s: mancano %(distance)s"
+
+# machine-translated
+#. The moving average has reached the goal, e.g. "Goal 75.0 kg reached".
+#, python-format
+msgid "Goal %(goal)s reached"
+msgstr "Obiettivo %(goal)s raggiunto"
+
+
+# machine-translated
+#. Instead of a goal date: the trend does not head for the goal. Neutral.
+msgid "No date at this pace"
+msgstr "Nessuna data a questo ritmo"
+
+# machine-translated
+#. Instead of a goal date: too few days of data for the trend yet.
+msgid "Not enough data for a date yet"
+msgstr "Non ci sono ancora dati sufficienti per una data"
+
+# machine-translated
+#. Name of the goal weight line in the chart's tooltip.
+msgid "Goal"
+msgstr "Obiettivo"
+
+# machine-translated
+#. Explanation above the goal weight fields in the settings.
+msgid ""
+"A goal weight is optional: it shows as a line on the chart and, under the "
+"current average, how far it is and roughly when you reach it at your current"
+" pace. That pace is the change of your moving average over the goal date "
+"trend."
+msgstr ""
+"Il peso obiettivo è facoltativo: appare come una linea nel grafico e, sotto "
+"la media attuale, quanto manca e più o meno quando lo raggiungerai al ritmo "
+"attuale. Quel ritmo è la variazione della tua media mobile nella tendenza "
+"per la data dell'obiettivo."
+
+# machine-translated
+#. Goal line tooltip, e.g. "Goal can be reached around 12 March 2027".
+#, python-format
+msgid "Goal can be reached around %(date)s"
+msgstr "L'obiettivo può essere raggiunto intorno al %(date)s"

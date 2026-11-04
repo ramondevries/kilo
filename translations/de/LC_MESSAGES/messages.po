@@ -1302,3 +1302,69 @@ msgstr "Gib deinen Code ein"
 msgid "Verify"
 msgstr "Bestätigen"
 
+# machine-translated
+#. NOTE: Label of the optional goal weight field in the settings.
+msgid "Goal weight (kg)"
+msgstr "Zielgewicht (kg)"
+
+# machine-translated
+#. NOTE: Error under the goal weight field in the settings.
+msgid "Enter the goal as a plain number, e.g. 75 or 72.5."
+msgstr "Gib das Ziel als einfache Zahl ein, z. B. 75 oder 72,5."
+
+# machine-translated
+#. NOTE: Settings label: the days over which the goal date's pace is measured.
+msgid "Goal date trend (days)"
+msgstr "Trend für das Zieldatum (Tage)"
+
+# machine-translated
+#. NOTE: Switch in the settings: show the goal weight on the public chart.
+msgid "Show my goal"
+msgstr "Mein Ziel zeigen"
+
+# machine-translated
+#. E.g. "Goal 75.0 kg: 4.3 kg to go"; both values include the unit.
+#, python-format
+msgid "Goal %(goal)s: %(distance)s to go"
+msgstr "Ziel %(goal)s: noch %(distance)s"
+
+# machine-translated
+#. The moving average has reached the goal, e.g. "Goal 75.0 kg reached".
+#, python-format
+msgid "Goal %(goal)s reached"
+msgstr "Ziel %(goal)s erreicht"
+
+
+# machine-translated
+#. Instead of a goal date: the trend does not head for the goal. Neutral.
+msgid "No date at this pace"
+msgstr "Bei diesem Tempo kein Datum"
+
+# machine-translated
+#. Instead of a goal date: too few days of data for the trend yet.
+msgid "Not enough data for a date yet"
+msgstr "Noch zu wenige Daten für ein Datum"
+
+# machine-translated
+#. Name of the goal weight line in the chart's tooltip.
+msgid "Goal"
+msgstr "Ziel"
+
+# machine-translated
+#. Explanation above the goal weight fields in the settings.
+msgid ""
+"A goal weight is optional: it shows as a line on the chart and, under the "
+"current average, how far it is and roughly when you reach it at your current"
+" pace. That pace is the change of your moving average over the goal date "
+"trend."
+msgstr ""
+"Ein Zielgewicht ist optional: Es erscheint als Linie im Diagramm und unter "
+"dem aktuellen Durchschnitt, wie weit es noch ist und ungefähr wann du es bei"
+" deinem aktuellen Tempo erreichst. Dieses Tempo ist die Änderung deines "
+"Bewegungsdurchschnitts über den Trend für das Zieldatum."
+
+# machine-translated
+#. Goal line tooltip, e.g. "Goal can be reached around 12 March 2027".
+#, python-format
+msgid "Goal can be reached around %(date)s"
+msgstr "Das Ziel kann etwa am %(date)s erreicht werden"

@@ -15,11 +15,12 @@
 
 Pure computation on a user's entries: the daily series (every calendar day, gaps
 interpolated), its moving average, the stat boxes (all changes are changes of the
-moving average), the BMI and which range buttons the data spans. `overview()` puts it
+moving average), the BMI, the goal and which range buttons the data spans. `overview()` puts it
 all in the one dict the dashboard, the public chart and every save's JSON answer use.
 The only Flask in here is Babel, for the range labels and the total box's plural label.
 """
 
+import math
 from collections import deque
 from datetime import date, timedelta
 
@@ -132,6 +133,61 @@ def _moving_average_changes(moving_average):
     ]
 
 
+# A goal date further away than this is no date: at such a slow pace it says nothing.
+GOAL_DATE_MAX_DAYS = 5 * 365
+# Closer to the goal than this counts as reached: it would show as "0.0 kg to go".
+GOAL_REACHED_WITHIN_KG = 0.05
+
+
+def goal_direction(goal_kg, reference_kg):
+    """True when reaching the goal means losing weight from `reference_kg`, False when gaining.
+    A goal equal to the reference counts as losing: it is reached at once either way."""
+    return goal_kg <= reference_kg
+
+
+def _goal(user, entries, moving_average):
+    """The goal for the Current average box and the chart, or None without a goal or entries.
+
+    `losing` is the direction saved with the goal, else the first entry's (a goal set before
+    any entry). `reached` once the moving average is at or past the goal in that direction (or
+    within GOAL_REACHED_WITHIN_KG of it);
+    otherwise `to_go` (kg) and a date: `date` (ISO) when the pace over the last `trend_days`
+    days heads for the goal within GOAL_DATE_MAX_DAYS, with `date_status` "date", "no_pace" (the
+    pace is flat, goes the other way or would take longer) or "short" (fewer days of data than
+    the trend needs). The date counts from the last entry, where the moving average ends.
+    """
+    goal_kg = user.goal_weight_kg
+    if goal_kg is None or not entries:
+        return None
+    current = moving_average[-1]
+    losing = user.goal_losing
+    if losing is None:
+        losing = goal_direction(goal_kg, entries[0].weight)
+    goal = {"weight": goal_kg, "losing": losing, "reached": False, "to_go": None, "date": None,
+            "date_status": None}
+    # Reached also when less is left than shows as 0.1 kg: "0.0 kg to go" would say nothing (and
+    # floating point makes 80 - 10 x 0.2 slightly more than 78).
+    to_go = (current - goal_kg) if losing else (goal_kg - current)
+    if to_go < GOAL_REACHED_WITHIN_KG:
+        goal["reached"] = True
+        return goal
+    goal["to_go"] = to_go
+    days = user.trend_days
+    if len(moving_average) <= days:
+        goal["date_status"] = "short"
+        return goal
+    pace = (current - moving_average[-1 - days]) / days  # kg per day
+    towards = pace < 0 if losing else pace > 0
+    days_needed = goal["to_go"] / abs(pace) if towards else None
+    if days_needed is None or days_needed > GOAL_DATE_MAX_DAYS:
+        goal["date_status"] = "no_pace"
+        return goal
+    goal["date_status"] = "date"
+    # Rounded first: 14 kg at 0.1 kg a day is 140.00000000000003 days in floating point.
+    goal["date"] = (entries[-1].entry_date + timedelta(days=math.ceil(round(days_needed, 6)))).isoformat()
+    return goal
+
+
 def _bmi(moving_average, height_cm):
     """BMI from the current (latest) moving-average weight; None without a
     height or any entries."""
@@ -219,13 +275,23 @@ def _moving_average(values, window):
     return result
 
 
-def overview(user, notes=True):
+def current_average(user):
+    """The latest moving-average weight, or None without entries: what a new goal is compared
+    with to know its direction."""
+    _labels, values, _bmis, _real = daily_series(entries_sorted(user), None)
+    moving_average = _moving_average(values, user.moving_avg_days)
+    return moving_average[-1] if moving_average else None
+
+
+def overview(user, notes=True, goal=True):
     """Everything the dashboard needs, as one dict.
 
-    Stats, the chart series (labels, weights, BMIs, moving average), the BMI, the
-    available ranges and the notes by date (for the chart tooltip; empty with
-    `notes=False`, as on the public chart). It is also returned as JSON after each
-    save so the page can refresh in place.
+    Stats, the chart series (labels, weights, BMIs, moving average), the BMI, the goal (None
+    with `goal=False`, as on a public chart that does not show it), the available ranges and
+    the notes by date (for the chart tooltip; empty with `notes=False`, as on the public chart).
+    `gain_is_good` says which way the change boxes are green: towards the goal, or without a
+    goal, up below BMI 22. It is also returned as JSON after each save so the page can refresh
+    in place.
     """
     entries = entries_sorted(user)
     chart_labels, chart_values, chart_bmis, chart_real = daily_series(
@@ -238,6 +304,11 @@ def overview(user, notes=True):
         # can pick the right plural form for the language.
         total_days = stats["total"]["days"]
         stats["total_label"] = ngettext("%(num)d-day change", "%(num)d-day change", total_days)
+    bmi_now = _bmi(chart_moving_average, user.height_cm)
+    goal_data = _goal(user, entries, chart_moving_average) if goal else None
+    # Towards the goal is the good way; without one, gaining below BMI 22.
+    without_goal = bmi_now is not None and bmi_now < 22
+    gain_is_good = not goal_data["losing"] if goal_data is not None else without_goal
     return {
         "stats": stats,
         "chart_labels": chart_labels,
@@ -248,7 +319,9 @@ def overview(user, notes=True):
         # Only the days that have a note, {"2026-10-05": "text"}: most entries have none.
         "chart_notes": {e.entry_date.isoformat(): e.note for e in entries if e.note} if notes else {},
         "moving_avg_days": user.moving_avg_days,
-        "bmi": _bmi(chart_moving_average, user.height_cm),
+        "bmi": bmi_now,
+        "goal": goal_data,
+        "gain_is_good": gain_is_good,
         "available_ranges": _available_range_keys(entries),
     }
 

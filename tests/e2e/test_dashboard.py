@@ -401,3 +401,112 @@ def test_chromium_can_install_kilo_as_an_app(dashboard, context, page):
     assert manifest["errors"] == []
     assert manifest["url"].startswith(page.url.rstrip("/") + "/static/manifest.json")
     assert cdp.send("Page.getInstallabilityErrors")["installabilityErrors"] == []
+
+
+# --- the goal weight --------------------------------------------------------------------------
+
+
+def test_the_goal_is_a_line_that_stretches_the_axis(dashboard, page):
+    dashboard(goal_weight_kg=70.0, goal_losing=True, moving_avg_days=1, trend_days=5)
+    # The goal line is dataset 3, one value per day on the chart, all the goal.
+    assert set(page.evaluate("chart.data.datasets[3].data")) == {70.0}
+    assert page.evaluate("chart.data.datasets[3].data.length") == page.evaluate("chart.data.labels.length")
+    # The weights are about 80 kg; the axis still shows the goal.
+    assert page.evaluate("chart.scales.y.min") <= 70.0
+    expect(page.locator("#stat-goal")).to_contain_text("Goal 70.0 kg")
+
+
+def test_without_a_goal_there_is_no_goal_line(dashboard, page):
+    dashboard()
+    assert page.evaluate("chart.data.datasets[3].data") == []
+    expect(page.locator("#stat-goal")).to_have_count(0)
+
+
+def test_a_save_updates_the_goal_lines_and_the_colours(dashboard, page):
+    # A flat 80 kg: no date at this pace. Today 79.0 makes the 5-day trend head for the goal.
+    dashboard(weights=dict.fromkeys(range(11), 80.0), goal_weight_kg=78.0, goal_losing=True,
+              moving_avg_days=1, trend_days=5)
+    goal = page.locator("#stat-goal")
+    tip = page.locator("#goal-tip")  # the Current average box's tooltip
+    expect(goal).to_have_text("Goal 78.0 kg: 2.0 kg to go")
+    expect(tip).to_have_text("No date at this pace")
+    type_weight(page, "79")
+    expect(goal).to_have_text("Goal 78.0 kg: 1.0 kg to go")
+    # 1 kg in 5 days: 200 g a day, 1 kg to go: five days from today, said on hover.
+    eta = date.today() + timedelta(days=5)
+    expect(tip).to_have_text("Goal can be reached around " + page.evaluate(f"fmtLongDate('{eta.isoformat()}')"))
+    expect(page.locator(".stats")).not_to_have_class("stats gain-good")
+    type_weight(page, "77.5")
+    expect(goal).to_have_text("Goal 78.0 kg reached")
+    expect(tip).to_have_text("")
+
+
+def test_a_reached_goal_adds_nothing_to_the_chart_tooltip(dashboard, page):
+    dashboard(weights={days_ago: 80.0 - 0.2 * (10 - days_ago) for days_ago in range(11)}, goal_weight_kg=78.0,
+              goal_losing=True, moving_avg_days=1, trend_days=5)
+    # 78.0 now (78.00000000000001 in floating point), so the goal is reached: nothing under the goal's value.
+    eta_text = page.evaluate("""() => {
+        const last = chart.data.labels.length - 1;
+        chart.tooltip.setActiveElements([{datasetIndex: 0, index: last}, {datasetIndex: 3, index: last}], {x: 0, y: 0});
+        chart.update();
+        return chart.tooltip.body.map((b) => [...b.lines, ...b.after].join(' | '));
+    }""")
+    assert eta_text[1] == "Goal: 78.0 kg"
+    assert eta_text[0] == "Weight (kg): 78"  # the other lines keep Chart.js's own label
+    assert "reached around" not in " ".join(eta_text)
+
+
+def test_the_chart_tooltip_has_the_goal_date(dashboard, page):
+    # 1 kg down in 5 days (200 g a day), 79.0 now: 1 kg to go to 78, five days from today.
+    weights = dict.fromkeys(range(6, 11), 80.0) | {days_ago: 79.0 + 0.2 * days_ago for days_ago in range(6)}
+    dashboard(weights=weights, goal_weight_kg=78.0, goal_losing=True, moving_avg_days=1, trend_days=5)
+    lines = page.evaluate("""() => {
+        const last = chart.data.labels.length - 1;
+        chart.tooltip.setActiveElements([{datasetIndex: 3, index: last}], {x: 0, y: 0});
+        chart.update();
+        return chart.tooltip.body.map((b) => [...b.lines, ...b.after]);
+    }""")
+    eta = page.evaluate(f"fmtLongDate('{(date.today() + timedelta(days=5)).isoformat()}')")
+    # On two lines: the tooltip does not wrap, and the sentence is broken just before the date.
+    assert lines == [["Goal: 78.0 kg", "Goal can be reached around", eta]]
+    assert page.locator("#goal-tip").text_content() == "Goal can be reached around " + eta
+    # German puts the date in the middle: the second line starts with it.
+    page.goto(page.url.split("?")[0] + "?lang=de")
+    lines = page.evaluate("""() => {
+        const last = chart.data.labels.length - 1;
+        chart.tooltip.setActiveElements([{datasetIndex: 3, index: last}], {x: 0, y: 0});
+        chart.update();
+        return chart.tooltip.body.map((b) => b.after);
+    }""")
+    eta_de = page.evaluate(f"fmtLongDate('{(date.today() + timedelta(days=5)).isoformat()}')")
+    assert lines == [["Das Ziel kann etwa am", eta_de + " erreicht werden"]]
+
+
+def test_the_goal_tooltip_opens_on_hover_click_and_focus(dashboard, page):
+    dashboard(goal_weight_kg=70.0, goal_losing=True, moving_avg_days=1, trend_days=5)
+    card, tip = page.locator("#stat-current-card"), page.locator("#goal-tip")
+    expect(tip).to_be_hidden()
+    card.hover()
+    expect(tip).to_be_visible()
+    page.mouse.move(0, 0)
+    expect(tip).to_be_hidden()
+    # A click (a tap on a phone) keeps it open after the pointer leaves; a second click closes it.
+    card.click()
+    page.mouse.move(0, 0)
+    expect(tip).to_be_visible()
+    card.click()
+    expect(tip).to_be_hidden()
+    # A click elsewhere closes it too.
+    card.click()
+    page.locator("h2").first.click()
+    expect(tip).to_be_hidden()
+    # The keyboard: focus opens it, Escape closes it.
+    card.focus()
+    expect(tip).to_be_visible()
+    page.keyboard.press("Escape")
+    expect(tip).to_be_hidden()
+    # It sits under the box, inside the window.
+    card.click()
+    box, tip_box = card.bounding_box(), tip.bounding_box()
+    assert tip_box["y"] >= box["y"] + box["height"]
+    assert tip_box["x"] + tip_box["width"] <= page.viewport_size["width"]

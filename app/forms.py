@@ -19,9 +19,10 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileRequired
 from wtforms import BooleanField, FloatField, IntegerField, SelectField, StringField
 from wtforms.validators import (
-    DataRequired, Email, InputRequired, Length, NumberRange, Regexp, ValidationError,
+    DataRequired, Email, InputRequired, Length, NumberRange, Optional, Regexp, ValidationError,
 )
 
+from app.csv_io import MAX_WEIGHT_KG, MIN_WEIGHT_KG
 from app.email_utils import MxCheckError, check_mx
 from app.models import User
 from app.utils import MAX_HEIGHT_CM, MIN_HEIGHT_CM, height_to_cm, parse_decimal
@@ -58,15 +59,23 @@ class DecimalFloatField(FloatField):
     """A FloatField that takes "1.8" and "1,8" alike and nothing else.
 
     Plain FloatField uses float(), which rejects the comma but accepts "1e2",
-    "1_8" and "nan"; this one goes through `parse_decimal`.
+    "1_8" and "nan"; this one goes through `parse_decimal`. `not_a_number` makes the
+    error message for anything else (the height's by default).
     """
+
+    def __init__(self, *args, not_a_number=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.not_a_number = not_a_number or (
+            lambda: _("Enter the height as a plain number, e.g. 180 or 1.8.")
+        )
 
     def process_formdata(self, valuelist):
         if not valuelist or not valuelist[0].strip():
-            return  # empty: left to the "required" validator
+            self.data = None  # empty: left to the "required" validator, or no value
+            return
         value = parse_decimal(valuelist[0])
         if value is None:
-            raise ValueError(_("Enter the height as a plain number, e.g. 180 or 1.8."))
+            raise ValueError(self.not_a_number())
         self.data = value
 
     def _value(self):
@@ -80,7 +89,8 @@ class DecimalFloatField(FloatField):
 
 
 class SettingsForm(FlaskForm):
-    """User settings: height (cm or m, 50-275 cm), dark mode and the moving-average window in days."""
+    """User settings: height (cm or m, 50-275 cm), dark mode, the moving-average window in days, the
+    goal weight (optional) and the days the goal date's trend is measured over."""
     MIN_HEIGHT_CM = MIN_HEIGHT_CM
     MAX_HEIGHT_CM = MAX_HEIGHT_CM
 
@@ -97,6 +107,28 @@ class SettingsForm(FlaskForm):
     moving_avg_days = IntegerField(
         _l("Moving average (days)"), default=10, validators=[NumberRange(min=1, max=3650)]
     )
+    goal_weight = DecimalFloatField(
+        # NOTE: Label of the optional goal weight field in the settings.
+        _l("Goal weight (kg)"),
+        # NOTE: Error under the goal weight field in the settings.
+        not_a_number=lambda: _("Enter the goal as a plain number, e.g. 75 or 72.5."),
+        validators=[Optional()],
+    )
+    trend_days = IntegerField(
+        # NOTE: Settings label: the days over which the goal date's pace is measured.
+        _l("Goal date trend (days)"), default=30, validators=[NumberRange(min=1, max=3650)]
+    )
+
+    def validate_goal_weight(self, field):
+        """Like any weight: MIN_WEIGHT_KG..MAX_WEIGHT_KG, or empty for no goal."""
+        if field.data is not None and not MIN_WEIGHT_KG <= field.data <= MAX_WEIGHT_KG:
+            raise ValidationError(
+                _(
+                    "Weight must be between %(min)s and %(max)s kg.",
+                    min=format_decimal(MIN_WEIGHT_KG),
+                    max=format_decimal(MAX_WEIGHT_KG),
+                )
+            )
 
     def validate_height_value(self, field):
         """Require a plain decimal number that is within MIN_HEIGHT_CM..MAX_HEIGHT_CM once converted to cm."""
@@ -133,6 +165,8 @@ class PublicChartForm(FlaskForm):
     public_show_weight = BooleanField(_l("Show my weight"))
     # NOTE: Switch in the settings: show the boxes with the current average, BMI and changes under the public chart.
     public_show_stats = BooleanField(_l("Show the stat boxes on the public page"))
+    # NOTE: Switch in the settings: show the goal weight on the public chart.
+    public_show_goal = BooleanField(_l("Show my goal"))
     public_dark_mode = BooleanField(_l("Dark mode"))
     public_id = StringField(
         # NOTE: Label of the field with the last part of the public page's address (the "ramon" in .../public/ramon).

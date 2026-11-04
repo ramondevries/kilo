@@ -1083,3 +1083,69 @@ msgstr "Anna koodisi"
 msgid "Verify"
 msgstr "Varmenna"
 
+# machine-translated
+#. NOTE: Label of the optional goal weight field in the settings.
+msgid "Goal weight (kg)"
+msgstr "Tavoitepaino (kg)"
+
+# machine-translated
+#. NOTE: Error under the goal weight field in the settings.
+msgid "Enter the goal as a plain number, e.g. 75 or 72.5."
+msgstr "Anna tavoite pelkkänä lukuna, esim. 75 tai 72,5."
+
+# machine-translated
+#. NOTE: Settings label: the days over which the goal date's pace is measured.
+msgid "Goal date trend (days)"
+msgstr "Tavoitepäivän trendi (päivää)"
+
+# machine-translated
+#. NOTE: Switch in the settings: show the goal weight on the public chart.
+msgid "Show my goal"
+msgstr "Näytä tavoitteeni"
+
+# machine-translated
+#. E.g. "Goal 75.0 kg: 4.3 kg to go"; both values include the unit.
+#, python-format
+msgid "Goal %(goal)s: %(distance)s to go"
+msgstr "Tavoite %(goal)s: jäljellä %(distance)s"
+
+# machine-translated
+#. The moving average has reached the goal, e.g. "Goal 75.0 kg reached".
+#, python-format
+msgid "Goal %(goal)s reached"
+msgstr "Tavoite %(goal)s saavutettu"
+
+
+# machine-translated
+#. Instead of a goal date: the trend does not head for the goal. Neutral.
+msgid "No date at this pace"
+msgstr "Tällä tahdilla ei päivämäärää"
+
+# machine-translated
+#. Instead of a goal date: too few days of data for the trend yet.
+msgid "Not enough data for a date yet"
+msgstr "Vielä liian vähän tietoja päivämäärään"
+
+# machine-translated
+#. Name of the goal weight line in the chart's tooltip.
+msgid "Goal"
+msgstr "Tavoite"
+
+# machine-translated
+#. Explanation above the goal weight fields in the settings.
+msgid ""
+"A goal weight is optional: it shows as a line on the chart and, under the "
+"current average, how far it is and roughly when you reach it at your current"
+" pace. That pace is the change of your moving average over the goal date "
+"trend."
+msgstr ""
+"Tavoitepaino on vapaaehtoinen: se näkyy viivana kaaviossa, ja nykyisen "
+"keskiarvon alla näet, paljonko on jäljellä ja suunnilleen milloin saavutat "
+"sen nykyisellä tahdilla. Tahti on liukuvan keskiarvosi muutos tavoitepäivän "
+"trendin aikana."
+
+# machine-translated
+#. Goal line tooltip, e.g. "Goal can be reached around 12 March 2027".
+#, python-format
+msgid "Goal can be reached around %(date)s"
+msgstr "Tavoite voidaan saavuttaa noin %(date)s"

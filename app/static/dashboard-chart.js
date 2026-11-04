@@ -87,6 +87,7 @@ const warnColor = rootStyle.getPropertyValue('--chart-yellow').trim();
 const gridLineColor = rootStyle.getPropertyValue('--border').trim();
 const movingAvgColor = rootStyle.getPropertyValue('--chart-moving-avg').trim();
 const overallAvgColor = rootStyle.getPropertyValue('--chart-overall-avg').trim();
+const goalColor = rootStyle.getPropertyValue('--chart-goal').trim();
 
 // The whole series, from the page data now and from each save's answer later (setSeries).
 let fullLabels;
@@ -95,6 +96,8 @@ let fullBmis;
 let fullReal;
 let fullMovingAvg;
 let fullNotes;
+let goalWeight; // the goal in kg for the goal line, or null (no goal, or not shown here)
+let currentGoal; // overview()'s goal, or null
 
 // `data` has the keys of routes.overview(): the page data, or save_field's answer.
 function setSeries(data) {
@@ -104,6 +107,25 @@ function setSeries(data) {
   fullReal = data.chart_real;
   fullMovingAvg = data.chart_moving_average;
   fullNotes = data.chart_notes;
+  currentGoal = data.goal;
+  goalWeight = data.goal ? data.goal.weight : null;
+}
+
+// When the goal is reached at the current pace ("Goal can be reached around ..."), or why there
+// is no date; null once it is reached. The Current average box's tooltip and the chart's goal
+// line say the same.
+function goalWhen(goal) {
+  return goalWhenLines(goal)?.join(' ') ?? null;
+}
+
+// The same as lines for the chart's tooltip, which does not wrap: a sentence with a date is
+// broken just before the date ("Goal can be reached around" / "November 15, 2026"), at the
+// date's place in the translated sentence, so it reads right in every language.
+function goalWhenLines(goal) {
+  if (!goal || goal.reached) return null;
+  if (goal.date_status !== 'date') return [t(goal.date_status === 'no_pace' ? 'goalNoPace' : 'goalShort')];
+  const [before, after = ''] = t('goalAround').split('%(date)s');
+  return [before.trim(), (fmtLongDate(goal.date) + after).trim()].filter(Boolean);
 }
 setSeries(PAGE);
 
@@ -543,6 +565,19 @@ const chart = new Chart(chartCtx, {
       tension: 0,
       pointRadius: 0,
       pointHoverRadius: 0,
+    }, {
+      // The goal weight: a horizontal dashed line. Being data, it also stretches the y axis to
+      // include the goal, so the line is always on the chart (the user's choice).
+      label: t('goal'),
+      data: [],
+      borderColor: goalColor,
+      borderWidth: 1.5,
+      borderDash: [8, 4],
+      order: -1,
+      fill: false,
+      tension: 0,
+      pointRadius: 0,
+      pointHoverRadius: 0,
     }]
   },
   options: {
@@ -582,6 +617,11 @@ const chart = new Chart(chartCtx, {
         callbacks: {
           title: (items) => (items.length ? fmtWeekdayDate(items[0].label) : ''),
           footer: (items) => (items.length ? wrapNote(fullNotes[items[0].label]) : []),
+          // The goal with its unit ("Goal: 78.0 kg"; the weight's name already says kg). For the
+          // other lines undefined: Chart.js then writes its own label.
+          label: (item) => (item.datasetIndex === 3 ? `${item.dataset.label}: ${weightFormat.format(item.raw)}` : undefined),
+          // Under the goal line's value: when it is reached at the current pace.
+          afterLabel: (item) => (item.datasetIndex === 3 ? goalWhenLines(currentGoal) ?? [] : []),
           // The BMI at the hovered date, from that date's moving-average
           // weight (the same smoothed value the stats boxes use).
           afterBody: (items) => {
@@ -843,6 +883,10 @@ function applyRange(rangeKey) {
   chart.data.datasets[0].data = shownValues;
   chart.data.datasets[1].data = MOVING_AVG_RANGES.has(rangeKey) ? movingAvg : [];
   chart.data.datasets[2].data = overallAvg == null ? [] : labels.map(() => overallAvg);
+  chart.data.datasets[3].data = goalWeight == null ? [] : labels.map(() => goalWeight);
+  // A little room above and below with a goal: it is often the lowest (or highest) value, and
+  // the axis would put its line exactly on the chart's edge.
+  chart.options.scales.y.grace = goalWeight == null ? 0 : '4%';
   chart.update();
 
   document.querySelectorAll('.range-btn').forEach((btn) => {
@@ -890,6 +934,27 @@ if (statsPanel) {
     if (!card) return;
     e.preventDefault();
     showRangeFromStat(card);
+  });
+}
+
+// The Current average box's goal tooltip (#goal-tip): shown on hover and on keyboard focus, and
+// kept open by a click or tap (touch screens have no hover, and a native title shows on neither);
+// a second click, a click elsewhere or Escape closes it. Empty (a reached goal): never shown.
+const goalCard = document.getElementById('stat-current-card');
+const goalTip = document.getElementById('goal-tip');
+if (goalCard && goalTip) {
+  let pinned = false;
+  const showTip = (show) => { goalTip.hidden = !show || !goalTip.textContent; };
+  goalCard.addEventListener('mouseenter', () => showTip(true));
+  goalCard.addEventListener('mouseleave', () => showTip(pinned));
+  goalCard.addEventListener('focus', () => showTip(true));
+  goalCard.addEventListener('blur', () => { pinned = false; showTip(false); });
+  goalCard.addEventListener('click', () => { pinned = !pinned || goalTip.hidden; showTip(pinned); });
+  goalCard.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { pinned = false; showTip(false); }
+  });
+  document.addEventListener('click', (e) => {
+    if (!goalCard.contains(e.target)) { pinned = false; showTip(false); }
   });
 }
 

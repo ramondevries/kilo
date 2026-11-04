@@ -22,6 +22,8 @@
   --chart-fill: rgba(25, 129, 84, 0.12);
   --chart-moving-avg: #2563eb;
   --chart-overall-avg: #000000;
+  /* The goal weight line: purple, apart from the BMI fill, the blue average and the black one. */
+  --chart-goal: #7c3aed;
   --fs-small: 0.78rem;
   --fs-ui: 0.9rem;
   --fs-heading: 1.05rem;
@@ -56,6 +58,7 @@ html[data-theme="dark"] {
   --chart-fill: rgba(79, 192, 138, 0.18);
   --chart-moving-avg: #5b9bff;
   --chart-overall-avg: #e9ece9;
+  --chart-goal: #c4a1ff;
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
@@ -345,6 +348,30 @@ html[data-theme="dark"] .brand-logo-dark { display: block; }
   gap: 0.25rem;
 }
 
+/* The Current average box with a goal: its tooltip opens on hover, click/tap and focus. */
+#stat-current-card[aria-describedby] {
+  position: relative;
+  cursor: default;
+}
+
+/* Like the chart's tooltip: dark, small, just under the box, over the boxes below it. */
+.goal-tip {
+  position: absolute;
+  inset-inline-start: 0.5rem;
+  top: calc(100% + 6px);
+  z-index: 20;
+  width: max-content;
+  max-width: min(22rem, 80vw);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.82);
+  color: #ffffff;
+  font-size: var(--fs-small);
+  line-height: 1.35;
+}
+
+.goal-tip[hidden] { display: none; }
+
 /* The x-day change boxes act as shortcuts to the matching chart range. */
 .stat-card-link {
   cursor: pointer;
@@ -374,9 +401,11 @@ html[data-theme="dark"] .brand-logo-dark { display: block; }
 .stat-value.up, .stat-sub.up { color: var(--danger); }
 .stat-value.down, .stat-sub.down { color: var(--accent); }
 
-/* Under BMI 22, weight loss is the unwanted direction: swap the colours. */
-.stats.bmi-low .stat-value.up, .stats.bmi-low .stat-sub.up { color: var(--accent); }
-.stats.bmi-low .stat-value.down, .stats.bmi-low .stat-sub.down { color: var(--danger); }
+/* When gaining is the wanted direction (towards a goal above the average, or without a goal
+   under BMI 22), swap the colours. */
+.stats.gain-good .stat-value.up, .stats.gain-good .stat-sub.up { color: var(--accent); }
+.stats.gain-good .stat-value.down, .stats.gain-good .stat-sub.down { color: var(--danger); }
+
 
 .stat-sub {
   font-size: var(--fs-small);

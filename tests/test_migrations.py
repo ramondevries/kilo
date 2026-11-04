@@ -126,6 +126,8 @@ def _database_before_alembic(path):
     with engine.begin() as conn:
         conn.execute(sa.text("ALTER TABLE user DROP COLUMN public_dark_mode"))  # 0002
         conn.execute(sa.text("ALTER TABLE user DROP COLUMN public_range"))  # 0003
+        for column in ("goal_weight_kg", "goal_losing", "trend_days", "public_show_goal"):  # 0004
+            conn.execute(sa.text(f"ALTER TABLE user DROP COLUMN {column}"))
     return engine
 
 
@@ -145,7 +147,8 @@ def test_a_database_from_the_last_version_before_alembic_only_gets_its_version(t
     assert schema_differences(app) == []
     with app.app_context():
         # Unchanged, apart from the columns of the later migrations.
-        assert [c for c in columns(db.engine, "user") if c[0] not in ("public_dark_mode", "public_range")] == before
+        later = ("public_dark_mode", "public_range", "goal_weight_kg", "goal_losing", "trend_days", "public_show_goal")
+        assert [c for c in columns(db.engine, "user") if c[0] not in later] == before
         user = User.query.one()
         assert (user.moving_avg_days, user.session_version, user.public_show_weight) == (7, 3, False)
 
@@ -189,7 +192,8 @@ def test_the_public_chart_settings_can_be_undone(tmp_path):
 
 
 def test_a_database_with_the_public_theme_gets_the_range(tmp_path):
-    """A database already at 0002 (the theme) gets 0003 (the range) and keeps its theme."""
+    """A database already at 0002 (the theme) gets 0003 (the range) and the later ones, and keeps
+    its theme."""
     path = tmp_path / "at0002.db"
     app = make_app(path)
     with app.app_context():
@@ -201,11 +205,42 @@ def test_a_database_with_the_public_theme_gets_the_range(tmp_path):
         db.session.commit()
         db.engine.dispose()
     app = make_app(path)
-    assert version_of(path) == ["0003"]
+    assert version_of(path) == [head()]
     assert schema_differences(app) == []
     with app.app_context():
         user = User.query.one()
         assert (user.public_dark_mode, user.public_range) == (True, None)
+
+
+def test_existing_users_get_no_goal_and_a_30_day_trend(tmp_path):
+    """0004: nothing changes for an existing user until they set a goal."""
+    path = tmp_path / "at0003.db"
+    app = make_app(path)
+    with app.app_context():
+        command.downgrade(migrate.get_config(MIGRATIONS_DIR), "0003")
+        db.session.execute(sa.text("INSERT INTO user (email_hash, created_at, code_attempts, delete_code_attempts,"
+                                   " height_unit, dark_mode, chart_range, moving_avg_days, session_version,"
+                                   " public_enabled, public_show_stats, public_show_weight, public_dark_mode)"
+                                   " VALUES ('x', '2026-01-01', 0, 0, 'cm', 0, 'all', 10, 0, 1, 1, 1, 0)"))
+        db.session.commit()
+        db.engine.dispose()
+    app = make_app(path)
+    assert version_of(path) == ["0004"]
+    assert schema_differences(app) == []
+    with app.app_context():
+        user = User.query.one()
+        goal = (user.goal_weight_kg, user.goal_losing, user.trend_days, user.public_show_goal)
+        assert goal == (None, None, 30, False)
+        assert user.public_goal_shown is False
+
+
+def test_the_goal_can_be_undone(tmp_path):
+    app = make_app(tmp_path / "kilo.db")
+    with app.app_context():
+        command.downgrade(migrate.get_config(MIGRATIONS_DIR), "0003")
+        names = {column["name"] for column in sa.inspect(db.engine).get_columns("user")}
+        assert not names & {"goal_weight_kg", "goal_losing", "trend_days", "public_show_goal"}
+        assert "public_range" in names
 
 
 def test_the_baseline_cannot_be_undone(tmp_path):

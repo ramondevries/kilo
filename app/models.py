@@ -65,6 +65,14 @@ class User(db.Model):
     dark_mode = db.Column(db.Boolean, nullable=False, default=False)
     chart_range = db.Column(db.String(4), nullable=False, default="all")
     moving_avg_days = db.Column(db.Integer, nullable=False, default=10)
+    # The goal weight in kg (None: no goal) and its direction: True when the goal is below the
+    # moving average it was set at (losing), False above (gaining), None when that could not be
+    # known yet (no entries then: the first entry decides, see overview.goal_overview). Kept, so a
+    # goal that has been passed stays "reached" and the colours keep their meaning.
+    goal_weight_kg = db.Column(db.Float, nullable=True)
+    goal_losing = db.Column(db.Boolean, nullable=True)
+    # Over how many days the moving average's change gives the pace for the goal date.
+    trend_days = db.Column(db.Integer, nullable=False, default=30)
     # Raised by "Sign out everywhere": a session cookie that carries an older number is no longer
     # accepted (see sessions.keep_session_alive). Cookies from before this column count as 0.
     session_version = db.Column(db.Integer, nullable=False, default=0)
@@ -85,6 +93,9 @@ class User(db.Model):
     # added the range.
     public_dark_mode = db.Column(db.Boolean, nullable=False, default=False)
     public_range = db.Column(db.String(4), nullable=True)
+    # Whether the public chart shows the goal (the line and the box's goal lines); off by default,
+    # and never without the weight: a goal line on the 0-100 scale would give the scale away.
+    public_show_goal = db.Column(db.Boolean, nullable=False, default=False)
 
     entries = db.relationship(
         "WeightEntry", backref="user", cascade="all, delete-orphan", lazy="dynamic"
@@ -95,6 +106,12 @@ class User(db.Model):
         """Whether the public chart shows the stat boxes: they show kilograms, so never without
         the weight, whatever public_show_stats says."""
         return self.public_show_weight and self.public_show_stats
+
+    @property
+    def public_goal_shown(self):
+        """Whether the public chart shows the goal: only with the weight, whatever
+        public_show_goal says."""
+        return self.public_show_weight and self.public_show_goal
 
     @property
     def is_verified(self):

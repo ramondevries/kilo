@@ -11,6 +11,37 @@
   <a class="skip-link" href="#daily-log">{{ _("Skip to the daily log") }}</a>
 {% endif %}{% endblock %}
 
+{# The goal line under the current average: how far it is. Hovering over the box (its title) says
+   roughly when the goal is reached at the current pace, or why there is no date. The script
+   rewrites both after every save from the same strings (showGoal in dashboard-log.js). #}
+{# NOTE: E.g. "Goal 75.0 kg: 4.3 kg to go"; both values include the unit. #}
+{% set goal_to_go = _("Goal %(goal)s: %(distance)s to go", goal="%(goal)s", distance="%(distance)s") %}
+{# NOTE: The moving average has reached the goal, e.g. "Goal 75.0 kg reached". #}
+{% set goal_reached = _("Goal %(goal)s reached", goal="%(goal)s") %}
+{# NOTE: Goal line tooltip, e.g. "Goal can be reached around 12 March 2027". #}
+{% set goal_around = _("Goal can be reached around %(date)s", date="%(date)s") %}
+{# NOTE: Instead of a goal date: the trend does not head for the goal. Neutral. #}
+{% set goal_no_pace = _("No date at this pace") %}
+{# NOTE: Instead of a goal date: too few days of data for the trend yet. #}
+{% set goal_short = _("Not enough data for a date yet") %}
+
+{# The box's tooltip: when the goal is reached, or why there is no date; empty once reached. #}
+{% macro goal_when(goal) -%}
+  {%- if goal and not goal.reached -%}
+    {%- if goal.date_status == "date" %}{{ goal_around|replace("%(date)s", goal.date|localdate('long')) }}
+    {%- elif goal.date_status == "no_pace" %}{{ goal_no_pace }}
+    {%- else %}{{ goal_short }}{% endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro goal_line(goal) -%}
+  {%- set weight = goal.weight|kg -%}
+  <span class="stat-sub" id="stat-goal">
+    {%- if goal.reached %}{{ goal_reached|replace("%(goal)s", weight) }}
+    {%- else %}{{ goal_to_go|replace("%(goal)s", weight)|replace("%(distance)s", goal.to_go|kg) }}{% endif -%}
+  </span>
+{%- endmacro %}
+
 {% macro day_row(day) %}
   <div class="day-row"{% if day %} data-date="{{ day.date }}"{% endif %}>
     {# Hidden from screen readers: the field's label says the date in full ("October 24, 2026"),
@@ -74,13 +105,22 @@
     </section>
 
     {% if show_stats %}
-    {# Below BMI 22 losing weight is the bad direction, so the change colours flip (see .bmi-low in style.css). #}
-    <section class="stats{{ ' bmi-low' if bmi is not none and bmi < 22 }}">
+    {# Gaining is the good direction towards a goal above the average, or without a goal below BMI
+       22: then the change colours flip (see .gain-good in style.css, overview.overview). #}
+    <section class="stats{{ ' gain-good' if gain_is_good }}">
       {% if stats %}
-        <div class="stat-card">
+        {# With a goal the box has a tooltip of its own (#goal-tip): on hover, on a click or tap
+           (a native title never shows on those) and on keyboard focus; see dashboard-chart.js. #}
+        {% set when = goal_when(goal) %}
+        <div class="stat-card" id="stat-current-card"
+             {%- if goal %} tabindex="0" aria-describedby="goal-tip"{% endif %}>
           {# NOTE: Label above the latest moving-average weight. #}
           <span class="stat-label">{{ _("Current average") }}</span>
           <span class="stat-value" id="stat-current">{{ stats.current|kg }}</span>
+          {% if goal %}
+            {{ goal_line(goal) }}
+            <span class="goal-tip" id="goal-tip" role="tooltip" hidden>{{ when }}</span>
+          {% endif %}
         </div>
       {% elif public %}
         <p class="empty" id="stat-empty">{{ _("No entries yet.") }}</p>
@@ -247,6 +287,8 @@
 {% set chart_higher = _("%(period)s: the line ends higher than it starts.", period="%(period)s") %}
 {# NOTE: The chart in words when the owner hides the weights on the public page: only the line's direction. #}
 {% set chart_level = _("%(period)s: the line ends at the same height as it starts.", period="%(period)s") %}
+{# NOTE: Name of the goal weight line in the chart's tooltip. #}
+{% set goal_label = _("Goal") %}
 <script type="application/json" id="i18n">{{ {
   "weightKg": _("Weight (kg)"),
   "movingAvg": ngettext("%(num)d-day average", "%(num)d-day average", moving_avg_days),
@@ -269,6 +311,12 @@
   "chartLower": chart_lower,
   "chartHigher": chart_higher,
   "chartLevel": chart_level,
+  "goal": goal_label,
+  "goalToGo": goal_to_go,
+  "goalReached": goal_reached,
+  "goalAround": goal_around,
+  "goalNoPace": goal_no_pace,
+  "goalShort": goal_short,
 }|tojson }}</script>
 {# Everything the scripts below need from the server: dashboard-chart.js reads it as PAGE. The
    chart_* keys are those of routes.overview(), like save_field's answer that replaces them
@@ -285,6 +333,7 @@
   "chart_real": chart_real,
   "chart_moving_average": chart_moving_average,
   "chart_notes": chart_notes,
+  "goal": goal,
   "note_max_length": NOTE_MAX_LENGTH,
   "urls": none if public else {
     "save_field": url_for("main.save_field"),

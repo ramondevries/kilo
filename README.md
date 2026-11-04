@@ -4,6 +4,18 @@ A small Flask app for logging your weight over time: add daily entries, see
 a trend chart, and track your progress with the 7-, 14-, 30-, 90-, 180- and
 365-day change and the total change, all based on a moving average.
 
+## Goal weight
+
+Under **Settings** a user can set an optional goal weight. It shows as a dashed line on
+the chart (the axis stretches to include it) and, under the current average, as how far it
+still is and roughly when it is reached at the current pace: the change of the moving
+average over the last **Goal date trend** days (30 by default, set next to it). No date is
+given when the trend is flat or heads the other way, when it would take more than five
+years, or while there are fewer days of data than the trend needs. When the goal is saved,
+Kilo notes whether it lies below or above the current average; once the average has passed
+it the box says the goal is reached, and the change boxes stay green in the goal's
+direction (without a goal they flip below BMI 22, as before).
+
 ## Try it now
 
 Want to see where your weight is really heading? **Kilo Tracker is free to use
@@ -72,7 +84,9 @@ an `<iframe>` code to copy. By default the page shows only the chart and its
 range buttons; the stat boxes (including the BMI and height) can be switched on
 there. With **Show my weight** switched off, the page shows only the shape of the
 line: the server rescales the weights to an abstract 0-100 range and leaves out the
-height and the BMI, so no kilogram is in the page at all, and the stat boxes are off. The day notes, the email address and the daily log are never shown. The proposed ID is the SHA-256
+height and the BMI, so no kilogram is in the page at all, and the stat boxes are off.
+The goal weight is left out unless **Show my goal** is switched on, which also needs the
+weight to be shown. The day notes, the email address and the daily log are never shown. The proposed ID is the SHA-256
 of the user's email address and the time in seconds (not the email hash, which is
 also the Gravatar id); the user can choose their own instead: 3 to 64 letters
 (a-z), digits, hyphens or underscores, unique among all users and not
