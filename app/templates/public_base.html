@@ -4,7 +4,10 @@
    (which would give every visitor a session cookie), even when the visitor is signed in. #}
 {% block csrf_meta %}{% endblock %}
 {% block app_manifest %}{% endblock %}
-{% block header_menu %}{% endblock %}
+{# On the right of the header, what Kilo is; in a new tab for the same reason as the logo below. #}
+{% block header_menu %}
+  <a class="header-link muted-link" href="{{ url_for('auth.about') }}" target="_blank" rel="noopener">{{ _("About") }}</a>
+{% endblock %}
 {% block flashes %}{% endblock %}
 {# In an iframe the logo would otherwise open Kilo inside the other site's page. #}
 {% block brand_link_attrs %} target="_blank" rel="noopener"{% endblock %}

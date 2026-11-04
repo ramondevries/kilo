@@ -981,6 +981,10 @@ code {
 
 .muted-link { color: var(--muted); }
 
+/* The About link on the right of the public chart's header (public_base.html). */
+.header-link { white-space: nowrap; text-decoration: none; }
+.header-link:hover { text-decoration: underline; }
+
 .inline-form { display: inline; }
 
 .link-button {

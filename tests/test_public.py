@@ -231,6 +231,12 @@ def test_the_public_page_may_be_shown_in_an_iframe(client, owner):
     assert 'target="_blank"' in response.data.decode().split("</header>")[0]
 
 
+def test_the_public_header_links_to_the_about_page(client, owner):
+    share(client, "mine")
+    header = client.get("/public/mine", headers={"Accept-Language": "nl"}).data.decode().split("</header>")[0]
+    assert '<a class="header-link muted-link" href="/about" target="_blank" rel="noopener">Over</a>' in header
+
+
 @pytest.mark.parametrize(
     "path", ["/", "/about", "/settings", "/settings/export", "/robots.txt", "/avatar", "/static/style.css", "/nope"]
 )
