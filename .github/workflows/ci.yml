@@ -24,9 +24,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 3.14 is what production runs (Ubuntu 26.04 since 2026-11-01). Add a newer version here
-        # to catch what the next upgrade would break.
-        python: ["3.14"]
+        # 3.14 is what production runs (Ubuntu 26.04 since 2026-11-01); 3.15 catches what the
+        # next upgrade would break.
+        python: ["3.14", "3.15"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
