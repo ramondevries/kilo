@@ -17,7 +17,7 @@ from flask import current_app
 from flask_babel import format_decimal, gettext as _, lazy_gettext as _l
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileRequired
-from wtforms import BooleanField, FloatField, IntegerField, SelectField, StringField
+from wtforms import BooleanField, FloatField, IntegerField, SelectChoice, SelectField, StringField
 from wtforms.validators import (
     DataRequired, Email, InputRequired, Length, NumberRange, Optional, Regexp, ValidationError,
 )
@@ -100,7 +100,7 @@ class SettingsForm(FlaskForm):
     height_value = DecimalFloatField(_l("Height"), validators=[InputRequired()])
     # NOTE: Label of the cm/m dropdown next to the height field.
     height_unit = SelectField(
-        _l("Unit"), choices=[(u, u) for u in User.HEIGHT_UNITS], validators=[DataRequired()]
+        _l("Unit"), choices=[SelectChoice(u, u) for u in User.HEIGHT_UNITS], validators=[DataRequired()]
     )
     dark_mode = BooleanField(_l("Dark mode"))
 
