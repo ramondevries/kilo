@@ -5,9 +5,12 @@ Portuguese (`pt`), German (`de`), Italian (`it`), Indonesian (`id`), Polish
 (`pl`), Romanian (`ro`), Hungarian (`hu`), Danish (`da`), Finnish (`fi`), Swedish
 (`sv`) and Norwegian Bokmål (`nb`). English (`en`) is the source language and the
 fallback. All fourteen translations were **machine-generated**. Dutch, German,
-Italian, Finnish, Indonesian and Spanish have since been reviewed by native
-speakers; the others still need review by people who speak the language, and
-that is the most useful contribution you can make.
+Italian, Finnish, Indonesian, Spanish, Swedish and Polish have since been
+reviewed by native speakers; the others (French, Brazilian Portuguese, Romanian,
+Hungarian, Danish and Norwegian) still need review by people who speak the
+language, and that is the most useful contribution you can make. Texts added
+after a review are machine-translated again, so a reviewed language can have a
+few entries that need a look too (the check script below lists them).
 
 Visitors can pick a language in the language menu (in the header, or in the account
 menu when signed in; the names come from `LANGUAGE_NAMES` in `app/i18n.py`, so a new
@@ -50,10 +53,10 @@ after every change to a `.po` file.
 1. Edit `translations/<lang>/LC_MESSAGES/messages.po`. Each entry has the
    English text (`msgid`), your translation (`msgstr`) and sometimes a note for
    translators (a line starting with `#.`). Plural entries have `msgstr[0]`
-   (singular) and `msgstr[1]` (plural); Polish has a third form, Indonesian only one. `msgstr[0]` is the text shown for 1 (in
-   French and Brazilian Portuguese also for 0), so keep it singular ("1 minuto",
-   not "1 minutos"), even when the English `msgid` above it reads the same as
-   the plural.
+   (singular) and `msgstr[1]` (plural); Polish has a third form, Indonesian
+   only one. `msgstr[0]` is the text shown for 1 (in French and Brazilian
+   Portuguese also for 0), so keep it singular ("1 minuto", not "1 minutos"),
+   even when the English `msgid` above it reads the same as the plural.
 2. Once a person has reviewed an entry, delete its `# machine-translated` line
    completely (do not leave an empty line or a lone `#` in its place).
    Entries that still have it are the ones that need a look; the check script
@@ -138,7 +141,8 @@ turns into a diff of well over a hundred lines per language and hides what
 really changed.
 
 **3. Translate** the new, empty entries in every `.po` file (a plural entry
-needs both `msgstr[0]` and `msgstr[1]`; mark machine translations with a
+needs every form the language has: `msgstr[0]` and `msgstr[1]`, and
+`msgstr[2]` in Polish; mark machine translations with a
 `# machine-translated` line above the entry), run
 `pybabel compile -d translations` and `python scripts/check_i18n.py`.
 
