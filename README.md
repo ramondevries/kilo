@@ -69,7 +69,7 @@ Norwegian (Bokmål). By default the language follows the browser's `Accept-Langu
 setting; the language menu (in the header, or in the account menu when signed in) picks
 another one, which that browser remembers for a year in a `kilo_lang` cookie ("Browser
 language" forgets it again). Add `?lang=de` to a URL to try a language for one page. The
-Dutch, German, Italian, Finnish, Indonesian, Spanish and Swedish translations have
+Dutch, German, Italian, Finnish, Indonesian, Spanish, Swedish and Polish translations have
 been reviewed by native speakers; the others are still machine-generated and welcome a
 review: see [TRANSLATING.md](TRANSLATING.md).
 The compiled catalogs (`*.mo`) are not in git: run `pybabel compile -d
