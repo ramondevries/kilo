@@ -510,3 +510,59 @@ def test_the_goal_tooltip_opens_on_hover_click_and_focus(dashboard, page):
     box, tip_box = card.bounding_box(), tip.bounding_box()
     assert tip_box["y"] >= box["y"] + box["height"]
     assert tip_box["x"] + tip_box["width"] <= page.viewport_size["width"]
+
+
+CROSSHAIR_PIXEL = """() => {
+    // The pixel just under the top of the plot area in the middle: the crosshair's vertical line
+    // runs through it; nothing else is drawn there with this test's data.
+    const area = chart.chartArea, ratio = chart.currentDevicePixelRatio;
+    const x = Math.round((area.left + area.right) / 2), y = Math.round(area.top) + 1;
+    return Array.from(chart.ctx.getImageData(x * ratio, y * ratio, 1, 1).data);
+}"""
+
+
+def _chart_middle(page):
+    """The middle of the chart's plot area in page coordinates."""
+    return page.evaluate("""() => {
+        const area = chart.chartArea, box = chart.canvas.getBoundingClientRect();
+        return {x: box.left + Math.round((area.left + area.right) / 2),
+                y: box.top + Math.round((area.top + area.bottom) / 2)};
+    }""")
+
+
+def _next_frame(page):
+    # Chart.js handles pointer events on the next animation frame (see cf56520).
+    page.evaluate("() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))")
+
+
+def test_the_mouse_draws_a_crosshair_over_the_chart(dashboard, page):
+    dashboard()
+    middle = _chart_middle(page)
+    before = page.evaluate(CROSSHAIR_PIXEL)
+    page.mouse.move(middle["x"], middle["y"])
+    _next_frame(page)
+    at = page.evaluate("crosshairAt")
+    box = page.evaluate("chart.canvas.getBoundingClientRect().toJSON()")
+    assert abs(at["x"] + box["left"] - middle["x"]) < 1
+    assert abs(at["y"] + box["top"] - middle["y"]) < 1
+    assert page.evaluate(CROSSHAIR_PIXEL) != before  # the vertical line is drawn at the top
+    # A click (it jumps to the day in the log) keeps it.
+    page.mouse.click(middle["x"], middle["y"])
+    _next_frame(page)
+    assert page.evaluate("crosshairAt") is not None
+    # Outside the plot area (on the axes and the page) it goes away again.
+    page.mouse.move(0, 0)
+    _next_frame(page)
+    assert page.evaluate("crosshairAt") is None
+    assert page.evaluate(CROSSHAIR_PIXEL) == before
+
+
+@pytest.mark.browser_context_args(has_touch=True)
+def test_a_finger_on_the_chart_draws_no_crosshair(dashboard, page):
+    dashboard()
+    middle = _chart_middle(page)
+    # A tap: touch events, then the mouse events the browser makes up for it.
+    page.touchscreen.tap(middle["x"], middle["y"])
+    _next_frame(page)
+    assert page.evaluate("chart.tooltip.getActiveElements().length") > 0  # the tap did reach the chart
+    assert page.evaluate("crosshairAt") is None

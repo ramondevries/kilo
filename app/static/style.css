@@ -24,6 +24,9 @@
   --chart-overall-avg: #000000;
   /* The goal weight line: purple, apart from the BMI fill, the blue average and the black one. */
   --chart-goal: #7c3aed;
+  /* The crosshair under the mouse pointer on the chart: thin, solid (the average and goal lines
+     are dashed) and see-through, but darker than the grid. */
+  --chart-crosshair: rgba(27, 31, 28, 0.4);
   --fs-small: 0.78rem;
   --fs-ui: 0.9rem;
   --fs-heading: 1.05rem;
@@ -59,6 +62,7 @@ html[data-theme="dark"] {
   --chart-moving-avg: #5b9bff;
   --chart-overall-avg: #e9ece9;
   --chart-goal: #c4a1ff;
+  --chart-crosshair: rgba(233, 236, 233, 0.4);
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 

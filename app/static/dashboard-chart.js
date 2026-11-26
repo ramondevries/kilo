@@ -516,9 +516,58 @@ function movingAvgBmiOn(dateLabel) {
   return fullMovingAvg[i] / (heightM * heightM);
 }
 
+// A crosshair under the mouse pointer: a horizontal and a vertical line across the plot area,
+// so a weight or a date is easy to read off the axes. Only for a mouse: on a touch screen the
+// finger is in the way and the tooltip already marks the day. Chart.js calls a finger's
+// touchmove "mousemove" too, so the browser's own event type decides; the mouse events a
+// browser makes up after a tap say so in `sourceCapabilities` (Chromium; elsewhere a tap can
+// leave the crosshair where the tooltip already is).
+let crosshairAt = null; // {x, y} in canvas pixels, or null while the pointer is elsewhere
+
+const crosshairPlugin = {
+  id: 'crosshair',
+  afterEvent(chartInstance, args) {
+    const { type, x, y, native } = args.event;
+    // Only moving and leaving change it: a click keeps the crosshair where it is.
+    if (type !== 'mousemove' && type !== 'mouseout') return;
+    let next = null;
+    if (type === 'mousemove' && native?.type === 'mousemove' && !native.sourceCapabilities?.firesTouchEvents) {
+      const area = chartInstance.chartArea;
+      const inside = x >= area.left && x <= area.right && y >= area.top && y <= area.bottom;
+      if (inside) next = { x, y };
+    }
+    if (next?.x !== crosshairAt?.x || next?.y !== crosshairAt?.y) {
+      crosshairAt = next;
+      args.changed = true;
+    }
+  },
+  // Over the lines but under the tooltip, which Chart.js draws after the datasets.
+  afterDatasetsDraw(chartInstance) {
+    if (!crosshairAt) return;
+    const { ctx, chartArea: area } = chartInstance;
+    // Read at draw time, so the colour follows the dark-mode switch without a reload.
+    const color = getComputedStyle(document.documentElement).getPropertyValue('--chart-crosshair').trim();
+    // Half-pixel offsets keep a 1px line sharp instead of smeared over two pixels.
+    const x = Math.round(crosshairAt.x) + 0.5;
+    const y = Math.round(crosshairAt.y) + 0.5;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    // Solid: the overall average and the goal are the dashed lines.
+    ctx.beginPath();
+    ctx.moveTo(x, area.top);
+    ctx.lineTo(x, area.bottom);
+    ctx.moveTo(area.left, y);
+    ctx.lineTo(area.right, y);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
 const chartCtx = document.getElementById('weight-chart');
 const chart = new Chart(chartCtx, {
   type: 'line',
+  plugins: [crosshairPlugin],
   data: {
     labels: fullLabels,
     datasets: [{
